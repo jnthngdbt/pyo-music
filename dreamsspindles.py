@@ -99,14 +99,19 @@ class CExpert:
         #self.start, self.duration = 
         self.data = [] #ReadArrayFromFile(filename)
 
+import os
+
 # excerpt1 100Hz 51 Woman extracted from 03:15:00 to 03:45:00 C3-A1 52 115 
-eeg = CEegFile("data\\spindle\\excerpt1.txt", 100, 51, Gender.woman)
+eegname = os.path.join("data","spindle","excerpt1.txt")
+eeg = CEegFile(eegname, 100, 51, Gender.woman)
 eeg.plot()
 
-hypno = CHypnogram("data\\spindle\\Hypnogram_excerpt1.txt", 1/5)
+hypnoname = os.path.join("data","spindle","Hypnogram_excerpt1.txt")
+hypno = CHypnogram(hypnoname, 1/5)
 hypno.plot()
 
-expert = CExpert("data\\spindle\\Visual_scoring1_excerpt1.txt")
+expertname = os.path.join("data","spindle","Visual_scoring1_excerpt1.txt")
+expert = CExpert(expertname)
 
 # Make sure the figures stay active. Figures have poped asynchronuously
 # from using plt.ion() (interactive mode). Show() stops execution.
