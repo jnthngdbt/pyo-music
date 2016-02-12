@@ -97,7 +97,7 @@ class CEegFile:
 class CExpert:
     def __init__(self, filename):
         #self.start, self.duration = 
-        self.data = [] #ReadArrayFromFile(filename)
+        self.data = ReadArrayFromFile(filename)
 
 # excerpt1 100Hz 51 Woman extracted from 03:15:00 to 03:45:00 C3-A1 52 115 
 eeg = CEegFile("data\\spindle\\excerpt1.txt", 100, 51, Gender.woman)
