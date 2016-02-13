@@ -59,22 +59,26 @@ class Gender:
     woman = 0
     man = 1
     
-#        cols = [float(x) for x in line.split()]
-#        c28, c31 = cols[27], cols[30]
-def ReadArrayFromFile(filename):
-    data = []
+def ReadListOfColsFromFile(filename):
     with open(filename) as file:
         lines = file.read().split('\n')
+        
         lines.pop(0) # The name of the electrode
-        lines.pop() #
+        lines.pop() # Remove last line
+                
+        numcols = len(lines[0].split())
+        data = [[] for i in range(numcols)]
+        
         for line in lines:
-            data.append(float(line))
-    return data
+            words = line.split()
+            for idx, val in enumerate(words):
+                data[idx].append(float(val))
+    return np.array(data)
     
 class CHypnogram:
     def __init__(self, filename, fs):
         self.fs = fs
-        self.data = ReadArrayFromFile(filename)
+        self.data = ReadListOfColsFromFile(filename)[0]
         self.time = np.arange(0, len(self.data)) / self.fs
         
     def plot(self):
@@ -85,7 +89,7 @@ class CHypnogram:
 class CEegFile:
     def __init__(self, filename, fs, age, gender):
         self.fs = fs
-        self.data = ReadArrayFromFile(filename)
+        self.data = ReadListOfColsFromFile(filename)[0]
         self.time = np.arange(0, len(self.data)) / self.fs
         self.age = age
         self.gender = gender
@@ -97,19 +101,24 @@ class CEegFile:
 class CExpert:
     def __init__(self, filename):
         #self.start, self.duration = 
-        self.data = [] #ReadArrayFromFile(filename)
+        data = ReadListOfColsFromFile(filename)
+        self.start = data[0]
+        self.duration = data[1]
 
 import os
 
 # excerpt1 100Hz 51 Woman extracted from 03:15:00 to 03:45:00 C3-A1 52 115 
+#eegname = "https://github.com/jnthngdbt/hellopython/blob/master/data/spindle/excerpt1.txt"
 eegname = os.path.join("data","spindle","excerpt1.txt")
 eeg = CEegFile(eegname, 100, 51, Gender.woman)
 eeg.plot()
 
+#hypnoname = "https://github.com/jnthngdbt/hellopython/blob/master/data/spindle/Hypnogram_excerpt1.txt"
 hypnoname = os.path.join("data","spindle","Hypnogram_excerpt1.txt")
 hypno = CHypnogram(hypnoname, 1/5)
 hypno.plot()
 
+#expertname = "https://github.com/jnthngdbt/hellopython/blob/master/data/spindle/Visual_scoring1_excerpt1.txt"
 expertname = os.path.join("data","spindle","Visual_scoring1_excerpt1.txt")
 expert = CExpert(expertname)
 
