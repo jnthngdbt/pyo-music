@@ -63,9 +63,11 @@ def ReadListOfColsFromFile(filename):
     with open(filename) as file:
         lines = file.read().split('\n')
         
+        # Filter file edges
         lines.pop(0) # The name of the electrode
-        lines.pop() # Remove last line
+        lines.pop() # Remove last line (empty, crashes)
                 
+        # Initialize an empty list of empty lists.
         numcols = len(lines[0].split())
         data = [[] for i in range(numcols)]
         
@@ -73,6 +75,8 @@ def ReadListOfColsFromFile(filename):
             words = line.split()
             for idx, val in enumerate(words):
                 data[idx].append(float(val))
+                
+    # Return a list of lists as a numpy array to allow arithmetics (+ more).
     return np.array(data)
     
 class CHypnogram:
@@ -86,7 +90,7 @@ class CHypnogram:
         plt.plot(self.time, self.data) 
 
 # EEG file object
-class CEegFile:
+class CEeg:
     def __init__(self, filename, fs, age, gender):
         self.fs = fs
         self.data = ReadListOfColsFromFile(filename)[0]
@@ -99,28 +103,36 @@ class CEegFile:
         plt.plot(self.time, self.data) 
         
 class CExpert:
-    def __init__(self, filename):
-        #self.start, self.duration = 
+    def __init__(self, filename, fs):
+        self.fs = fs
         data = ReadListOfColsFromFile(filename)
-        self.start = data[0]
-        self.duration = data[1]
+        self.iduration = (data[1] * self.fs).astype(int)
+        self.iposition = ((data[0] + self.iduration/2.0)*self.fs).astype(int)
+        
+    def idx(self, iposition, iduration):
+        istart = iposition - iduration/2
+        iend   = iposition + iduration/2
+        return range(int(istart), int(iend))
+        
+    def plot(self, eeg, i):
+        idx = self.idx(self.iposition[i], self.iduration[i])
+        plt.figure()           
+        plt.plot(eeg.time[idx], eeg.data[idx]) 
 
 import os
 
 # excerpt1 100Hz 51 Woman extracted from 03:15:00 to 03:45:00 C3-A1 52 115 
 #eegname = "https://github.com/jnthngdbt/hellopython/blob/master/data/spindle/excerpt1.txt"
-eegname = os.path.join("data","spindle","excerpt1.txt")
-eeg = CEegFile(eegname, 100, 51, Gender.woman)
+eeg = CEeg(os.path.join("data","spindle","excerpt1.txt"), 100, 51, Gender.woman)
 eeg.plot()
 
 #hypnoname = "https://github.com/jnthngdbt/hellopython/blob/master/data/spindle/Hypnogram_excerpt1.txt"
-hypnoname = os.path.join("data","spindle","Hypnogram_excerpt1.txt")
-hypno = CHypnogram(hypnoname, 1/5)
+hypno = CHypnogram(os.path.join("data","spindle","Hypnogram_excerpt1.txt"), 1/5)
 hypno.plot()
 
 #expertname = "https://github.com/jnthngdbt/hellopython/blob/master/data/spindle/Visual_scoring1_excerpt1.txt"
-expertname = os.path.join("data","spindle","Visual_scoring1_excerpt1.txt")
-expert = CExpert(expertname)
+expert = CExpert(os.path.join("data","spindle","Visual_scoring1_excerpt1.txt"), eeg.fs)
+expert.plot(eeg, 15)
 
 # Make sure the figures stay active. Figures have poped asynchronuously
 # from using plt.ion() (interactive mode). Show() stops execution.
