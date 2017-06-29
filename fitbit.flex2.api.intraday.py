@@ -24,6 +24,7 @@ days = np.arange(numdays) + day0num
 hours = np.arange(nummins)/60
 
 daysdata = np.zeros((nummins, numdays))
+dayssmooth = np.zeros((nummins, numdays))
 
 for i, day in enumerate(days):
     
@@ -44,6 +45,7 @@ for i, day in enumerate(days):
     df = pd.DataFrame.from_dict(xd)
     
     daysdata[:,i] = df.value
+    dayssmooth[:,i] = np.convolve(df.value, np.ones(5), 'same')
             
 daystrs = []
 for day in days:
@@ -59,14 +61,18 @@ hourticks = nummins * np.arange(len(hourstrs))/len(hourstrs)
 
 plt.figure()
 
-plt.plot(daysdata, 'k', alpha=0.1)
+plt.plot(daysdata, '.-k', alpha=0.1)
 plt.xticks(hourticks, hourstrs, rotation=90)
+plt.ylim([1,np.max(daysdata)])
+
+ax = plt.gca()
+ax.set_facecolor('white')
 
 plt.tight_layout() # to make sure date tick labels are visible
 
 plt.figure(figsize=(3.20, 6.80))
 
-plt.imshow(np.sqrt(daysdata))
+plt.imshow(np.sqrt(dayssmooth))
 plt.axis('tight')
 plt.grid('off')
 
