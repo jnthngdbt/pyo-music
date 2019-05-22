@@ -11,16 +11,16 @@ plt.rcParams['axes.facecolor'] = '#222222'
 plt.close('all')
 
 # -----------------------------------------------------------------
-def makeCube(units):
+def makeCube(units = 1):
   M = np.array([
-    [-1,  1, -1], # back-bottom-left
-    [-1,  1,  1], # back-top-left
-    [ 1,  1,  1], # back-top-right
-    [ 1,  1, -1], # back-bottom-right
-    [-1, -1, -1], # front-bottom-left
-    [-1, -1,  1], # front-top-left
-    [ 1, -1,  1], # front-top-right
-    [ 1, -1, -1], # front-bottom-right
+    [-1,  1, -1], # left-back-bottom
+    [-1,  1,  1], # left-back-top
+    [ 1,  1,  1], # right-back-top
+    [ 1,  1, -1], # right-back-bottom
+    [-1, -1, -1], # left-front-bottom
+    [-1, -1,  1], # left-front-top
+    [ 1, -1,  1], # right-front-top
+    [ 1, -1, -1], # right-front-bottom
   ])
 
   M = M.T
