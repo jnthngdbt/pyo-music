@@ -16,6 +16,6 @@ REM                      -pc 0/X                  = disable/enable the display o
 REM                      -pc_scale X              = resize the principal curvatures vectors size to X (default 0.02)
 REM (Note: for multiple .pcd files, provide multiple -{fc,ps,opaque} parameters; they will be automatically assigned to the right file)
 
-"C:\Program Files\PCL 1.9.1\bin\pcl_viewer_release.exe" %*
+"%PCL_ROOT%pcl_viewer_release.exe" %*
 
 pause
