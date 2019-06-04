@@ -13,7 +13,7 @@ tolLabels = ['0.010', '0.020', '0.030']
 for tolLabel in tolLabels:
     tol = float(tolLabel)
     rms = np.arange(0.00001, 0.05, 0.0001)
-    score = np.exp(1 - rms/tol) / np.exp(1)
+    score = np.exp(-rms/tol)
     plt.plot(rms, score)
 
 plt.xlabel('rms')
