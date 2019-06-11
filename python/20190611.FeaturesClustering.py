@@ -17,7 +17,7 @@ head = [
 'moldid', 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD'
 ]
 
-data = [
+input = [
 1,0.990793,0.135385,-0.000625682,-0.632086,0.993123,-0.116928,0.00587595,0.619137,-0.0254031,-0.999674,0.00248732,0.0951856,-3.07883e-05,-0.999991,-0.00413554,-0.2105,0.00248435,0.117094,0.993118,-0.265533,0.00261031,-0.143238,0.989685,0.261548,
 2,0.822924,0.568145,0.00284429,-0.463893,0.994592,-0.103862,-0.000557272,0.613945,-0.0172443,-0.999816,-0.00842976,0.10103,0.00446617,-0.999982,-0.00412157,-0.215343,-0.000688101,0.174554,0.984647,-0.256921,0.00616344,-0.163726,0.986487,0.25659,
 9,0.903216,0.429133,0.00680399,-0.539592,0.981852,-0.189578,0.00507264,0.600576,-0.0245175,-0.999699,0.000807852,0.105108,0.00269793,-0.999972,-0.00696798,-0.211349,0.00320113,0.135953,0.99071,-0.243169,0.00758788,-0.159843,0.987113,0.238581,
@@ -148,35 +148,101 @@ data = [
 #599,-0.672785,-0.739838,-0.000920837,0.327457,0.994357,-0.105739,0.00856614,0.606872,-0.00428766,-0.999973,-0.00590255,0.119791,0.0286475,-0.999587,-0.00216151,-0.210286,-0.0487058,0.153475,0.986951,-0.246736,0.050673,-0.168894,0.984331,0.244938,
 
 nbFeatures = len(head)
-nbSamples = int(len(data) / len(head))
+nbSamples = int(len(input) / len(head))
 
-data = np.array(data)
-data = data.reshape((nbSamples, nbFeatures))
+input = np.array(input)
+input = input.reshape((nbSamples, nbFeatures))
 
-ids = data[:,0]
-data = data[:,1:]
+# Extract first id column
+samplenames = np.array([str(int(id)) for id in input[:,0]])
+input = input[:, 1:]
+featurenames = np.array(head[1:])
 
-dist = scipy.spatial.distance.pdist(data, 'euclidean')
-links = scipy.cluster.hierarchy.linkage(dist, 'single')
-dendro = scipy.cluster.hierarchy.dendrogram(links, labels=ids, orientation='right')
+nbFeatures = len(featurenames)
+nbSamples = len(samplenames)
 
-sortidx = np.array(dendro['leaves'])
+labels = {}
+data = {}
+metric = {}
+dist = {}
+links = {}
+dendro = {}
+dendrori = {}
+sortidx = {}
 
-sortdist = scipy.spatial.distance.squareform(dist)
-sortdist = sortdist[np.ix_(sortidx, sortidx)]
+labels[0] = samplenames
+labels[1] = featurenames
 
-sortids = ids[sortidx]
+data[0] = input
+data[1] = input.T
 
-fig, ax = plt.subplots()
+metric[0] = 'euclidean'
+metric[1] = 'correlation'
 
-im = ax.matshow(sortdist) # , clim=[0,1]
-ax.set_xticks(np.arange(nbSamples))
-ax.set_yticks(np.arange(nbSamples))
+dendrori[0] = 'right'
+dendrori[1] = 'top'
 
-ax.set_xticklabels(sortids, rotation=90)
-ax.set_yticklabels(sortids)
+for axis in [0, 1]:
+    plt.figure() # for the dendrogram
 
-fig.colorbar(im)
-fig.tight_layout()
+    dist[axis] = scipy.spatial.distance.pdist(data[axis], metric[axis])
+    links[axis] = scipy.cluster.hierarchy.linkage(dist[axis], 'average')
+    dendro[axis] = scipy.cluster.hierarchy.dendrogram(links[axis], labels=labels[axis], orientation=dendrori[axis])
+    plt.gca().invert_yaxis()
+
+    sortidx[axis] = np.array(dendro[axis]['leaves'])
+
+    # Sort data from clustering
+    dist[axis] = scipy.spatial.distance.squareform(dist[axis])
+    dist[axis] = dist[axis][np.ix_(sortidx[axis], sortidx[axis])]
+    labels[axis] = labels[axis][sortidx[axis]]
+
+    data[axis] = data[axis][sortidx[axis]]
+
+def showDistMatrix(axis):
+    fig, ax = plt.subplots()
+
+    im = ax.matshow(dist[axis]) # , clim=[0,1]
+    ax.set_xticks(np.arange(data[axis].shape[0]))
+    ax.set_yticks(np.arange(data[axis].shape[0]))
+
+    ax.set_xticklabels(labels[axis], rotation=90)
+    ax.set_yticklabels(labels[axis])
+
+    fig.colorbar(im)
+    fig.tight_layout()
+
+def showDataMatrix(sorti, sortj):
+    fig, ax = plt.subplots()
+
+    dataforvis = input[np.ix_(sorti, sortj)]
+    dataforvis = (dataforvis - dataforvis.mean(axis=0)) / dataforvis.std(axis=0)
+
+    im = ax.matshow(dataforvis)
+    ax.set_xticks(np.arange(dataforvis.shape[1]))
+    ax.set_yticks(np.arange(dataforvis.shape[0]))
+    ax.set_xticklabels(featurenames[sortj], rotation=90)
+    ax.set_yticklabels(samplenames[sorti])
+    ax.set_aspect('auto')
+
+    fig.colorbar(im)
+
+showDistMatrix(0)
+plt.title('samples distance matrix')
+
+showDistMatrix(1)
+plt.title('features distance matrix')
+
+showDataMatrix(np.arange(nbSamples), np.arange(nbFeatures))
+plt.title('input data')
+
+showDataMatrix(sortidx[0], np.arange(nbFeatures))
+plt.title('input data, sorted by samples clustering')
+
+showDataMatrix(np.arange(nbSamples), sortidx[1])
+plt.title('input data, sorted by features clustering')
+
+showDataMatrix(sortidx[0], sortidx[1])
+plt.title('input data, sorted by samples and features clustering')
 
 plt.show()
