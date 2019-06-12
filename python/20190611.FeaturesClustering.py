@@ -121,7 +121,6 @@ input = [
 560,0.900808,0.434197,-0.00414112,-0.558715,0.00022366,0.988971,-0.14811,0.000446398,0.624646,0.000633485,-0.0250744,-0.999686,-0.000218919,0.121696,0.00018919,0.0015907,-0.999999,0.000515454,-0.264073,2.79164e-06,0.000644275,0.150861,0.988555,-0.257144,0.000260728,0.00421517,-0.14995,0.988685,0.259974,0.000221284,
 563,0.934955,0.354766,0.000555065,-0.58888,0.00435041,0.991549,-0.129719,0.00165248,0.629804,0.00465502,-0.0291914,-0.999544,-0.00767151,0.0955542,0.000175285,-0.00406117,-0.999974,-0.00592933,-0.218949,4.78941e-06,-0.00719573,0.123248,0.99235,-0.262583,0.00127361,0.0155652,-0.12235,0.992365,0.260465,0.00139433,
 564,0.970046,0.242838,-0.00634837,-0.614106,0.0153032,0.996014,-0.0890928,0.00440512,0.625632,0.0159515,-0.0299234,-0.99954,-0.00491874,0.0964938,0.000275183,0.00529816,-0.99998,-0.00354536,-0.216923,5.98974e-06,-0.00372313,0.170692,0.985317,-0.259774,0.00329499,0.00673184,-0.15823,0.987379,0.262998,0.00258138,
-568,0.812045,0.582843,0.0296213,-0.473012,0.0138818,0.964296,-0.264345,0.0159484,0.591821,0.00674396,-0.0263795,-0.999576,-0.0123262,0.108635,7.48036e-05,-0.00563236,-0.999973,0.00464596,-0.225793,0.000432524,-0.0235634,0.132795,0.990863,-0.243588,0.00070614,0.0105315,-0.306852,0.951699,0.245949,0.00743768,
 580,0.987911,0.154711,0.00985614,-0.636299,0.0234798,0.991252,-0.131204,0.0143102,0.625468,0.0208833,-0.0241098,-0.999707,-0.00204524,0.0957403,0.000462258,-0.00250502,-0.999977,-0.0062667,-0.209482,5.96551e-06,0.00708915,0.12771,0.991786,-0.25521,0.00488765,0.00368045,-0.127273,0.991861,0.25526,0.00490133,
 582,0.994172,0.10573,0.0210576,-0.639766,0.0401194,0.995726,-0.0920804,0.00710294,0.625849,0.0321682,-0.0239254,-0.999701,-0.00511681,0.0886865,0.000354961,-0.0027577,-0.99997,-0.00717765,-0.198657,6.68033e-06,0.00239545,0.11857,0.992943,-0.257914,0.00577818,0.00333083,-0.117837,0.993027,0.257559,0.00520092,
 583,0.975622,0.219386,0.00566656,-0.611385,0.0318986,0.994817,-0.100973,0.0119964,0.617406,0.0332179,-0.0243536,-0.999702,-0.00157988,0.0907708,0.000322764,-0.00379623,-0.999974,-0.00620492,-0.200475,7.72334e-06,0.00401935,0.11834,0.992965,-0.259232,0.00559003,0.00632874,-0.115386,0.993301,0.259421,0.00519962,
@@ -143,6 +142,7 @@ input = [
 
 #599,-0.672785,-0.739838,-0.000920837,0.327457,0.994357,-0.105739,0.00856614,0.606872,-0.00428766,-0.999973,-0.00590255,0.119791,0.0286475,-0.999587,-0.00216151,-0.210286,-0.0487058,0.153475,0.986951,-0.246736,0.050673,-0.168894,0.984331,0.244938,
 # 14,0.950745,0.243645,-0.191626,-0.605456,0.0849185,0.996899,-0.078638,-0.00273369,0.637171,0.0172699,-0.0223135,-0.999747,-0.00282597,0.0948195,0.000480991,-0.00852302,-0.999945,-0.00604403,-0.224183,5.69741e-05,0.0022669,0.0540424,0.998536,-0.270495,0.00260622,0.0083215,-0.10051,0.994901,0.271442,0.00719644,
+# 568,0.812045,0.582843,0.0296213,-0.473012,0.0138818,0.964296,-0.264345,0.0159484,0.591821,0.00674396,-0.0263795,-0.999576,-0.0123262,0.108635,7.48036e-05,-0.00563236,-0.999973,0.00464596,-0.225793,0.000432524,-0.0235634,0.132795,0.990863,-0.243588,0.00070614,0.0105315,-0.306852,0.951699,0.245949,0.00743768,
 
 head = [
 'moldid', 'backA', 'backB', 'backC', 'backD', 'backK', 'frontA', 'frontB', 'frontC', 'frontD', 'frontK', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'bottomK', 'topA', 'topB', 'topC', 'topD', 'topK', 'rightA', 'rightB', 'rightC', 'rightD', 'rightK', 'leftA', 'leftB', 'leftC', 'leftD', 'leftK'
@@ -162,11 +162,12 @@ featurenames = np.array(head[1:])
 # Select subset of all features
 featurenameslist = list(featurenames)
 # featureSubset = np.array([ 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK'])
-featureSubset = np.array([ 'backD', 'frontD', 'bottomD', 'topD', 'rightD', 'leftD', 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK'])
+# featureSubset = np.array([ 'backD', 'frontD', 'bottomD', 'topD', 'rightD', 'leftD', 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK'])
 # featureSubset = np.array([ 'backD', 'frontD', 'bottomD', 'topD', 'rightD', 'leftD'])
-# featureSubset = np.array([ 'backB', 'backD', 'frontB', 'frontD', 'bottomA', 'bottomD', 'topA', 'topD', 'rightA', 'rightB', 'rightD', 'leftA', 'leftB', 'leftD'])
 # featureSubset = np.array([ 'backB', 'frontB', 'bottomA', 'topA', 'rightA', 'rightB', 'leftA', 'leftB'])
-# featureSubset = np.array([ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD'])
+# featureSubset = np.array([ 'backB', 'backD', 'frontB', 'frontD', 'bottomA', 'bottomD', 'topA', 'topD', 'rightA', 'rightB', 'rightD', 'leftA', 'leftB', 'leftD'])
+featureSubset = np.array([ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD'])
+# featureSubset = np.array([ 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK', 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD'])
 featureSubsetIdx = [featurenameslist.index(f) for f in featureSubset]
 input = input[:, featureSubsetIdx]
 featurenames = featureSubset
@@ -182,6 +183,7 @@ links = {}
 dendro = {}
 dendrori = {}
 sortidx = {}
+figsize = {}
 
 labels[0] = samplenames
 labels[1] = featurenames
@@ -195,25 +197,33 @@ metric[1] = 'correlation'
 dendrori[0] = 'right'
 dendrori[1] = 'top'
 
+figsize[0] = (2,10)
+figsize[1] = (10,2)
+
 for axis in [0, 1]:
-    plt.figure() # for the dendrogram
+    plt.figure(figsize=figsize[axis]) # for the dendrogram
 
     dist[axis] = scipy.spatial.distance.pdist(data[axis], metric[axis])
-    links[axis] = scipy.cluster.hierarchy.linkage(dist[axis], 'average')
+    links[axis] = scipy.cluster.hierarchy.linkage(dist[axis], 'complete')
     dendro[axis] = scipy.cluster.hierarchy.dendrogram(links[axis], labels=labels[axis], orientation=dendrori[axis])
+    
     plt.gca().invert_yaxis()
+    plt.tight_layout()
+
+    dist[axis] = scipy.spatial.distance.squareform(dist[axis])
+
+    print(labels[axis][np.argsort(dist[axis][0,:])])
 
     sortidx[axis] = np.array(dendro[axis]['leaves'])
 
     # Sort data from clustering
-    dist[axis] = scipy.spatial.distance.squareform(dist[axis])
     dist[axis] = dist[axis][np.ix_(sortidx[axis], sortidx[axis])]
     labels[axis] = labels[axis][sortidx[axis]]
 
     data[axis] = data[axis][sortidx[axis]]
 
 def showDistMatrix(axis):
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(13,10))
 
     im = ax.matshow(dist[axis]) # , clim=[0,1]
     ax.set_xticks(np.arange(data[axis].shape[0]))
@@ -226,7 +236,7 @@ def showDistMatrix(axis):
     fig.tight_layout()
 
 def showDataMatrix(sorti, sortj):
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(4,10))
 
     dataforvis = input[np.ix_(sorti, sortj)]
     dataforvis = (dataforvis - dataforvis.mean(axis=0)) / dataforvis.std(axis=0)
@@ -239,23 +249,24 @@ def showDataMatrix(sorti, sortj):
     ax.set_aspect('auto')
 
     fig.colorbar(im)
+    fig.tight_layout()
 
 showDistMatrix(0)
-plt.title('samples distance matrix')
+plt.xlabel('samples distance matrix')
 
 showDistMatrix(1)
-plt.title('features distance matrix')
+plt.xlabel('features distance matrix')
 
-showDataMatrix(np.arange(nbSamples), np.arange(nbFeatures))
-plt.title('input data')
+# showDataMatrix(np.arange(nbSamples), np.arange(nbFeatures))
+# plt.xlabel('input data')
 
-showDataMatrix(sortidx[0], np.arange(nbFeatures))
-plt.title('input data, sorted by samples clustering')
+# showDataMatrix(sortidx[0], np.arange(nbFeatures))
+# plt.xlabel('input data, sorted by samples clustering')
 
-showDataMatrix(np.arange(nbSamples), sortidx[1])
-plt.title('input data, sorted by features clustering')
+# showDataMatrix(np.arange(nbSamples), sortidx[1])
+# plt.xlabel('input data, sorted by features clustering')
 
 showDataMatrix(sortidx[0], sortidx[1])
-plt.title('input data, sorted by samples and features clustering')
+plt.xlabel('input data, sorted by samples and features clustering')
 
 plt.show()
