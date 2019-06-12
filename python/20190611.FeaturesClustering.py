@@ -884,7 +884,7 @@ inputData = np.array(inputData)
 inputData = inputData.reshape((nbSamples, nbFeatures))
 
 # Remove outliers.
-outlierIds = [281, 311, 321, 362, 419, 476, 557, 588, 624, 627]
+outlierIds = [281, 311, 321, 362, 419, 476, 544, 557, 585, 588, 599, 624, 627, 3071, 3332, 3338, 7514, 7586, 8243, 8303, 8393 ]
 mustRemoveId = []
 for id in list(inputData[:,0]):
     mustRemoveId.append(int(id) not in outlierIds)
