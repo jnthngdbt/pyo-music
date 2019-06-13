@@ -847,8 +847,6 @@ moldData = [
 678,678,0,1,1,1,0,2,0.961714,0.274032,0.00366553,-0.604599,0.0175296,0.991046,-0.133513,-0.00138363,0.622213,0.0180647,-0.0319158,-0.999451,-0.00885024,0.0938052,0.000437677,-0.00197628,-0.999991,-0.00385423,-0.223951,7.39246e-06,0.00452442,0.116519,0.993178,-0.263977,0.00267535,0.00197188,-0.126981,0.991903,0.262138,0.00288211,
 ]
 
-# 599,1,4,4,2,0,2,-0.672785,-0.739838,-0.000920837,0.327457,0.01339,0.994357,-0.105739,0.00856614,0.606872,0.0340197,-0.00428766,-0.999973,-0.00590255,0.119791,0.000222323,0.0286475,-0.999587,-0.00216151,-0.210286,0.000187596,-0.0487058,0.153475,0.986951,-0.246736,0.00761509,0.050673,-0.168894,0.984331,0.244938,0.0077499,
-
 inputHeader = [
 'id', 'mold', 'eside', 'eback', 'efront', 'ematerial', 'ebathtype', 'elength', 'backA', 'backB', 'backC', 'backD', 'backK', 'frontA', 'frontB', 'frontC', 'frontD', 'frontK', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'bottomK', 'topA', 'topB', 'topC', 'topD', 'topK', 'rightA', 'rightB', 'rightC', 'rightD', 'rightK', 'leftA', 'leftB', 'leftC', 'leftD', 'leftK'
 ]
@@ -870,10 +868,9 @@ featureSubset = featureSubset_MainPlaneComponents
 
 # -----------------------------------------------------------------------
 
+# Merge scans and molds
 inputData = moldData
 inputData.extend(scanData)
-
-# -----------------------------------------------------------------------
 
 # Get initial input data dimension.
 nbFeatures = len(inputHeader)
@@ -883,13 +880,18 @@ nbSamples = int(len(inputData) / len(inputHeader))
 inputData = np.array(inputData)
 inputData = inputData.reshape((nbSamples, nbFeatures))
 
+# -----------------------------------------------------------------------
+
 # Remove outliers.
 outlierIds = [281, 311, 321, 362, 419, 476, 544, 557, 585, 588, 599, 624, 627, 3071, 3332, 3338, 7514, 7586, 8243, 8303, 8393 ]
 mustRemoveId = []
 for id in list(inputData[:,0]):
     mustRemoveId.append(int(id) not in outlierIds)
+
 inputData = inputData[mustRemoveId]
 nbSamples = inputData.shape[0]
+
+# -----------------------------------------------------------------------
 
 # Compute categories from original specs.
 specs = inputData[:, 2:8] + 1 # +1 to support -1 values
@@ -900,6 +902,11 @@ categories = [categorieUniqueIds.index(c) for c in categorieIds]
 
 # Extract samples id from first column.
 sampleNames = np.array(["%6i %3i %4i-%3i" % (categorieIds[i], categories[i], inputData[i, 0], inputData[i, 1]) for i in np.arange(nbSamples)])
+
+#
+mapScanToMoldIdx = np.array([ list(inputData[:,0]).index(i) for i in list(inputData[:,1])])
+
+# Remove first non-feature columns.
 inputData = inputData[:, 2:]
 featureNames = np.array(inputHeader[2:])
 
@@ -912,6 +919,8 @@ featureNames = featureSubset
 # Get dimension of final data subset.
 nbFeatures = len(featureNames)
 nbSamples = len(sampleNames)
+
+# -----------------------------------------------------------------------
 
 def computeClustering(data, labels, figsize, distMetric, linkMethod, dendrogramOrientation):
     plt.figure(figsize=figsize) # for the dendrogram
@@ -936,9 +945,11 @@ def showDistMatrix(dist, labels, sortidx, thresh = None):
     dist = dist[np.ix_(sortidx, sortidx)]
     labels = labels[sortidx]
 
+    range = np.arange(dist.shape[0])
+
     fig, ax = plt.subplots(figsize=(13,10))
     im = ax.matshow(dist)
-    ax.set_yticks(np.arange(dist.shape[0]))
+    ax.set_yticks(range)
     ax.set_yticklabels(labels)
     fig.colorbar(im)
     fig.tight_layout()
@@ -973,7 +984,12 @@ distFeatures, sortFeatures = computeClustering(inputData.T, featureNames, (10,2)
 sortCategories = np.argsort(categories)
 
 showDistMatrix(distSamples, sampleNames, sortSamples)
+plt.plot(sortSamples, sortSamples[mapScanToMoldIdx], 'o') # almost but not quite
 plt.xlabel('samples distance matrix')
+
+# showDistMatrix(distSamples, sampleNames, np.arange(nbSamples))
+# plt.plot(mapScanToMoldIdx, np.arange(nbSamples), 'o')
+# plt.xlabel('samples distance matrix')
 
 showDistMatrix(distSamples, sampleNames, sortCategories)
 plt.xlabel('samples distance matrix, sorted by category')
