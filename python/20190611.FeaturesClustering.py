@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as DA # 'pip install -U scikit-learn', or 'conda install scikit-learn'
+
 import scipy.spatial
 import scipy.cluster
 
@@ -863,6 +865,7 @@ featureSubset_MainPlaneComponents = np.array([ 'backB', 'backD', 'frontB', 'fron
 featureSubset_ABC = np.array([ 'backA', 'backB', 'backC', 'frontA', 'frontB', 'frontC', 'bottomA', 'bottomB', 'bottomC', 'topA', 'topB', 'topC', 'rightA', 'rightB', 'rightC', 'leftA', 'leftB', 'leftC'])
 featureSubset_ABCD = np.array([ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD'])
 featureSubset_ABCDK = np.array([ 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK', 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD'])
+featureSubset_LdaTrialNope = np.array([ 'topB', 'bottomB', 'bottomK', 'topK', 'rightK', 'leftK'])
 
 # Selection
 featureSubset = featureSubset_ABCDK
@@ -900,11 +903,12 @@ categorieNames = ["%i%i%i%i%i%i" % (specs[i, 0], specs[i, 1], specs[i, 2], specs
 categorieIds = [int(c) for c in categorieNames]
 categorieUniqueIds = [x for i, x in enumerate(categorieIds) if i == categorieIds.index(x)]
 categories = [categorieUniqueIds.index(c) for c in categorieIds]
+nbCategories = len(categorieUniqueIds)
 
 # Extract samples id from first column.
 sampleNames = np.array(["%6i %3i %4i-%3i" % (categorieIds[i], categories[i], inputData[i, 0], inputData[i, 1]) for i in np.arange(nbSamples)])
 
-#
+# Map each sample with the expected corresponding mold (for molds, they are mapped to themselves).
 mapScanToMoldIdx = np.array([ list(inputData[:,0]).index(i) for i in list(inputData[:,1])])
 
 # Remove first non-feature columns.
@@ -924,12 +928,13 @@ nbSamples = len(sampleNames)
 # -----------------------------------------------------------------------
 
 def computeClustering(data, labels, figsize, distMetric, linkMethod, dendrogramOrientation):
-    plt.figure(figsize=figsize) # for the dendrogram
+    showDendro = False
+    if showDendro: plt.figure(figsize=figsize) # for the dendrogram
 
     # Agglomerative hierarichal clustering.
     dist = scipy.spatial.distance.pdist(data, distMetric)
     links = scipy.cluster.hierarchy.linkage(dist, linkMethod)
-    dendro = scipy.cluster.hierarchy.dendrogram(links, labels=labels, orientation=dendrogramOrientation)
+    dendro = scipy.cluster.hierarchy.dendrogram(links, labels=labels, orientation=dendrogramOrientation, no_plot=not showDendro)
     
     plt.gca().invert_yaxis()
     plt.tight_layout()
@@ -1011,25 +1016,61 @@ def computeMatchingDistances(dist):
 
     fig.tight_layout()
 
+def computeLda(data, classLabels):
+    lda = DA()
+    lda.fit(data, classLabels)
 
-distSamples, sortSamples = computeClustering(inputData, sampleNames, (2,10), 'euclidean', 'complete', 'right')
+    fig, ax = plt.subplots()
+    im = ax.matshow(lda.coef_)
+    ax.set_xticks(np.arange(nbFeatures))
+    ax.set_yticks(np.arange(nbCategories))
+    ax.set_xticklabels(featureNames, rotation=90, fontsize=8)
+    ax.set_xlabel('features')
+    ax.set_ylabel('classes')
+    ax.set_aspect('auto')
+    fig.colorbar(im)
+
+    fig, ax = plt.subplots()
+    im = ax.matshow(lda.scalings_)
+    ax.set_yticks(np.arange(nbFeatures))
+    ax.set_yticklabels(featureNames, fontsize=8)
+    ax.set_ylabel('features')
+    ax.set_aspect('auto')
+    fig.colorbar(im)
+
+    return lda.transform(data)[:,:6]
+
+# -----------------------------------------------------------------------
+
+distSamples, sortSamples = computeClustering(inputData, sampleNames, (2,10), 'euclidean', 'ward', 'right')
 distFeatures, sortFeatures = computeClustering(inputData.T, featureNames, (10,2), 'euclidean', 'complete', 'top')
 
 sortCategories = np.argsort(categories)
 
 computeMatchingDistances(distSamples)
 
+ldaData = computeLda(inputData, categories)
+distLda, sortLda = computeClustering(ldaData, sampleNames, (2,10), 'euclidean', 'ward', 'right')
+
+computeMatchingDistances(distLda)
+
+# -----------------------------------------------------------------------
+
 showDistMatrix(distSamples, sampleNames, sortSamples)
 showScanToMoldMap(mapScanToMoldIdx, sortSamples)
 plt.xlabel('samples distance matrix')
+
+showDistMatrix(distLda, sampleNames, sortLda)
+showScanToMoldMap(mapScanToMoldIdx, sortLda)
+plt.xlabel('samples distance matrix in LDA space')
 
 # showDistMatrix(distSamples, sampleNames, np.arange(nbSamples))
 # plt.plot(mapScanToMoldIdx, np.arange(nbSamples), 'o')
 # plt.xlabel('samples distance matrix')
 
-showDistMatrix(distSamples, sampleNames, sortCategories)
-showScanToMoldMap(mapScanToMoldIdx, sortCategories)
-plt.xlabel('samples distance matrix, sorted by category')
+# showDistMatrix(distSamples, sampleNames, sortCategories)
+# showScanToMoldMap(mapScanToMoldIdx, sortCategories)
+# plt.xlabel('samples distance matrix, sorted by category')
 
 # showDistMatrix(1)
 # plt.xlabel('features distance matrix')
@@ -1043,7 +1084,12 @@ plt.xlabel('samples distance matrix, sorted by category')
 # showDataMatrix(np.arange(nbSamples), sortidx[1])
 # plt.xlabel('inputData data, sorted by features clustering')
 
-showDataMatrix(inputData, featureNames, sampleNames, sortFeatures, sortSamples)
-plt.xlabel('inputData data, sorted by samples and features clustering')
+# showDataMatrix(inputData, featureNames, sampleNames, sortFeatures, sortSamples)
+# plt.xlabel('inputData data, sorted by samples and features clustering')
+
+# fig, ax = plt.subplots(figsize=(4,10))
+# ax.matshow(ldaData)
+# ax.set_aspect('auto')
+# plt.xlabel('LDA space')
 
 plt.show()
