@@ -9,7 +9,7 @@ matplotlib.style.use(['dark_background'])
 plt.rcParams['grid.color'] = '#333333'
 plt.rcParams['figure.facecolor'] = '#222222'
 plt.rcParams['axes.facecolor'] = '#222222'
-plt.rcParams["font.size"] = "6"
+plt.rcParams["font.size"] = "10"
 plt.rcParams["font.family"] = "consolas"
 
 plt.close('all')
@@ -860,11 +860,12 @@ featureSubset_D = np.array([ 'backD', 'frontD', 'bottomD', 'topD', 'rightD', 'le
 featureSubset_DK = np.array([ 'backD', 'frontD', 'bottomD', 'topD', 'rightD', 'leftD', 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK'])
 featureSubset_MainNormalComponents = np.array([ 'backB', 'frontB', 'bottomA', 'topA', 'rightA', 'rightB', 'leftA', 'leftB'])
 featureSubset_MainPlaneComponents = np.array([ 'backB', 'backD', 'frontB', 'frontD', 'bottomA', 'bottomD', 'topA', 'topD', 'rightA', 'rightB', 'rightD', 'leftA', 'leftB', 'leftD'])
+featureSubset_ABC = np.array([ 'backA', 'backB', 'backC', 'frontA', 'frontB', 'frontC', 'bottomA', 'bottomB', 'bottomC', 'topA', 'topB', 'topC', 'rightA', 'rightB', 'rightC', 'leftA', 'leftB', 'leftC'])
 featureSubset_ABCD = np.array([ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD'])
 featureSubset_ABCDK = np.array([ 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK', 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD'])
 
 # Selection
-featureSubset = featureSubset_MainPlaneComponents
+featureSubset = featureSubset_ABCDK
 
 # -----------------------------------------------------------------------
 
@@ -950,15 +951,17 @@ def showDistMatrix(dist, labels, sortidx, thresh = None):
     fig, ax = plt.subplots(figsize=(13,10))
     im = ax.matshow(dist)
     ax.set_yticks(range)
-    ax.set_yticklabels(labels)
+    ax.set_yticklabels(labels, fontsize=6)
     fig.colorbar(im)
     fig.tight_layout()
 
     if thresh != None:
-        im.set_cmap('gray_r')
+        im.set_cmap('viridis_r')
         for it in ax.get_images():
             it.set_clim(0, thresh)
 
+def showScanToMoldMap(map, sortidx):
+    plt.plot(np.argsort(sortidx)[map[sortidx]], np.arange(len(sortidx)), '.-', alpha=0.8, linewidth=0.5, markersize=2)
 
 def showDataMatrix(data, xLabels, yLabels, xSort, ySort):
     data = data[np.ix_(ySort, xSort)]
@@ -972,19 +975,52 @@ def showDataMatrix(data, xLabels, yLabels, xSort, ySort):
     im = ax.matshow(dataforvis)
     ax.set_xticks(np.arange(len(xLabels)))
     ax.set_yticks(np.arange(len(yLabels)))
-    ax.set_xticklabels(xLabels, rotation=90)
-    ax.set_yticklabels(yLabels)
+    ax.set_xticklabels(xLabels, rotation=90, fontsize=6)
+    ax.set_yticklabels(yLabels, fontsize=6)
     ax.set_aspect('auto')
     fig.colorbar(im)
     fig.tight_layout()
+
+def computeMatchingDistances(dist):
+    x = []
+    y = []
+    r = []
+    for i in np.arange(nbSamples):
+        if i != mapScanToMoldIdx[i]: # skip molds, since they match themselves
+            x.append(sampleNames[i])
+            y.append(dist[i, mapScanToMoldIdx[i]])
+            r.append(np.searchsorted(np.sort(dist[i, :]), y[-1]) )
+
+    idx = np.argsort(r)
+    x = np.array(x)[idx]
+    y = np.array(y)[idx]
+    r = np.array(r)[idx]
+    
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12,6))
+
+    ax1.bar(np.arange(len(x)), y)
+    ax1.set_ylabel('expected mold distance')
+    ax1.set_xlim([0,len(x)])
+
+    ax2.bar(np.arange(len(x)), r)
+    ax2.set_xticks(np.arange(len(x)))
+    ax2.set_xticklabels(x, rotation=90, fontsize=6)
+    ax2.set_xlim([0,len(x)])
+    ax2.set_ylim([0,50])
+    ax2.set_ylabel('expected mold rank')
+
+    fig.tight_layout()
+
 
 distSamples, sortSamples = computeClustering(inputData, sampleNames, (2,10), 'euclidean', 'complete', 'right')
 distFeatures, sortFeatures = computeClustering(inputData.T, featureNames, (10,2), 'euclidean', 'complete', 'top')
 
 sortCategories = np.argsort(categories)
 
+computeMatchingDistances(distSamples)
+
 showDistMatrix(distSamples, sampleNames, sortSamples)
-plt.plot(sortSamples, sortSamples[mapScanToMoldIdx], 'o') # almost but not quite
+showScanToMoldMap(mapScanToMoldIdx, sortSamples)
 plt.xlabel('samples distance matrix')
 
 # showDistMatrix(distSamples, sampleNames, np.arange(nbSamples))
@@ -992,6 +1028,7 @@ plt.xlabel('samples distance matrix')
 # plt.xlabel('samples distance matrix')
 
 showDistMatrix(distSamples, sampleNames, sortCategories)
+showScanToMoldMap(mapScanToMoldIdx, sortCategories)
 plt.xlabel('samples distance matrix, sorted by category')
 
 # showDistMatrix(1)
