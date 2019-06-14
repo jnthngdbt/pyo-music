@@ -3,6 +3,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as DA # 'pip install -U scikit-learn', or 'conda install scikit-learn'
+from sklearn.decomposition import PCA
 
 import scipy.spatial
 import scipy.cluster
@@ -982,6 +983,7 @@ def showDataMatrix(data, xLabels, yLabels, xSort, ySort):
     ax.set_yticks(np.arange(len(yLabels)))
     ax.set_xticklabels(xLabels, rotation=90, fontsize=6)
     ax.set_yticklabels(yLabels, fontsize=6)
+    ax.xaxis.set_ticks_position('bottom')
     ax.set_aspect('auto')
     fig.colorbar(im)
     fig.tight_layout()
@@ -1001,44 +1003,84 @@ def computeMatchingDistances(dist):
     y = np.array(y)[idx]
     r = np.array(r)[idx]
     
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12,6))
+    fig = plt.figure(figsize=(12,6))
 
-    ax1.bar(np.arange(len(x)), y)
-    ax1.set_ylabel('expected mold distance')
-    ax1.set_xlim([0,len(x)])
+    ax = plt.subplot(2,1,1)
+    ax.bar(np.arange(len(x)), y)
+    ax.set_ylabel('expected mold distance')
+    ax.set_xlim([0,len(x)])
 
-    ax2.bar(np.arange(len(x)), r)
-    ax2.set_xticks(np.arange(len(x)))
-    ax2.set_xticklabels(x, rotation=90, fontsize=6)
-    ax2.set_xlim([0,len(x)])
-    ax2.set_ylim([0,50])
-    ax2.set_ylabel('expected mold rank')
+    ax = plt.subplot(2,1,2)
+    ax.bar(np.arange(len(x)), r)
+    ax.set_xticks(np.arange(len(x)))
+    ax.set_xticklabels(x, rotation=90, fontsize=6)
+    ax.xaxis.set_ticks_position('bottom')
+    ax.set_xlim([0,len(x)])
+    ax.set_ylim([0,50])
+    ax.set_ylabel('expected mold rank')
 
     fig.tight_layout()
 
 def computeLda(data, classLabels):
-    lda = DA()
+    nbComponents = 6
+
+    lda = DA(n_components=nbComponents)
     lda.fit(data, classLabels)
 
-    fig, ax = plt.subplots()
+    fig = plt.figure()
+
+    ax = plt.subplot(2,2,1)
     im = ax.matshow(lda.coef_)
     ax.set_xticks(np.arange(nbFeatures))
     ax.set_yticks(np.arange(nbCategories))
     ax.set_xticklabels(featureNames, rotation=90, fontsize=8)
+    ax.xaxis.set_ticks_position('bottom')
     ax.set_xlabel('features')
     ax.set_ylabel('classes')
     ax.set_aspect('auto')
     fig.colorbar(im)
+    plt.title('lda coef')
 
-    fig, ax = plt.subplots()
-    im = ax.matshow(lda.scalings_)
+    ax = plt.subplot(2,2,2)
+    im = ax.matshow(lda.scalings_[:, :nbComponents])
+    ax.set_xticks(np.arange(nbComponents))
     ax.set_yticks(np.arange(nbFeatures))
     ax.set_yticklabels(featureNames, fontsize=8)
+    ax.xaxis.set_ticks_position('bottom')
+    ax.set_xlabel('components')
     ax.set_ylabel('features')
     ax.set_aspect('auto')
     fig.colorbar(im)
+    plt.title('lda scalings w: X* = X.w')
 
-    return lda.transform(data)[:,:6]
+    ldaData = lda.transform(data)
+
+    ax = plt.subplot(2,2,3)
+    im = ax.scatter(ldaData[:,0],ldaData[:,1], c=classLabels, alpha=0.5, cmap='nipy_spectral')
+    fig.colorbar(im)
+
+    ax = plt.subplot(2,2,4)
+    ax.bar(np.arange(nbComponents), lda.explained_variance_ratio_)
+    plt.title('explained variance')
+    plt.xlabel('components')
+
+    return ldaData[:,:nbComponents]
+
+def computePca(data, classLabels):
+    nbComponents = 10
+
+    pca = PCA(n_components=nbComponents)
+    pca.fit(data)
+
+    pcaData = pca.transform(data)
+
+    fig = plt.figure()
+
+    ax = plt.subplot(2,2,1)
+    im = ax.scatter(pcaData[:,0],pcaData[:,1], c=classLabels, alpha=0.5, cmap='nipy_spectral')
+    fig.colorbar(im)
+
+    return pcaData[:,:nbComponents]
 
 # -----------------------------------------------------------------------
 
@@ -1048,6 +1090,8 @@ distFeatures, sortFeatures = computeClustering(inputData.T, featureNames, (10,2)
 sortCategories = np.argsort(categories)
 
 computeMatchingDistances(distSamples)
+
+pcaData = computePca(inputData, categories)
 
 ldaData = computeLda(inputData, categories)
 distLda, sortLda = computeClustering(ldaData, sampleNames, (2,10), 'euclidean', 'ward', 'right')
