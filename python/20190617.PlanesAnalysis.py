@@ -194,34 +194,54 @@ print(data[planeDistDiffNames].tail())
 
 #%%
 
-def selectMoldScans(data): return data['type'] == 'moldscan'
-def selectScans(data): return data['type'] == 'scan'
+def getMoldScanDataValues(colNames): return data.loc[data['type'] == 'moldscan', colNames].values
+def getScanDataValues(colNames): return data.loc[data['type'] == 'scan', colNames].values
+
+alpha = 0.5
 
 def plot(colNames, bins, xlabel):
+    moldScanDiff = getMoldScanDataValues(colNames)
+    scanDiff = getScanDataValues(colNames)
+
     plt.figure(figsize=(8,8))
     for i, plane in enumerate(planeNames):
-        moldScanDiff = data.loc[selectMoldScans(data), colNames[i]]
-        scanDiff = data.loc[selectScans(data), colNames[i]]
-
-        alpha = 0.5
-
         plt.subplot(3,2,i+1)
-        plt.hist(moldScanDiff, bins=bins, alpha=alpha, label='mold')
-        plt.hist(scanDiff, bins=bins, alpha=alpha, label='scan')
+        plt.hist(scanDiff[:,i], bins=bins, alpha=alpha)
+        plt.hist(moldScanDiff[:,i], bins=bins, alpha=alpha)
         plt.title(plane)
 
         if i > 3:
             plt.xlabel(xlabel)
 
-    plt.legend(['mold', 'scan'])
+    plt.legend(['scan', 'mold'])
+    plt.tight_layout()
 
-plot(planeAngleDiffNames, np.arange(0, 10, 0.2), 'degree')
-plt.suptitle('angle diff')
+angleBins = np.arange(0, 10, 0.2)
+distBins = np.arange(-12, 12, 0.4)
+
+xlabelAngle = 'angles (degree)'
+xlabelDist = 'distance (cm)'
+
+plot(planeAngleDiffNames, angleBins, xlabelAngle)
+plot(planeDistDiffNames, distBins, xlabelDist)
+
+#%%
+
+plt.figure(figsize=(8,4))
+
+plt.subplot(1,2,1)
+plt.hist(getScanDataValues(planeAngleDiffNames).flatten(), bins=angleBins, alpha=alpha)
+plt.hist(getMoldScanDataValues(planeAngleDiffNames).flatten(), bins=angleBins, alpha=alpha)
+plt.xlabel(xlabelAngle)
+
+plt.subplot(1,2,2)
+plt.hist(getScanDataValues(planeDistDiffNames).flatten(), bins=distBins, alpha=alpha)
+plt.hist(getMoldScanDataValues(planeDistDiffNames).flatten(), bins=distBins, alpha=alpha)
+plt.xlabel(xlabelDist)
+
+plt.legend(['scan', 'mold'])
 plt.tight_layout()
 
-plot(planeDistDiffNames, np.arange(-10, 10, 0.4), 'cm')
-plt.suptitle('distance diff')
-plt.tight_layout()
 
 #%%
 
@@ -229,5 +249,7 @@ plt.tight_layout()
 weird = data.loc[data['top-dist-diff'] > 5, ['id', 'mold']]
 print(weird)
 weird.hist()
+
+
 
 plt.show()
