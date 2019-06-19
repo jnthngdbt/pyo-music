@@ -242,14 +242,20 @@ plt.xlabel(xlabelDist)
 plt.legend(['scan', 'mold'])
 plt.tight_layout()
 
-
 #%%
 
-# Cases of the second mode of top/bottom D distribution
-weird = data.loc[data['top-dist-diff'] > 5, ['id', 'mold']]
-print(weird)
-weird.hist()
+# # plt.figure()
+# # plt.subplot(2,1,1)
+# data.loc[data['type'] == 'moldscan', ['backD', 'frontD', 'topD', 'bottomD', 'rightD', 'leftD']].plot()
+# plt.ylim([-0.8, 0.8])
 
+# # plt.subplot(2,1,2)
+# data.loc[data['type'] == 'scan', ['backD', 'frontD', 'topD', 'bottomD', 'rightD', 'leftD']].plot()
+# plt.ylim([-0.8, 0.8])
 
+# data.loc[data['type'] == 'moldscan', ['back-dist-diff', 'front-dist-diff', 'top-dist-diff', 'bottom-dist-diff', 'right-dist-diff', 'left-dist-diff']].plot()
+# plt.ylim([-80, 80])
+
+#%%
 
 plt.show()
