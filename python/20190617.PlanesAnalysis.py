@@ -25,7 +25,7 @@ featureSubset = featureSubset_ABCDK
 
 #%%
 
-scanDataFull = pd.read_csv("python/data/20190617.planes.scans.csv", index_col=False)
+scanDataFull = pd.read_csv("python/data/20190617.planes.allscans.csv", index_col=False)
 moldDataFull = pd.read_csv('python/data/20190617.planes.molds.csv', index_col=False)
 moldScanDataFull = pd.read_csv('python/data/20190617.planes.moldscans.csv', index_col=False)
 
