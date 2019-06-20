@@ -17,8 +17,8 @@ plt.close('all')
 
 #%% Some feature subsets. Select one to use.
 
-featureSubset_ABCD = [ 'id', 'mold', 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
-featureSubset_ABCDK = [ 'id', 'mold', 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK', 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
+featureSubset_ABCD = [ 'id', 'mold', 'specs-category', 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
+featureSubset_ABCDK = [ 'id', 'mold', 'specs-category', 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK', 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
 
 # Selection
 featureSubset = featureSubset_ABCDK
@@ -45,6 +45,30 @@ scanDataFull = removeNanRows(scanDataFull)
 moldDataFull = removeNanRows(moldDataFull)
 moldScanDataFull = removeNanRows(moldScanDataFull)
 
+# Remove id 0, which is the scan when generating the molds data.
+scanDataFull = scanDataFull[scanDataFull['id'] > 0]
+moldDataFull = moldDataFull[moldDataFull['id'] > 0]
+moldScanDataFull = moldScanDataFull[moldScanDataFull['id'] > 0]
+
+#%%
+
+def addSpecsCategory(data):
+    # Add specs category column
+    specs = data.values[:, 2:8]
+    categorieNames = ["%i%i%i%i%i%i" %
+        (specs[i, 0], specs[i, 1], specs[i, 2], specs[i, 3], specs[i, 4], specs[i, 5]) for i in np.arange(data.values.shape[0])]
+    categorieIds = [int(c) for c in categorieNames]
+    categorieUniqueIds = [x for i, x in enumerate(categorieIds) if i == categorieIds.index(x)]
+    categories = [categorieUniqueIds.index(c) for c in categorieIds]
+    data['specs-category'] = categories
+    return data
+
+scanDataFull = addSpecsCategory(scanDataFull)
+moldDataFull = addSpecsCategory(moldDataFull)
+moldScanDataFull = addSpecsCategory(moldScanDataFull)
+
+#%%
+
 scanData = scanDataFull.loc[:, featureSubset]
 moldData = moldDataFull.loc[:, featureSubset]
 moldScanData = moldScanDataFull.loc[:, featureSubset]
@@ -67,20 +91,12 @@ moldData['type'] = 'mold'
 moldScanData['type'] = 'moldscan'
 
 print('added data type column')
-# print(scanData)
-# print(moldData)
-# print(moldScanData)
 
 data = scanData
 data = data.append(moldData, ignore_index=True)
 data = data.append(moldScanData, ignore_index=True)
 
 print('appended into a single dataframe')
-# print(data)
-
-# data.groupby('type').mean().plot.bar()
-
-# plt.show()
 
 #%%
 
@@ -103,9 +119,6 @@ print('testing moldRow')
 print('does {} == {}?'.format(
     data.loc[1000, 'mold'], # expected mold of scan 1000
     data.loc[data.loc[1000, 'moldRow'], 'mold'])) # the mold located at expected mold's row of scan 1000
-
-# plt.plot(data.loc[:, 'moldRow'])
-# plt.show()
 
 #%%
 
@@ -194,6 +207,8 @@ print(data[planeDistDiffNames].tail())
 
 #%%
 
+# Plot hists by plane 
+
 def getMoldScanDataValues(colNames): return data.loc[data['type'] == 'moldscan', colNames].values
 def getScanDataValues(colNames): return data.loc[data['type'] == 'scan', colNames].values
 
@@ -227,6 +242,8 @@ plot(planeDistDiffNames, distBins, xlabelDist)
 
 #%%
 
+# Plot global hists 
+
 plt.figure(figsize=(8,4))
 
 plt.subplot(1,2,1)
@@ -244,6 +261,8 @@ plt.tight_layout()
 
 #%%
 
+# Plot D plane parameter
+
 # # plt.figure()
 # # plt.subplot(2,1,1)
 # data.loc[data['type'] == 'moldscan', ['backD', 'frontD', 'topD', 'bottomD', 'rightD', 'leftD']].plot()
@@ -255,6 +274,23 @@ plt.tight_layout()
 
 # data.loc[data['type'] == 'moldscan', ['back-dist-diff', 'front-dist-diff', 'top-dist-diff', 'bottom-dist-diff', 'right-dist-diff', 'left-dist-diff']].plot()
 # plt.ylim([-80, 80])
+
+
+#%%
+
+# Trying to groupby specs categories
+
+# subdata = data.loc[data['type'] == 'scan', ['top-dist-diff', 'specs-category']]
+# for d in subdata.groupby('specs-category'):
+#     print(d.tail
+
+# plt.plot(data.loc[data['type'] == 'scan', ['top-dist-diff', 'specs-category']].groupby('specs-category').mean())
+
+# data.loc[data['type'] == 'scan', ['top-dist-diff' + 'specs-category'].groupby('specs-category').hist('top-dist-diff')
+
+#%%
+
+print(data.loc[(data['type']=='scan') & (data['top-dist-diff'] > 5) & (data['id']>1000), ['id', 'mold']].count())
 
 #%%
 
