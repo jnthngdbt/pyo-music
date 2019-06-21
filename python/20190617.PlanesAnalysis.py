@@ -15,23 +15,25 @@ plt.rcParams["font.family"] = "consolas"
 
 plt.close('all')
 
-#%% Some feature subsets. Select one to use.
-
-featureSubset_ABCD = [ 'id', 'mold', 'specs-category', 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
-featureSubset_ABCDK = [ 'id', 'mold', 'specs-category', 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK', 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
-
-# Selection
-featureSubset = featureSubset_ABCDK
-
 #%%
 
-scanDataFull = pd.read_csv("python/data/20190617.planes.allscans.csv", index_col=False)
-moldDataFull = pd.read_csv('python/data/20190617.planes.molds.csv', index_col=False)
-moldScanDataFull = pd.read_csv('python/data/20190617.planes.moldscans.csv', index_col=False)
+scanData = pd.read_csv("python/data/20190617.planes.goodscans.csv", index_col=False)
+moldData = pd.read_csv('python/data/20190617.planes.molds.csv', index_col=False)
+moldScanData = pd.read_csv('python/data/20190617.planes.moldscans.csv', index_col=False)
 
-# print(scanDataFull)
-# print(moldDataFull)
-# print(moldScanDataFull)
+scanData['type'] = 'scan'
+moldData['type'] = 'mold'
+moldScanData['type'] = 'moldscan'
+
+print('added data type column')
+
+data = scanData
+data = data.append(moldData, ignore_index=True)
+# data = data.append(moldScanData, ignore_index=True)
+
+print('appended into a single dataframe')
+
+#%%
 
 def removeNanRows(df):
     nanRows = df.isna().any(axis=1)
@@ -41,14 +43,10 @@ def removeNanRows(df):
 
     return df[nanRows != True]
 
-scanDataFull = removeNanRows(scanDataFull)
-moldDataFull = removeNanRows(moldDataFull)
-moldScanDataFull = removeNanRows(moldScanDataFull)
+data = removeNanRows(data)
 
 # Remove id 0, which is the scan when generating the molds data.
-scanDataFull = scanDataFull[scanDataFull['id'] > 0]
-moldDataFull = moldDataFull[moldDataFull['id'] > 0]
-moldScanDataFull = moldScanDataFull[moldScanDataFull['id'] > 0]
+data = data[data['id'] > 0]
 
 #%%
 
@@ -63,40 +61,7 @@ def addSpecsCategory(data):
     data['specs-category'] = categories
     return data
 
-scanDataFull = addSpecsCategory(scanDataFull)
-moldDataFull = addSpecsCategory(moldDataFull)
-moldScanDataFull = addSpecsCategory(moldScanDataFull)
-
-#%%
-
-scanData = scanDataFull.loc[:, featureSubset]
-moldData = moldDataFull.loc[:, featureSubset]
-moldScanData = moldScanDataFull.loc[:, featureSubset]
-
-# scanData.hist(bins=50)
-# plt.suptitle('scan data')
-
-# moldData.hist(bins=50)
-# plt.suptitle('mold data')
-
-# moldScanData.hist(bins=50)
-# plt.suptitle('mold scan data')
-
-# plt.show()
-
-#%%
-
-scanData['type'] = 'scan'
-moldData['type'] = 'mold'
-moldScanData['type'] = 'moldscan'
-
-print('added data type column')
-
-data = scanData
-data = data.append(moldData, ignore_index=True)
-data = data.append(moldScanData, ignore_index=True)
-
-print('appended into a single dataframe')
+data = addSpecsCategory(data)
 
 #%%
 
@@ -117,15 +82,15 @@ print('added moldRow')
 
 print('testing moldRow')
 print('does {} == {}?'.format(
-    data.loc[1000, 'mold'], # expected mold of scan 1000
-    data.loc[data.loc[1000, 'moldRow'], 'mold'])) # the mold located at expected mold's row of scan 1000
+    data.loc[700, 'mold'], # expected mold of scan 1000
+    data.loc[data.loc[700, 'moldRow'], 'mold'])) # the mold located at expected mold's row of scan 1000
 
 #%%
 
 planeNames = ['back', 'front', 'top', 'bottom', 'left', 'right']
 
 planeAngleDiffNames = [plane + '-angle-diff' for plane in planeNames]
-planeDistDiffNames = [plane + '-dist-diff' for plane in planeNames]
+planeCentroiDiffNames = [plane + '-centroid-diff' for plane in planeNames]
 planeAngleBaselineNames = [plane + '-angle-baseline' for plane in planeNames]
 planeDistBaselineNames = [plane + '-dist-baseline' for plane in planeNames]
 
@@ -173,37 +138,22 @@ print(data[planeDistDiffNames].tail())
 
 #%%
 
-# def computeAngleBaseline(plane, i):
-#     N = data.shape[0]
-#     a = 0
-#     nbRandomTrials = 10
-#     for i in np.arange(nbRandomTrials):
-#         ri = np.random.randint(N)
-#         a += convertDotToAngleDeg(computeNormalsDot(plane, int(i), data.index[ri]))
-#     return a / nbRandomTrials
+def getCentroidFromIdx(plane, i):
+    c = data.loc[i, [plane+'-cx', plane+'-cy', plane+'-cz']].values * 100 # convert to cm
+    return c
 
-# for idx, plane in enumerate(planeNames):
-#     data[planeAngleBaselineNames[idx]] = [computeAngleBaseline(plane, i) for i in data.index]
+def computeCentroidDiff(plane, i, j):
+    ci = getCentroidFromIdx(plane, i)
+    cj = getCentroidFromIdx(plane, j)
+    d = ci-cj
+    d = np.sqrt(np.sum(d*d))
+    return d
 
-# print('computed angle baseline diff')
-# print(data[planeAngleBaselineNames].tail())
+for idx, plane in enumerate(planeNames):
+    data[planeCentroiDiffNames[idx]] = [computeCentroidDiff(plane, i, data.loc[i, 'moldRow']) for i in data.index]
 
-#%%
-
-# def computeDistBaseline(plane, i):
-#     N = data.shape[0]
-#     d = 0
-#     nbRandomTrials = 10
-#     for i in np.arange(nbRandomTrials):
-#         ri = np.random.randint(N)
-#         d += getDistFromIdx(plane, i) - getDistFromIdx(plane, ri)
-#     return d / nbRandomTrials
-
-# for idx, plane in enumerate(planeNames):
-#     data[planeDistBaselineNames[idx]] = [computeDistBaseline(plane, i) for i in data.index]
-
-# print('computed dist baseline diff')
-# print(data[planeDistBaselineNames].tail())
+print('computed centroid diff')
+print(data[planeCentroiDiffNames].tail())
 
 #%%
 
@@ -232,13 +182,13 @@ def plot(colNames, bins, xlabel):
     plt.tight_layout()
 
 angleBins = np.arange(0, 10, 0.2)
-distBins = np.arange(-12, 12, 0.4)
+distBins = np.arange(0, 20, 0.5)
 
 xlabelAngle = 'angles (degree)'
 xlabelDist = 'distance (cm)'
 
 plot(planeAngleDiffNames, angleBins, xlabelAngle)
-plot(planeDistDiffNames, distBins, xlabelDist)
+plot(planeCentroiDiffNames, distBins, xlabelDist)
 
 #%%
 
@@ -252,8 +202,8 @@ plt.hist(getMoldScanDataValues(planeAngleDiffNames).flatten(), bins=angleBins, a
 plt.xlabel(xlabelAngle)
 
 plt.subplot(1,2,2)
-plt.hist(getScanDataValues(planeDistDiffNames).flatten(), bins=distBins, alpha=alpha)
-plt.hist(getMoldScanDataValues(planeDistDiffNames).flatten(), bins=distBins, alpha=alpha)
+plt.hist(getScanDataValues(planeCentroiDiffNames).flatten(), bins=distBins, alpha=alpha)
+plt.hist(getMoldScanDataValues(planeCentroiDiffNames).flatten(), bins=distBins, alpha=alpha)
 plt.xlabel(xlabelDist)
 
 plt.legend(['scan', 'mold'])
@@ -288,9 +238,6 @@ plt.tight_layout()
 
 # data.loc[data['type'] == 'scan', ['top-dist-diff' + 'specs-category'].groupby('specs-category').hist('top-dist-diff')
 
-#%%
-
-print(data.loc[(data['type']=='scan') & (data['top-dist-diff'] > 5) & (data['id']>1000), ['id', 'mold']].count())
 
 #%%
 
