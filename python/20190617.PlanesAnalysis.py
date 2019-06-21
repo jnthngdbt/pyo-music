@@ -90,6 +90,7 @@ print('does {} == {}?'.format(
 planeNames = ['back', 'front', 'top', 'bottom', 'left', 'right']
 
 planeAngleDiffNames = [plane + '-angle-diff' for plane in planeNames]
+planeDistDiffNames = [plane + '-dist-diff' for plane in planeNames]
 planeCentroiDiffNames = [plane + '-centroid-diff' for plane in planeNames]
 planeAngleBaselineNames = [plane + '-angle-baseline' for plane in planeNames]
 planeDistBaselineNames = [plane + '-dist-baseline' for plane in planeNames]
