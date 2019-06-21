@@ -15,14 +15,6 @@ plt.rcParams["font.family"] = "consolas"
 
 plt.close('all')
 
-#%% Some feature subsets. Select one to use.
-
-featureSubset_ABCD = [ 'id', 'mold', 'specs-category', 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
-featureSubset_ABCDK = [ 'id', 'mold', 'specs-category', 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK', 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
-
-# Selection
-featureSubset = featureSubset_ABCDK
-
 #%%
 
 data = pd.read_csv('python/data/20190617.planes.molds.csv', index_col=False)
@@ -61,36 +53,76 @@ print(data.head())
 
 #%%
 
+def getCentroid(plane, i):
+    c = data.loc[i, [plane+'-cx', plane+'-cy', plane+'-cz']].values
+    return c
+
+def getNormWithoutComponent(v, i):
+    v[i] = 0
+    return np.linalg.norm(v)
+
+data['my-spec-length'] = np.abs(data['front-cx']) + np.abs(data['back-cx'])
+data['my-spec-height'] = np.abs(data['bottom-cy']) + np.abs(data['top-cy'])
+
+#%%
+
+def getNormal(plane, i):
+    n = data.loc[i, [plane+'A', plane+'B', plane+'C']].values
+    n = n / np.linalg.norm(n)
+    return n
+
+def getNormalForParallelism(plane, i):
+    n = getNormal(plane, i)
+    n[1] = 0 # kill y component
+    n = n / np.linalg.norm(n)
+    return n
+
+def convertDotToAngleDeg(dot):
+    a = 180.0 * np.arccos(dot) / np.pi
+    return a
+
+def computeParallelism(plane1, plane2, i):
+    n1 = getNormalForParallelism(plane1, i)
+    n2 = getNormalForParallelism(plane2, i)
+    d = convertDotToAngleDeg(min(1.0, np.dot(n1, n2)))
+    return d
+
+data['parallelism'] = [computeParallelism('left', 'right', i) for i in data.index]
+
+data = removeNanRows(data)
+
+#%%
+
 alpha = 0.5
 
-def showSpecHists(specName, specCategories, featureName, bins):
+def showSpecHists(data, specName, specCategories, featureName, bins, ylim = None):
     plt.figure(figsize=(8,3))
 
-    plt.subplot(1,2,1)
-    for spec in specCategories:
-        d = data[data[specName] == spec]
-        d = d[featureName]
-        plt.hist(d, bins=bins, alpha=alpha)
-        
-    plt.xlabel(featureName)
-    plt.legend(specCategories)
+    if specName != None:
+        plt.subplot(1,2,1)
+        for spec in specCategories:
+            d = data[data[specName] == spec]
+            d = d[featureName]
+            plt.hist(d, bins=bins, alpha=alpha)
+            
+        plt.xlabel(featureName)
+        plt.legend(specCategories)
+        plt.suptitle(specName)
+        if ylim != None: plt.ylim(ylim)
 
     plt.subplot(1,2,2)
     plt.hist(data[featureName], bins=bins, alpha=alpha)
     plt.xlabel(featureName)
+    if ylim != None: plt.ylim(ylim)
 
-    plt.suptitle(specName)
     plt.tight_layout()
 
-showSpecHists('spec-back', faceNames, 'backK', np.arange(0, 0.05, 0.001))
-showSpecHists('spec-front', faceNames, 'frontK', np.arange(0, 0.05, 0.001))
-showSpecHists('spec-side', sideNames, 'leftK', np.arange(0, 0.01, 0.0002))
-showSpecHists('spec-side', sideNames, 'rightK', np.arange(0, 0.01, 0.0002))
-
-#%%
-
-# def computeSpecBack():
-#     # sel = data
+showSpecHists(data, 'spec-back', faceNames, 'backK', np.arange(0, 0.05, 0.001))
+showSpecHists(data, 'spec-front', faceNames, 'frontK', np.arange(0, 0.05, 0.001))
+# showSpecHists(data, 'spec-side', sideNames, 'leftK', np.arange(0, 0.01, 0.0002))
+# showSpecHists(data, 'spec-side', sideNames, 'rightK', np.arange(0, 0.01, 0.0002))
+showSpecHists(data, 'spec-length', lengthNames, 'my-spec-length', np.arange(0.75, 1.5, 0.02))
+showSpecHists(data, 'spec-side', sideNames, 'parallelism', np.arange(0, 7, 0.2), [0,20])
 
 #%%
 
