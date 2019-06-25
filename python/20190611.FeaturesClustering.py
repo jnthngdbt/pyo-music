@@ -1,3 +1,4 @@
+#%%
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -48,22 +49,22 @@ ADD_RANDOM_FEATURE = False
 # -----------------------------------------------------------------------
 # Some feature subsets. Select one to use.
 
-featureSubset_OriginalSpecs = np.array([ 'eside', 'eback', 'efront', 'ematerial', 'ebathtype', 'elength'])
-featureSubset_OriginalMeasures = np.array([ 'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8'])
-featureSubset_K = np.array([ 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK'])
-featureSubset_D = np.array([ 'backD', 'frontD', 'bottomD', 'topD', 'rightD', 'leftD'])
-featureSubset_DK = np.array([ 'backD', 'frontD', 'bottomD', 'topD', 'rightD', 'leftD', 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK'])
-featureSubset_MainNormalComponents = np.array([ 'backB', 'frontB', 'bottomA', 'topA', 'rightA', 'rightB', 'leftA', 'leftB'])
-featureSubset_MainPlaneComponents = np.array([ 'backB', 'backD', 'frontB', 'frontD', 'bottomA', 'bottomD', 'topA', 'topD', 'rightA', 'rightB', 'rightD', 'leftA', 'leftB', 'leftD'])
-featureSubset_ABC = np.array([ 'backA', 'backB', 'backC', 'frontA', 'frontB', 'frontC', 'bottomA', 'bottomB', 'bottomC', 'topA', 'topB', 'topC', 'rightA', 'rightB', 'rightC', 'leftA', 'leftB', 'leftC'])
-featureSubset_ABCD = np.array([ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD'])
-featureSubset_ABCDK = np.array([ 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK', 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD'])
-featureSubset_LdaTrialNope = np.array([ 'topB', 'bottomB', 'bottomK', 'topK', 'rightK', 'leftK'])
-featureSubset_UncorrelateABCDK = np.array([ 'backK', 'frontK', 'bottomK', 'topK', 'leftK', 'backA', 'backC', 'frontA', 'frontC', 'frontD', 'bottomB', 'bottomC', 'bottomD', 'topB', 'topD', 'rightA', 'rightB', 'rightD', 'leftA'])
-featureSubset_ABCD_NoTopB = np.array([ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD'])
+classificationFeatures_OriginalSpecs = [ 'eside', 'eback', 'efront', 'ematerial', 'ebathtype', 'elength']
+classificationFeatures_OriginalMeasures = [ 'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8']
+classificationFeatures_K = [ 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK']
+classificationFeatures_D = [ 'backD', 'frontD', 'bottomD', 'topD', 'rightD', 'leftD']
+classificationFeatures_DK = [ 'backD', 'frontD', 'bottomD', 'topD', 'rightD', 'leftD', 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK']
+classificationFeatures_MainNormalComponents = [ 'backB', 'frontB', 'bottomA', 'topA', 'rightA', 'rightB', 'leftA', 'leftB']
+classificationFeatures_MainPlaneComponents = [ 'backB', 'backD', 'frontB', 'frontD', 'bottomA', 'bottomD', 'topA', 'topD', 'rightA', 'rightB', 'rightD', 'leftA', 'leftB', 'leftD']
+classificationFeatures_ABC = [ 'backA', 'backB', 'backC', 'frontA', 'frontB', 'frontC', 'bottomA', 'bottomB', 'bottomC', 'topA', 'topB', 'topC', 'rightA', 'rightB', 'rightC', 'leftA', 'leftB', 'leftC']
+classificationFeatures_ABCD = [ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
+classificationFeatures_ABCDK = [ 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK', 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
+classificationFeatures_LdaTrialNope = [ 'topB', 'bottomB', 'bottomK', 'topK', 'rightK', 'leftK']
+classificationFeatures_UncorrelateABCDK = [ 'backK', 'frontK', 'bottomK', 'topK', 'leftK', 'backA', 'backC', 'frontA', 'frontC', 'frontD', 'bottomB', 'bottomC', 'bottomD', 'topB', 'topD', 'rightA', 'rightB', 'rightD', 'leftA']
+classificationFeatures_ABCD_NoTopB = [ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
 
 # Selection
-featureSubset = featureSubset_ABCD
+classificationFeatures = classificationFeatures_ABCD
 
 #%%
 # Create the main data matrix.
@@ -183,10 +184,10 @@ planeNames = ['back', 'front', 'top', 'bottom', 'left', 'right']
 #%%
 
 # Use a pandas dataframe to have access to useful data visualizations.
-df = data[featureSubset]
+df = data[classificationFeatures]
 df.hist(bins=50)
 
-if (len(featureSubset) < 20): 
+if (len(classificationFeatures) < 20): 
     pd.plotting.scatter_matrix(df, hist_kwds={'bins': 30})
 
 #%%
@@ -255,10 +256,10 @@ def computeMatchingDistances(dist):
     x = []
     y = []
     r = []
-    for i in np.arange(nbSamples):
-        if i != mapScanToMoldIdx[i]: # skip molds, since they match themselves
-            x.append(sampleNames[i])
-            y.append(dist[i, mapScanToMoldIdx[i]])
+    for i in data.index:
+        if i != data.loc[i, 'moldRow']: # skip molds, since they match themselves
+            x.append(data.loc[i, 'name'])
+            y.append(dist[i, data.loc[i, 'moldRow']])
             r.append(np.searchsorted(np.sort(dist[i, :]), y[-1]) )
 
     N = len(x)
@@ -294,6 +295,7 @@ def computeLda(data, classLabels):
 
     nbFeatures = lda.scalings_.shape[0]
     nbComponents = lda.scalings_.shape[1]
+    nbCategories = lda.coef_.shape[0]
 
     weightMatrix = np.dot(np.ones((nbFeatures, 1)), np.array([lda.explained_variance_ratio_]))
     weightedScalings = lda.scalings_ * weightMatrix
@@ -307,7 +309,7 @@ def computeLda(data, classLabels):
     im = ax.matshow(lda.coef_)
     ax.set_xticks(np.arange(nbFeatures))
     ax.set_yticks(np.arange(nbCategories))
-    ax.set_xticklabels(featureNames, rotation=90, fontsize=8)
+    ax.set_xticklabels(classificationFeatures, rotation=90, fontsize=8)
     ax.xaxis.set_ticks_position('bottom')
     ax.set_xlabel('features')
     ax.set_ylabel('classes')
@@ -319,7 +321,7 @@ def computeLda(data, classLabels):
     im = ax.matshow(weightedScalings)
     ax.set_xticks(np.arange(nbComponents))
     ax.set_yticks(np.arange(nbFeatures))
-    # ax.set_yticklabels(featureNames, fontsize=8)
+    # ax.set_yticklabels(classificationFeatures, fontsize=8)
     ax.xaxis.set_ticks_position('bottom')
     ax.set_xlabel('components')
     ax.set_ylabel('features')
@@ -360,6 +362,8 @@ def computePca(data, classLabels):
     pca.fit(data)
     pcaData = pca.transform(data)
 
+    nbFeatures = pca.components_.shape[1]
+
     fig = plt.figure()
 
     # ax = plt.subplot(2,2,1,projection='3d')
@@ -383,7 +387,7 @@ def computePca(data, classLabels):
     im = ax.matshow(pca.components_.T)
     ax.set_xticks(np.arange(nbComponents))
     ax.set_yticks(np.arange(nbFeatures))
-    ax.set_yticklabels(featureNames, fontsize=8)
+    ax.set_yticklabels(classificationFeatures, fontsize=8)
     ax.xaxis.set_ticks_position('bottom')
     ax.set_xlabel('components')
     ax.set_ylabel('features')
@@ -401,35 +405,37 @@ def computePca(data, classLabels):
 
 # -----------------------------------------------------------------------
 
-distSamples, sortSamples = computeClustering(inputData, sampleNames, (2,10), 'euclidean', 'ward', 'right')
-distFeatures, sortFeatures = computeClustering(inputData.T, featureNames, (10,2), 'correlation', 'complete', 'top')
+d = data.loc[:, classificationFeatures].values
 
-sortCategories = np.argsort(categories)
+distSamples, sortSamples = computeClustering(d, data['name'].values, (2,10), 'euclidean', 'ward', 'right')
+distFeatures, sortFeatures = computeClustering(d.T, classificationFeatures, (10,2), 'correlation', 'complete', 'top')
+
+sortCategories = np.argsort(data['specs-category'])
 
 computeMatchingDistances(distSamples)
 
 # Finds a non-supervised representation of data.
-pcaData = computePca(inputData, categories)
+pcaData = computePca(d, data['specs-category'])
 
 # Finds a supervised (uses class labels) representation of data that maximizes clusters discrimination.
-ldaData = computeLda(inputData, categories)
+ldaData = computeLda(d, data['specs-category'])
 # ldaData = computeLda(pcaData[:,:3], categories)########
-distLda, sortLda = computeClustering(ldaData, sampleNames, (2,10), 'euclidean', 'ward', 'right')
+distLda, sortLda = computeClustering(ldaData, data['name'].values, (2,10), 'euclidean', 'ward', 'right')
 
 computeMatchingDistances(distLda)
 
 # -----------------------------------------------------------------------
 
-showDistMatrix(distSamples, sampleNames, sortSamples)
-showScanToMoldMap(mapScanToMoldIdx, sortSamples)
+showDistMatrix(distSamples, data['name'].values, sortSamples)
+showScanToMoldMap(data['moldRow'].values, sortSamples)
 plt.xlabel('samples distance matrix')
 
 # showDistMatrix(distFeatures, featureNames, sortFeatures)
-showDistMatrix(distFeatures, featureNames, np.arange(nbFeatures))
+showDistMatrix(distFeatures, classificationFeatures, np.arange(len(classificationFeatures)))
 plt.xlabel('features distance matrix')
 
-showDistMatrix(distLda, sampleNames, sortLda)
-showScanToMoldMap(mapScanToMoldIdx, sortLda)
+showDistMatrix(distLda, data['name'].values, sortLda)
+showScanToMoldMap(data['moldRow'].values, sortLda)
 plt.xlabel('samples distance matrix in LDA space')
 
 plt.show()
