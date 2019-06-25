@@ -43,7 +43,7 @@ def set_axes_equal(ax):
 # -----------------------------------------------------------------------
 
 INCLUDE_SCANS = False
-INCLUDE_MOLD_SCANS = False
+INCLUDE_MOLD_SCANS = True
 ADD_RANDOM_FEATURE = False
 
 # -----------------------------------------------------------------------
@@ -61,10 +61,10 @@ classificationFeatures_ABCD = [ 'backA', 'backB', 'backC', 'backD', 'frontA', 'f
 classificationFeatures_ABCDK = [ 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK', 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
 classificationFeatures_LdaTrialNope = [ 'topB', 'bottomB', 'bottomK', 'topK', 'rightK', 'leftK']
 classificationFeatures_UncorrelateABCDK = [ 'backK', 'frontK', 'bottomK', 'topK', 'leftK', 'backA', 'backC', 'frontA', 'frontC', 'frontD', 'bottomB', 'bottomC', 'bottomD', 'topB', 'topD', 'rightA', 'rightB', 'rightD', 'leftA']
-classificationFeatures_ABCD_NoTopB = [ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
+classificationFeatures_ABCD_NoTopBottomABC = [ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomD', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
 
 # Selection
-classificationFeatures = classificationFeatures_ABCD
+classificationFeatures = classificationFeatures_MainPlaneComponents
 
 #%%
 # Create the main data matrix.
@@ -126,52 +126,16 @@ data = addSpecsCategory(data)
 
 #%%
 
-def getMoldRowIdx(moldIdx):
-    i = data.index[(data['type'] == 'mold') & (data['mold'] == moldIdx)].values
-    if len(i) > 0:
-        return i[0]
-    else:
-        return np.nan
-
-data['moldRow'] = [getMoldRowIdx(moldIdx) for moldIdx in list(data['mold'])]
-data = removeNanRows(data)
-
-data['moldRow'] = [int(i) for i in data['moldRow']] # convert to int
-
-print('added moldRow')
-# print(data)
-
-print('testing moldRow')
-testi = min(700, data.values.shape[0]-1)
-print('does {} == {}?'.format(
-    data.loc[testi, 'mold'], # expected mold of scan 1000
-    data.loc[data.loc[testi, 'moldRow'], 'mold'])) # the mold located at expected mold's row of scan 1000
-
-#%%
-
 planeNames = ['back', 'front', 'top', 'bottom', 'left', 'right']
 
 # -----------------------------------------------------------------------
 
 # Remove outliers.
-outlierIds = [0, 281, 311, 321, 362, 419, 476, 544, 557, 585, 588, 599, 624, 625, 627, 676, 1680, 3071, 3332, 3338, 7514, 7586, 8243, 8303, 8393 ]
+outlierIds = [0, 281, 311, 321, 362, 419, 476, 544, 557, 585, 588, 599, 624, 625, 627, 676, 1680, 1843, 1853, 1974, 1979, 2508, 2703, 3071, 3332, 3338, 7514, 7586, 8243, 8303, 8393 ]
 toKeep = [i not in outlierIds for i in data['id']]
 print('Removing:')
 print(data[[not i for i in toKeep]])
 data = data[toKeep]
-
-
-# mustRemoveId = []
-# for id in list(inputData[:,0]):
-#     mustRemoveId.append(int(id) not in outlierIds)
-
-# inputData = inputData[mustRemoveId]
-# nbSamples = inputData.shape[0]
-
-# -----------------------------------------------------------------------
-
-
-
 
 # -----------------------------------------------------------------------
 # Added a random feature, to see if we can detect that it brings nothing 
@@ -195,6 +159,29 @@ df.hist(bins=50)
 
 if (len(classificationFeatures) < 20): 
     pd.plotting.scatter_matrix(df, hist_kwds={'bins': 30})
+
+#%%
+
+def getMoldRowIdx(moldIdx):
+    i = data.index[(data['type'] == 'mold') & (data['mold'] == moldIdx)].values
+    if len(i) > 0:
+        return i[0]
+    else:
+        return np.nan
+
+data['moldRow'] = [getMoldRowIdx(moldIdx) for moldIdx in list(data['mold'])]
+data = removeNanRows(data)
+
+data['moldRow'] = [int(i) for i in data['moldRow']] # convert to int
+
+print('added moldRow')
+# print(data)
+
+print('testing moldRow')
+testi = min(700, data.values.shape[0]-1)
+print('does {} == {}?'.format(
+    data.loc[testi, 'mold'], # expected mold of scan 1000
+    data.loc[data.loc[testi, 'moldRow'], 'mold'])) # the mold located at expected mold's row of scan 1000
 
 #%%
 
@@ -236,10 +223,32 @@ def showDistMatrix(dist, labels, sortidx, thresh = None):
         for it in ax.get_images():
             it.set_clim(0, thresh)
 
-# def showScanToMoldMap(data, sortidx):
-#     # data['moldRow'].values
-#     plt.plot(np.argsort(sortidx)[data['moldRow']], np.arange(len(sortidx)), '.-', alpha=0.8, linewidth=0.5, markersize=2)
-#     # plt.plot(np.argsort(sortidx)[map[sortidx]], np.arange(len(sortidx)), '.-', alpha=0.8, linewidth=0.5, markersize=2)
+def showScanToMoldMap(data, sortidx):
+    # data['moldRow'].values
+
+    N = len(sortidx)
+    sortData = data.iloc[sortidx, :]
+
+    print(data)
+    print(sortData)
+
+    moldRowsIdxLabels = sortData['moldRow'] # map[sortidx]
+    moldRowsIdx = [data.index.get_loc(i) for i in moldRowsIdxLabels]
+    # moldRowsIdx = [sortData.index.get_loc(i) for i in moldRowsIdxLabels]
+    x = np.argsort(sortidx)[moldRowsIdx] # np.argsort(sortidx)[map[sortidx]]
+    y = np.arange(N)
+
+
+    # i1 = np.argsort(sortidx)
+    # i2 = [data.index.get_loc(i) for i in data['moldRow']] 
+    # x = i1[data['moldRow']]
+    # y = np.arange(N)
+    plt.plot(x, y, '.-', alpha=0.8, linewidth=0.5, markersize=2)
+
+
+
+
+    # plt.plot(np.argsort(sortidx)[map[sortidx]], np.arange(len(sortidx)), '.-', alpha=0.8, linewidth=0.5, markersize=2)
 
 def showDataMatrix(data, xLabels, yLabels, xSort, ySort):
     data = data[np.ix_(ySort, xSort)]
@@ -266,9 +275,11 @@ def computeMatchingDistances(dist):
     r = []
     for i in data.index:
         if i != data.loc[i, 'moldRow']: # skip molds, since they match themselves
+            idx = data.index.get_loc(i)
+            moldIdx = data.index.get_loc(data.loc[i, 'moldRow'])
             x.append(data.loc[i, 'name'])
-            y.append(dist[i, data.loc[i, 'moldRow']])
-            r.append(np.searchsorted(np.sort(dist[i, :]), y[-1]) )
+            y.append(dist[idx, moldIdx])
+            r.append(np.searchsorted(np.sort(dist[idx, :]), y[-1]) )
 
     N = len(x)
 
@@ -435,7 +446,7 @@ computeMatchingDistances(distLda)
 # -----------------------------------------------------------------------
 
 showDistMatrix(distSamples, data['name'].values, sortSamples)
-# showScanToMoldMap(data, sortSamples)
+showScanToMoldMap(data, sortSamples)
 plt.xlabel('samples distance matrix')
 
 # showDistMatrix(distFeatures, featureNames, sortFeatures)
@@ -443,7 +454,7 @@ showDistMatrix(distFeatures, np.array(classificationFeatures), np.arange(len(cla
 plt.xlabel('features distance matrix')
 
 showDistMatrix(distLda, data['name'].values, sortLda)
-# showScanToMoldMap(data['moldRow'].values, sortLda)
+showScanToMoldMap(data, sortLda)
 plt.xlabel('samples distance matrix in LDA space')
 
 plt.show()
