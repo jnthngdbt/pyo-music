@@ -153,8 +153,14 @@ planeNames = ['back', 'front', 'top', 'bottom', 'left', 'right']
 
 # -----------------------------------------------------------------------
 
-# # Remove outliers.
-# outlierIds = [0, 281, 311, 321, 362, 419, 476, 544, 557, 585, 588, 599, 624, 627, 1680, 3071, 3332, 3338, 7514, 7586, 8243, 8303, 8393 ]
+# Remove outliers.
+outlierIds = [0, 281, 311, 321, 362, 419, 476, 544, 557, 585, 588, 599, 624, 625, 627, 676, 1680, 3071, 3332, 3338, 7514, 7586, 8243, 8303, 8393 ]
+toKeep = [i not in outlierIds for i in data['id']]
+print('Removing:')
+print(data[[not i for i in toKeep]])
+data = data[toKeep]
+
+
 # mustRemoveId = []
 # for id in list(inputData[:,0]):
 #     mustRemoveId.append(int(id) not in outlierIds)
@@ -230,8 +236,10 @@ def showDistMatrix(dist, labels, sortidx, thresh = None):
         for it in ax.get_images():
             it.set_clim(0, thresh)
 
-def showScanToMoldMap(map, sortidx):
-    plt.plot(np.argsort(sortidx)[map[sortidx]], np.arange(len(sortidx)), '.-', alpha=0.8, linewidth=0.5, markersize=2)
+# def showScanToMoldMap(data, sortidx):
+#     # data['moldRow'].values
+#     plt.plot(np.argsort(sortidx)[data['moldRow']], np.arange(len(sortidx)), '.-', alpha=0.8, linewidth=0.5, markersize=2)
+#     # plt.plot(np.argsort(sortidx)[map[sortidx]], np.arange(len(sortidx)), '.-', alpha=0.8, linewidth=0.5, markersize=2)
 
 def showDataMatrix(data, xLabels, yLabels, xSort, ySort):
     data = data[np.ix_(ySort, xSort)]
@@ -427,15 +435,15 @@ computeMatchingDistances(distLda)
 # -----------------------------------------------------------------------
 
 showDistMatrix(distSamples, data['name'].values, sortSamples)
-showScanToMoldMap(data['moldRow'].values, sortSamples)
+# showScanToMoldMap(data, sortSamples)
 plt.xlabel('samples distance matrix')
 
 # showDistMatrix(distFeatures, featureNames, sortFeatures)
-showDistMatrix(distFeatures, classificationFeatures, np.arange(len(classificationFeatures)))
+showDistMatrix(distFeatures, np.array(classificationFeatures), np.arange(len(classificationFeatures), dtype=np.int16))
 plt.xlabel('features distance matrix')
 
 showDistMatrix(distLda, data['name'].values, sortLda)
-showScanToMoldMap(data['moldRow'].values, sortLda)
+# showScanToMoldMap(data['moldRow'].values, sortLda)
 plt.xlabel('samples distance matrix in LDA space')
 
 plt.show()
