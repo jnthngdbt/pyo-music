@@ -64,12 +64,11 @@ featureSubset_UncorrelateABCDK = [ 'backK', 'frontK', 'bottomK', 'topK', 'leftK'
 featureSubset_ABCD_NoTopBottomABC = [ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomD', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
 featureSubset_ABCD_NoTopBottomABC = [ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomD', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
 
-featureSubset_simple5 = ['heightFront', 'heightBack', 'heightRatio', 'lengthTop', 'lengthDown', 'lengthRatio', 'slopeBack', 'slopeFront', 'slopeDown', 'slopeSide', 'parallelismTop', 'parallelismDown', 'parallelismRatio']
+featureSubset_box_simple = ['heightFront', 'lengthTop', 'slopeBack']
+featureSubset_box = ['heightFront', 'heightBack', 'heightRatio', 'lengthTop', 'lengthDown', 'lengthRatio', 'slopeBack', 'slopeFront', 'slopeDown', 'slopeSide', 'parallelismTop', 'parallelismDown', 'parallelismRatio']
 
 # Selection
-featureSubset = featureSubset_simple5
-
-classificationFeatures = ['lengthTop']
+featureSubset = featureSubset_box_simple
 
 #%%
 # Create the main data matrix.
@@ -131,8 +130,6 @@ data = addSpecsCategory(data)
 
 #%%
 
-# -----------------------------------------------------------------------
-
 # Remove outliers.
 outlierIds = [0, 281, 311, 321, 362, 419, 476, 544, 557, 585, 588, 599, 624, 625, 627, 676, 1680, 1843, 1853, 1974, 1979, 2508, 2703, 3071, 3332, 3338, 7514, 7586, 8243, 8303, 8393 ]
 toKeep = [i not in outlierIds for i in data['id']]
@@ -167,28 +164,6 @@ pandasPlot(data[featureSubset])
 
 #%%
 
-def getLengthTopClass(length):
-    if length < 1.0: return 0
-    elif length < 1.13: return 1
-    elif length < 1.27: return 2
-    elif length < 1.43: return 3
-    elif length < 1.56: return 4
-    else: return 5
-
-data['classLengthTop'] = [getLengthTopClass(i) for i in data['lengthTop']]
-
-# data[featureSubset + ['classLengthTop']].groupby('class').hist(bins=20, alpha=0.4)
-
-def getHeightFrontClass(length):
-    if length < 0.2: return 0
-    elif length < 1.3: return 1
-    else: return 2
-
-data['classHeightFront'] = [getHeightFrontClass(i) for i in data['heightFront']]
-
-
-#%%
-
 # STANDARDIZE
 for feat in featureSubset:
     data[feat] = (data[feat] - data[feat].mean(axis=0)) / data[feat].std(axis=0)
@@ -210,7 +185,6 @@ data = removeNanRows(data)
 data['moldRow'] = [int(i) for i in data['moldRow']] # convert to int
 
 print('added moldRow')
-# print(data)
 
 print('testing moldRow')
 testi = min(700, data.values.shape[0]-1)
@@ -220,17 +194,13 @@ print('does {} == {}?'.format(
 
 #%%
 
-def computeClassPerformance(name):
-    scanSel = data['type'] == 'scan'
-    hits = np.array([int(data.loc[i, name] == data.loc[data.loc[i, 'moldRow'], name]) for i in data[scanSel].index])
+featDiffNames = []
+for feat in featureSubset:
+    featDiff = feat + '-diff'
+    featDiffNames.append(featDiff)
+    data[featDiff] = [data.loc[i, feat] - data.loc[data.loc[i, 'moldRow'], feat] for i in data.index]
 
-    print(hits)
-    performance = np.sum(hits) / len(hits)
-
-    print("Classification on {}: {}%".format(name, performance * 100))
-
-computeClassPerformance('classHeightFront')
-computeClassPerformance('classLengthTop')
+pandasPlot(data.loc[data['type'] == 'scan', featDiffNames])
 
 #%%
 
@@ -273,31 +243,12 @@ def showDistMatrix(dist, labels, sortidx, thresh = None):
             it.set_clim(0, thresh)
 
 def showScanToMoldMap(data, sortidx):
-    # data['moldRow'].values
-
-    N = len(sortidx)
     sortData = data.iloc[sortidx, :]
-
-    print(data)
-    print(sortData)
-
     moldRowsIdxLabels = sortData['moldRow'] # map[sortidx]
     moldRowsIdx = [data.index.get_loc(i) for i in moldRowsIdxLabels]
-    # moldRowsIdx = [sortData.index.get_loc(i) for i in moldRowsIdxLabels]
     x = np.argsort(sortidx)[moldRowsIdx] # np.argsort(sortidx)[map[sortidx]]
-    y = np.arange(N)
-
-
-    # i1 = np.argsort(sortidx)
-    # i2 = [data.index.get_loc(i) for i in data['moldRow']] 
-    # x = i1[data['moldRow']]
-    # y = np.arange(N)
+    y = np.arange(len(sortidx))
     plt.plot(x, y, '.-', alpha=0.8, linewidth=0.5, markersize=2)
-
-
-
-
-    # plt.plot(np.argsort(sortidx)[map[sortidx]], np.arange(len(sortidx)), '.-', alpha=0.8, linewidth=0.5, markersize=2)
 
 def showDataMatrix(data, xLabels, yLabels, xSort, ySort):
     data = data[np.ix_(ySort, xSort)]
@@ -486,16 +437,16 @@ d = data.loc[:, featureSubset].values
 distSamples, sortSamples = computeClustering(d, data['name'].values, (2,10), 'euclidean', 'complete', 'right')
 computeMatchingDistances(distSamples)
 
-# distFeatures, sortFeatures = computeClustering(d.T, featureSubset, (10,2), 'correlation', 'complete', 'top')
+distFeatures, sortFeatures = computeClustering(d.T, featureSubset, (10,2), 'correlation', 'complete', 'top')
 
-# # Finds a non-supervised representation of data.
-# pcaData = computePca(d, data['specs-category'])
+# Finds a non-supervised representation of data.
+pcaData = computePca(d, data['specs-category'])
 
-# # Finds a supervised (uses class labels) representation of data that maximizes clusters discrimination.
-# ldaData = computeLda(d, data['specs-category'])
-# # ldaData = computeLda(pcaData[:,:3], categories)########
-# distLda, sortLda = computeClustering(ldaData, data['name'].values, (2,10), 'euclidean', 'complete', 'right')
-# computeMatchingDistances(distLda)
+# Finds a supervised (uses class labels) representation of data that maximizes clusters discrimination.
+ldaData = computeLda(d, data['specs-category'])
+# ldaData = computeLda(pcaData[:,:3], categories)########
+distLda, sortLda = computeClustering(ldaData, data['name'].values, (2,10), 'euclidean', 'complete', 'right')
+computeMatchingDistances(distLda)
 
 # -----------------------------------------------------------------------
 
@@ -503,13 +454,13 @@ showDistMatrix(distSamples, data['name'].values, sortSamples)
 showScanToMoldMap(data, sortSamples)
 plt.xlabel('samples distance matrix')
 
-# # showDistMatrix(distFeatures, featureNames, sortFeatures)
-# showDistMatrix(distFeatures, np.array(featureSubset), np.arange(len(featureSubset), dtype=np.int16))
-# plt.xlabel('features distance matrix')
+# showDistMatrix(distFeatures, featureNames, sortFeatures)
+showDistMatrix(distFeatures, np.array(featureSubset), np.arange(len(featureSubset), dtype=np.int16))
+plt.xlabel('features distance matrix')
 
-# showDistMatrix(distLda, data['name'].values, sortLda)
-# showScanToMoldMap(data, sortLda)
-# plt.xlabel('samples distance matrix in LDA space')
+showDistMatrix(distLda, data['name'].values, sortLda)
+showScanToMoldMap(data, sortLda)
+plt.xlabel('samples distance matrix in LDA space')
 
 plt.show()
 
