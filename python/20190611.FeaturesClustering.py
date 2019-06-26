@@ -33,7 +33,7 @@ def set_axes_radius(ax, origin, radius):
 def set_axes_equal(ax):
     '''Make axes of 3D plot have equal scale so that spheres appear as spheres,
     cubes as cubes, etc..  This is one possible solution to Matplotlib's
-    ax.set_aspect('equal') and ax.axis('equal') not working for 3D.
+    ax.set_aspect('equal') and ax.axis('equal') not working for 3D..
     '''
     limits = np.array([ax.get_xlim3d(), ax.get_ylim3d(), ax.get_zlim3d()])
     origin = np.mean(limits, axis=1)
@@ -42,29 +42,34 @@ def set_axes_equal(ax):
 
 # -----------------------------------------------------------------------
 
-INCLUDE_SCANS = False
-INCLUDE_MOLD_SCANS = True
+INCLUDE_SCANS = True
+INCLUDE_MOLD_SCANS = False
 ADD_RANDOM_FEATURE = False
 
 # -----------------------------------------------------------------------
 # Some feature subsets. Select one to use.
 
-classificationFeatures_OriginalSpecs = [ 'eside', 'eback', 'efront', 'ematerial', 'ebathtype', 'elength']
-classificationFeatures_OriginalMeasures = [ 'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8']
-classificationFeatures_K = [ 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK']
-classificationFeatures_D = [ 'backD', 'frontD', 'bottomD', 'topD', 'rightD', 'leftD']
-classificationFeatures_DK = [ 'backD', 'frontD', 'bottomD', 'topD', 'rightD', 'leftD', 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK']
-classificationFeatures_MainNormalComponents = [ 'backB', 'frontB', 'bottomA', 'topA', 'rightA', 'rightB', 'leftA', 'leftB']
-classificationFeatures_MainPlaneComponents = [ 'backB', 'backD', 'frontB', 'frontD', 'bottomA', 'bottomD', 'topA', 'topD', 'rightA', 'rightB', 'rightD', 'leftA', 'leftB', 'leftD']
-classificationFeatures_ABC = [ 'backA', 'backB', 'backC', 'frontA', 'frontB', 'frontC', 'bottomA', 'bottomB', 'bottomC', 'topA', 'topB', 'topC', 'rightA', 'rightB', 'rightC', 'leftA', 'leftB', 'leftC']
-classificationFeatures_ABCD = [ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
-classificationFeatures_ABCDK = [ 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK', 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
-classificationFeatures_LdaTrialNope = [ 'topB', 'bottomB', 'bottomK', 'topK', 'rightK', 'leftK']
-classificationFeatures_UncorrelateABCDK = [ 'backK', 'frontK', 'bottomK', 'topK', 'leftK', 'backA', 'backC', 'frontA', 'frontC', 'frontD', 'bottomB', 'bottomC', 'bottomD', 'topB', 'topD', 'rightA', 'rightB', 'rightD', 'leftA']
-classificationFeatures_ABCD_NoTopBottomABC = [ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomD', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
+featureSubset_OriginalSpecs = [ 'eside', 'eback', 'efront', 'ematerial', 'ebathtype', 'elength']
+featureSubset_OriginalMeasures = [ 'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8']
+featureSubset_K = [ 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK']
+featureSubset_D = [ 'backD', 'frontD', 'bottomD', 'topD', 'rightD', 'leftD']
+featureSubset_DK = [ 'backD', 'frontD', 'bottomD', 'topD', 'rightD', 'leftD', 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK']
+featureSubset_MainNormalComponents = [ 'backB', 'frontB', 'bottomA', 'topA', 'rightA', 'rightB', 'leftA', 'leftB']
+featureSubset_MainPlaneComponents = [ 'backB', 'backD', 'frontB', 'frontD', 'bottomA', 'bottomD', 'topA', 'topD', 'rightA', 'rightB', 'rightD', 'leftA', 'leftB', 'leftD']
+featureSubset_ABC = [ 'backA', 'backB', 'backC', 'frontA', 'frontB', 'frontC', 'bottomA', 'bottomB', 'bottomC', 'topA', 'topB', 'topC', 'rightA', 'rightB', 'rightC', 'leftA', 'leftB', 'leftC']
+featureSubset_ABCD = [ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
+featureSubset_ABCDK = [ 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK', 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
+featureSubset_LdaTrialNope = [ 'topB', 'bottomB', 'bottomK', 'topK', 'rightK', 'leftK']
+featureSubset_UncorrelateABCDK = [ 'backK', 'frontK', 'bottomK', 'topK', 'leftK', 'backA', 'backC', 'frontA', 'frontC', 'frontD', 'bottomB', 'bottomC', 'bottomD', 'topB', 'topD', 'rightA', 'rightB', 'rightD', 'leftA']
+featureSubset_ABCD_NoTopBottomABC = [ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomD', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
+featureSubset_ABCD_NoTopBottomABC = [ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomD', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
+
+featureSubset_simple5 = ['heightFront', 'heightBack', 'heightRatio', 'lengthTop', 'lengthDown', 'lengthRatio', 'slopeBack', 'slopeFront', 'slopeDown', 'slopeSide', 'parallelismTop', 'parallelismDown', 'parallelismRatio']
 
 # Selection
-classificationFeatures = classificationFeatures_MainPlaneComponents
+featureSubset = featureSubset_simple5
+
+classificationFeatures = ['lengthTop']
 
 #%%
 # Create the main data matrix.
@@ -126,8 +131,6 @@ data = addSpecsCategory(data)
 
 #%%
 
-planeNames = ['back', 'front', 'top', 'bottom', 'left', 'right']
-
 # -----------------------------------------------------------------------
 
 # Remove outliers.
@@ -150,15 +153,47 @@ data = data[toKeep]
 
 #     # Update data size.
 #     nbFeatures = len(featureNames)
+#%%
+
+print(data.head())
+
+def pandasPlot(data):
+    data.hist(bins=50)
+
+    if (len(featureSubset) < 20): 
+        pd.plotting.scatter_matrix(data, hist_kwds={'bins': 30})
+
+pandasPlot(data[featureSubset])
 
 #%%
 
-# Use a pandas dataframe to have access to useful data visualizations.
-df = data[classificationFeatures]
-df.hist(bins=50)
+def getLengthTopClass(length):
+    if length < 1.0: return 0
+    elif length < 1.13: return 1
+    elif length < 1.27: return 2
+    elif length < 1.43: return 3
+    elif length < 1.56: return 4
+    else: return 5
 
-if (len(classificationFeatures) < 20): 
-    pd.plotting.scatter_matrix(df, hist_kwds={'bins': 30})
+data['classLengthTop'] = [getLengthTopClass(i) for i in data['lengthTop']]
+
+# data[featureSubset + ['classLengthTop']].groupby('class').hist(bins=20, alpha=0.4)
+
+def getHeightFrontClass(length):
+    if length < 0.2: return 0
+    elif length < 1.3: return 1
+    else: return 2
+
+data['classHeightFront'] = [getHeightFrontClass(i) for i in data['heightFront']]
+
+
+#%%
+
+# STANDARDIZE
+for feat in featureSubset:
+    data[feat] = (data[feat] - data[feat].mean(axis=0)) / data[feat].std(axis=0)
+
+pandasPlot(data[featureSubset])
 
 #%%
 
@@ -182,6 +217,20 @@ testi = min(700, data.values.shape[0]-1)
 print('does {} == {}?'.format(
     data.loc[testi, 'mold'], # expected mold of scan 1000
     data.loc[data.loc[testi, 'moldRow'], 'mold'])) # the mold located at expected mold's row of scan 1000
+
+#%%
+
+def computeClassPerformance(name):
+    scanSel = data['type'] == 'scan'
+    hits = np.array([int(data.loc[i, name] == data.loc[data.loc[i, 'moldRow'], name]) for i in data[scanSel].index])
+
+    print(hits)
+    performance = np.sum(hits) / len(hits)
+
+    print("Classification on {}: {}%".format(name, performance * 100))
+
+computeClassPerformance('classHeightFront')
+computeClassPerformance('classLengthTop')
 
 #%%
 
@@ -273,6 +322,7 @@ def computeMatchingDistances(dist):
     x = []
     y = []
     r = []
+    m = []
     for i in data.index:
         if i != data.loc[i, 'moldRow']: # skip molds, since they match themselves
             idx = data.index.get_loc(i)
@@ -280,6 +330,7 @@ def computeMatchingDistances(dist):
             x.append(data.loc[i, 'name'])
             y.append(dist[idx, moldIdx])
             r.append(np.searchsorted(np.sort(dist[idx, :]), y[-1]) )
+            m.append(data.loc[i, 'mold'])
 
     N = len(x)
 
@@ -289,21 +340,27 @@ def computeMatchingDistances(dist):
     x = np.array(x)[idx]
     y = np.array(y)[idx]
     r = np.array(r)[idx]
+    m = np.array(m)[idx]
     
     fig = plt.figure(figsize=(12,6))
 
-    ax = plt.subplot(2,1,1)
+    ax = plt.subplot(3,1,1)
     ax.bar(np.arange(len(x)), y)
     ax.set_ylabel('expected mold distance')
     ax.set_xlim([0,len(x)])
 
-    ax = plt.subplot(2,1,2)
+    ax = plt.subplot(3,1,2)
+    ax.plot(np.arange(len(x)), m, '.')
+    ax.set_ylabel('expected mold')
+    ax.set_xlim([0,len(x)])
+
+    ax = plt.subplot(3,1,3)
     ax.bar(np.arange(len(x)), r)
     ax.set_xticks(np.arange(len(x)))
     ax.set_xticklabels(x, rotation=90, fontsize=6)
     ax.xaxis.set_ticks_position('bottom')
     ax.set_xlim([0,len(x)])
-    ax.set_ylim([0,50])
+    ax.set_ylim([0,20])
     ax.set_ylabel('expected mold rank')
 
     fig.tight_layout()
@@ -328,7 +385,7 @@ def computeLda(data, classLabels):
     im = ax.matshow(lda.coef_)
     ax.set_xticks(np.arange(nbFeatures))
     ax.set_yticks(np.arange(nbCategories))
-    ax.set_xticklabels(classificationFeatures, rotation=90, fontsize=8)
+    ax.set_xticklabels(featureSubset, rotation=90, fontsize=8)
     ax.xaxis.set_ticks_position('bottom')
     ax.set_xlabel('features')
     ax.set_ylabel('classes')
@@ -340,7 +397,7 @@ def computeLda(data, classLabels):
     im = ax.matshow(weightedScalings)
     ax.set_xticks(np.arange(nbComponents))
     ax.set_yticks(np.arange(nbFeatures))
-    # ax.set_yticklabels(classificationFeatures, fontsize=8)
+    # ax.set_yticklabels(featureSubset, fontsize=8)
     ax.xaxis.set_ticks_position('bottom')
     ax.set_xlabel('components')
     ax.set_ylabel('features')
@@ -373,7 +430,7 @@ def computeLda(data, classLabels):
     return ldaData[:,:nbComponents]
 
 def computePca(data, classLabels):
-    nbComponents = 8
+    nbComponents = 3
 
     # From the docs: "The input data is centered but not scaled for each feature before applying the SVD."
     pca = PCA(n_components=nbComponents)
@@ -406,7 +463,7 @@ def computePca(data, classLabels):
     im = ax.matshow(pca.components_.T)
     ax.set_xticks(np.arange(nbComponents))
     ax.set_yticks(np.arange(nbFeatures))
-    ax.set_yticklabels(classificationFeatures, fontsize=8)
+    ax.set_yticklabels(featureSubset, fontsize=8)
     ax.xaxis.set_ticks_position('bottom')
     ax.set_xlabel('components')
     ax.set_ylabel('features')
@@ -424,24 +481,21 @@ def computePca(data, classLabels):
 
 # -----------------------------------------------------------------------
 
-d = data.loc[:, classificationFeatures].values
+d = data.loc[:, featureSubset].values
 
-distSamples, sortSamples = computeClustering(d, data['name'].values, (2,10), 'euclidean', 'ward', 'right')
-distFeatures, sortFeatures = computeClustering(d.T, classificationFeatures, (10,2), 'correlation', 'complete', 'top')
-
-sortCategories = np.argsort(data['specs-category'])
-
+distSamples, sortSamples = computeClustering(d, data['name'].values, (2,10), 'euclidean', 'complete', 'right')
 computeMatchingDistances(distSamples)
 
-# Finds a non-supervised representation of data.
-pcaData = computePca(d, data['specs-category'])
+# distFeatures, sortFeatures = computeClustering(d.T, featureSubset, (10,2), 'correlation', 'complete', 'top')
 
-# Finds a supervised (uses class labels) representation of data that maximizes clusters discrimination.
-ldaData = computeLda(d, data['specs-category'])
-# ldaData = computeLda(pcaData[:,:3], categories)########
-distLda, sortLda = computeClustering(ldaData, data['name'].values, (2,10), 'euclidean', 'ward', 'right')
+# # Finds a non-supervised representation of data.
+# pcaData = computePca(d, data['specs-category'])
 
-computeMatchingDistances(distLda)
+# # Finds a supervised (uses class labels) representation of data that maximizes clusters discrimination.
+# ldaData = computeLda(d, data['specs-category'])
+# # ldaData = computeLda(pcaData[:,:3], categories)########
+# distLda, sortLda = computeClustering(ldaData, data['name'].values, (2,10), 'euclidean', 'complete', 'right')
+# computeMatchingDistances(distLda)
 
 # -----------------------------------------------------------------------
 
@@ -449,13 +503,13 @@ showDistMatrix(distSamples, data['name'].values, sortSamples)
 showScanToMoldMap(data, sortSamples)
 plt.xlabel('samples distance matrix')
 
-# showDistMatrix(distFeatures, featureNames, sortFeatures)
-showDistMatrix(distFeatures, np.array(classificationFeatures), np.arange(len(classificationFeatures), dtype=np.int16))
-plt.xlabel('features distance matrix')
+# # showDistMatrix(distFeatures, featureNames, sortFeatures)
+# showDistMatrix(distFeatures, np.array(featureSubset), np.arange(len(featureSubset), dtype=np.int16))
+# plt.xlabel('features distance matrix')
 
-showDistMatrix(distLda, data['name'].values, sortLda)
-showScanToMoldMap(data, sortLda)
-plt.xlabel('samples distance matrix in LDA space')
+# showDistMatrix(distLda, data['name'].values, sortLda)
+# showScanToMoldMap(data, sortLda)
+# plt.xlabel('samples distance matrix in LDA space')
 
 plt.show()
 
