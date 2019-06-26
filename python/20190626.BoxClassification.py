@@ -175,6 +175,9 @@ classThresholds = {
     'leftK': 0.0035,
 }
 
+for feat in classThresholds.keys():
+    data[feat + '-norm'] = data[feat] / classThresholds[feat]
+
 scanData = data.loc[data['type'] == 'scan']
 moldData = data.loc[data['type'] == 'mold']
 
@@ -188,8 +191,11 @@ for i, idx in enumerate(scanData.index):
     mask = np.ones(nbMolds)
     classSize[i, 0] = np.sum(mask)
     for j, feat in enumerate(classThresholds.keys()):
-        diff = np.abs(moldData[feat].values - scanData.loc[idx, feat])
-        thresh = diff < classThresholds[feat]
+        diff = np.abs(moldData[feat + '-norm'].values - scanData.loc[idx, feat + '-norm'])
+        thresh = diff < 1.0 # has been normalized
+
+        # Compute rank from euclidean distance between current features, ok since normalized, plot overlaping bars for each iteration
+
         mask = np.logical_and(mask, thresh)
         classSize[i, j+1] = np.sum(mask)
         expectedMoldIsInList[i, j+1] = mask[moldData.index.get_loc(scanData.loc[idx, 'moldRow'])]
