@@ -38,12 +38,13 @@ featureSubset_ABCD_NoTopBottomABC = [ 'backA', 'backB', 'backC', 'backD', 'front
 
 featureSubset_box1 = ['heightFront', 'heightBack', 'heightRatio', 'lengthTop', 'lengthDown', 'lengthRatio', 'slopeBack', 'slopeFront', 'slopeDown', 'slopeSide', 'parallelismTop', 'parallelismDown', 'parallelismRatio']
 featureSubset_box2 = ['heightFront', 'heightBack', 'lengthTop', 'lengthDown', 'slopeBack', 'parallelismTop', 'parallelismDown', 'frontK', 'front-planarity', 'backK', 'back-planarity', 'leftK', 'left-planarity', 'rightK', 'right-planarity']
+featureSubset_box3 = ['heightFront', 'heightBack', 'lengthTop', 'lengthDown', 'slopeBack', 'parallelismTop', 'parallelismDown', 'frontK', 'front-planarity', 'backK', 'back-planarity', 'leftK', 'left-planarity', 'rightK', 'right-planarity']
 
 # Selection
 featureSubset = featureSubset_box2
 
 #%%
-# Create the main data matrix.
+print("Creating main database...")
 
 # Merge scans and molds
 moldData = pd.read_csv('python/data/20190617.planes.molds.csv', index_col=False)
@@ -60,9 +61,13 @@ if INCLUDE_MOLD_SCANS:
     moldScanData['type'] = 'moldscan'
     data = data.append(moldScanData, ignore_index=True)
 
+def getMoldData(): return data.loc[data['type'] == 'mold', :]
+def getScanData(): return data.loc[data['type'] == 'scan', :]
+
 print('appended into a single dataframe')
 
 #%%
+print("Removing NaNs...")
 
 def removeNanRows(df):
     nanRows = df.isna().any(axis=1)
@@ -78,6 +83,7 @@ data = removeNanRows(data)
 data = data[data['id'] > 0]
 
 #%%
+print("Adding original specs category...")
 
 def addSpecsCategory(data):
     N = data.values.shape[0]
@@ -101,29 +107,39 @@ def addSpecsCategory(data):
 data = addSpecsCategory(data)
 
 #%%
+print("Removing outliers...")
 
-# -----------------------------------------------------------------------
+def getOutlierNegativeMask(data):
+    outlierIds = [0, 281, 311, 321, 362, 419, 476, 544, 557, 585, 588, 599, 624, 625, 627, 676, 1680, 1843, 1853, 1974, 1979, 2508, 2703, 3071, 3332, 3338, 7514, 7586, 8243, 8303, 8393 ]
+    toKeep = [i not in outlierIds for i in data['id']]
+    print('Removing:')
+    print(data[[not i for i in toKeep]])
+    return toKeep
 
 # Remove outliers.
-outlierIds = [0, 281, 311, 321, 362, 419, 476, 544, 557, 585, 588, 599, 624, 625, 627, 676, 1680, 1843, 1853, 1974, 1979, 2508, 2703, 3071, 3332, 3338, 7514, 7586, 8243, 8303, 8393 ]
-toKeep = [i not in outlierIds for i in data['id']]
-print('Removing:')
-print(data[[not i for i in toKeep]])
-data = data[toKeep]
+data = data[getOutlierNegativeMask(data)]
 
 #%%
+print("Showing data with pandas visualization...")
 
-print(data.head())
+axx = getScanData()[featureSubset].hist(bins=50, alpha=0.5)
+axx = axx.flatten()
+axx = axx[:len(featureSubset)]
+axx = getMoldData()[featureSubset].hist(bins=50, alpha=0.5, ax=axx)
+plt.suptitle('scan then mold')
 
-def pandasPlot(data):
-    data.hist(bins=50)
-
-    if (len(featureSubset) < 20): 
-        pd.plotting.scatter_matrix(data, hist_kwds={'bins': 30})
-
-pandasPlot(data[featureSubset])
+if (len(featureSubset) < 20): 
+    pd.plotting.scatter_matrix(data, hist_kwds={'bins': 30})
 
 #%%
+#################################
+if not INCLUDE_SCANS:
+    plt.show()
+    exit()
+#################################
+
+#%%
+print("Mapping scans with their corresponding expected mold...")
 
 def getMoldRowIdx(moldIdx):
     i = data.index[(data['type'] == 'mold') & (data['mold'] == moldIdx)].values
@@ -137,9 +153,6 @@ data = removeNanRows(data)
 
 data['moldRow'] = [int(i) for i in data['moldRow']] # convert to int
 
-print('added moldRow')
-# print(data)
-
 print('testing moldRow')
 testi = min(700, data.values.shape[0]-1)
 print('does {} == {}?'.format(
@@ -147,6 +160,7 @@ print('does {} == {}?'.format(
     data.loc[data.loc[testi, 'moldRow'], 'mold'])) # the mold located at expected mold's row of scan 1000
 
 #%%
+print("Computing features discriminant quality...")
 
 def computeDiffWithExpectedMold(feat):
     return np.array([data.loc[i, feat] - data.loc[data.loc[i, 'moldRow'], feat] for i in data.index])
@@ -162,11 +176,12 @@ for feat in featureSubset:
     # Compute difference.
     data[featDiff] = computeDiffWithExpectedMold(feat)
     # Compute the quality.
-    scanData = data[data['type'] == 'scan']
-    featureClassificationQuality.append(scanData[feat].std() / scanData[featDiff].std())
+    featureClassificationQuality.append(getMoldData()[feat].std() / getScanData()[featDiff].std())
+
+print("Plotting features discriminant quality...")
 
 # Show differences histograms.
-data.loc[data['type'] == 'scan', featDiffNames].hist(bins=50)
+getScanData()[featDiffNames].hist(bins=50)
 
 # Plot the quality for each feature.
 plt.figure()
@@ -175,6 +190,7 @@ plt.xticks(np.arange(len(featureSubset)), featureSubset, rotation=80)
 plt.ylabel('classification potential')
 
 #%%
+print("Normalizing data with defined thresholds...")
 
 # Difference thresholds determined from the histograms of the differences
 # with the expected molds. Thresholding difference with this value should
@@ -193,12 +209,13 @@ for feat in classThresholds.keys():
     data[feat + '-norm'] = data[feat] / classThresholds[feat]
 
 #%%
+print("Computing ranks...")
 
 def computeScanRank(scanIdx, moldData, features):
     # Compute euclidean distances.
     distWithAllMolds = np.zeros(moldData.shape[0])
     for feat in features:
-        diff = moldData.loc[:, feat + '-norm'] - scanData.loc[scanIdx, feat + '-norm']
+        diff = moldData.loc[:, feat + '-norm'] - getScanData().loc[scanIdx, feat + '-norm']
         diff = diff.values
         distWithAllMolds = distWithAllMolds + diff*diff
     distWithAllMolds = np.sqrt(distWithAllMolds)
@@ -206,7 +223,7 @@ def computeScanRank(scanIdx, moldData, features):
     # Compute rank.
     sortIdx = np.argsort(distWithAllMolds)
     rank = sortIdx[sortIdx]
-    moldIdx = scanData.loc[scanIdx, 'moldRow']
+    moldIdx = getScanData().loc[scanIdx, 'moldRow']
     if moldIdx in moldData.index:
         imold = moldData.index.get_loc(moldIdx)
         return rank[imold]
@@ -214,33 +231,33 @@ def computeScanRank(scanIdx, moldData, features):
         return 600
 
 #%%
+print("Computing ranks for each feature...")
+
 # Analyze the effect of each classification feature.
 
-scanData = data.loc[data['type'] == 'scan']
-moldData = data.loc[data['type'] == 'mold']
-
-nbMolds = moldData.shape[0]
-nbScans = scanData.shape[0]
+nbMolds = getMoldData().shape[0]
+nbScans = getScanData().shape[0]
 
 classSize = np.zeros((nbScans, len(classThresholds) + 1))
 expectedMoldIsInList = np.ones((nbScans, len(classThresholds) + 1))
 ranks = np.zeros((nbScans, len(classThresholds) + 1))
 
-for i, idx in enumerate(scanData.index):
+for i, idx in enumerate(getScanData().index):
     mask = np.ones(nbMolds) == 1 # mask filter to filter molds
     classSize[i, 0] = np.sum(mask)
-    ranks[i, 0] = computeScanRank(idx, moldData.loc[mask, :], classThresholds.keys())
+    ranks[i, 0] = computeScanRank(idx, getMoldData().loc[mask, :], classThresholds.keys())
     for j, feat in enumerate(classThresholds.keys()):
         # Find molds whose 
-        diff = np.abs(moldData[feat + '-norm'].values - scanData.loc[idx, feat + '-norm'])
+        diff = np.abs(getMoldData()[feat + '-norm'].values - getScanData().loc[idx, feat + '-norm'])
         thresh = diff < 1.0 # has been normalized
         mask = np.logical_and(mask, thresh)
 
         classSize[i, j+1] = np.sum(mask)
-        expectedMoldIsInList[i, j+1] = mask[moldData.index.get_loc(scanData.loc[idx, 'moldRow'])]
-        ranks[i,j+1] = computeScanRank(idx, moldData.loc[mask, :], classThresholds.keys())
+        expectedMoldIsInList[i, j+1] = mask[getMoldData().index.get_loc(getScanData().loc[idx, 'moldRow'])]
+        ranks[i,j+1] = computeScanRank(idx, getMoldData().loc[mask, :], classThresholds.keys())
 
 #%%
+print("Plotting performance...")
 
 plt.figure(figsize=(10,6))
 x = np.arange(nbScans)
@@ -250,16 +267,17 @@ for i in np.arange(classSize.shape[1]):
     performance = np.sum(expectedMoldIsInList[:, i]) / nbScans
     print('Performance at classification {}: {}%'.format(i, performance * 100))
 
-plt.xticks(x, scanData.iloc[si,:]['name'], rotation=80)
+plt.xticks(x, getScanData().iloc[si,:]['name'], rotation=80)
 
 #%%
+print("Plotting ranks...")
 
 plt.figure(figsize=(10,6))
 # ri = np.argsort(ranks[:, -1])
 for i in np.arange(ranks.shape[1]):
     ri = np.argsort(ranks[:, i])
     plt.bar(x, ranks[ri, i], alpha=0.8)
-# plt.xticks(x, scanData.iloc[ri,:]['name'], rotation=80) # not if sorting each time
+# plt.xticks(x, getScanData().iloc[ri,:]['name'], rotation=80) # not if sorting each time
 plt.ylim([0,100])
 plt.xlabel('sorted scan')
 plt.ylabel('expected mold rank')
