@@ -148,18 +148,27 @@ print('does {} == {}?'.format(
 
 #%%
 
+def computeDiffWithExpectedMold(feat):
+    return np.array([data.loc[i, feat] - data.loc[data.loc[i, 'moldRow'], feat] for i in data.index])
+
+# Determine features 'quality': if the variance of the difference between the 
+# scan and the expected mold is small compared to the variance of the feature.
 featDiffNames = []
 featureClassificationQuality = []
 for feat in featureSubset:
+    # Feature name for the difference.
     featDiff = feat + '-diff'
     featDiffNames.append(featDiff)
+    # Compute difference.
+    data[featDiff] = computeDiffWithExpectedMold(feat)
+    # Compute the quality.
+    scanData = data[data['type'] == 'scan']
+    featureClassificationQuality.append(scanData[feat].std() / scanData[featDiff].std())
 
-    data[featDiff] = [data.loc[i, feat] - data.loc[data.loc[i, 'moldRow'], feat] for i in data.index]
-
-    featureClassificationQuality.append(data[feat].std() / data[featDiff].std())
-
+# Show differences histograms.
 data.loc[data['type'] == 'scan', featDiffNames].hist(bins=50)
 
+# Plot the quality for each feature.
 plt.figure()
 plt.bar(np.arange(len(featureSubset)), featureClassificationQuality)
 plt.xticks(np.arange(len(featureSubset)), featureSubset, rotation=80)
@@ -167,16 +176,45 @@ plt.ylabel('classification potential')
 
 #%%
 
+# Difference thresholds determined from the histograms of the differences
+# with the expected molds. Thresholding difference with this value should
+# keep near 100% of the expected mold.
 classThresholds = {
     'heightFront': 0.03,
     'lengthDown': 0.1,
     'slopeBack': 0.15,
     'parallelismTop': 0.06,
-    'leftK': 0.0035,
+    # 'leftK': 0.0035,
 }
 
+# Normalize the feature with the difference threshold. The difference can 
+# than be compared to 1 for thresholding.
 for feat in classThresholds.keys():
     data[feat + '-norm'] = data[feat] / classThresholds[feat]
+
+#%%
+
+def computeScanRank(scanIdx, moldData, features):
+    # Compute euclidean distances.
+    distWithAllMolds = np.zeros(moldData.shape[0])
+    for feat in features:
+        diff = moldData.loc[:, feat + '-norm'] - scanData.loc[scanIdx, feat + '-norm']
+        diff = diff.values
+        distWithAllMolds = distWithAllMolds + diff*diff
+    distWithAllMolds = np.sqrt(distWithAllMolds)
+
+    # Compute rank.
+    sortIdx = np.argsort(distWithAllMolds)
+    rank = sortIdx[sortIdx]
+    moldIdx = scanData.loc[scanIdx, 'moldRow']
+    if moldIdx in moldData.index:
+        imold = moldData.index.get_loc(moldIdx)
+        return rank[imold]
+    else: # not in list
+        return 600
+
+#%%
+# Analyze the effect of each classification feature.
 
 scanData = data.loc[data['type'] == 'scan']
 moldData = data.loc[data['type'] == 'mold']
@@ -186,19 +224,21 @@ nbScans = scanData.shape[0]
 
 classSize = np.zeros((nbScans, len(classThresholds) + 1))
 expectedMoldIsInList = np.ones((nbScans, len(classThresholds) + 1))
+ranks = np.zeros((nbScans, len(classThresholds) + 1))
 
 for i, idx in enumerate(scanData.index):
-    mask = np.ones(nbMolds)
+    mask = np.ones(nbMolds) == 1 # mask filter to filter molds
     classSize[i, 0] = np.sum(mask)
+    ranks[i, 0] = computeScanRank(idx, moldData.loc[mask, :], classThresholds.keys())
     for j, feat in enumerate(classThresholds.keys()):
+        # Find molds whose 
         diff = np.abs(moldData[feat + '-norm'].values - scanData.loc[idx, feat + '-norm'])
         thresh = diff < 1.0 # has been normalized
-
-        # Compute rank from euclidean distance between current features, ok since normalized, plot overlaping bars for each iteration
-
         mask = np.logical_and(mask, thresh)
+
         classSize[i, j+1] = np.sum(mask)
         expectedMoldIsInList[i, j+1] = mask[moldData.index.get_loc(scanData.loc[idx, 'moldRow'])]
+        ranks[i,j+1] = computeScanRank(idx, moldData.loc[mask, :], classThresholds.keys())
 
 #%%
 
@@ -211,6 +251,18 @@ for i in np.arange(classSize.shape[1]):
     print('Performance at classification {}: {}%'.format(i, performance * 100))
 
 plt.xticks(x, scanData.iloc[si,:]['name'], rotation=80)
+
+#%%
+
+plt.figure(figsize=(10,6))
+# ri = np.argsort(ranks[:, -1])
+for i in np.arange(ranks.shape[1]):
+    ri = np.argsort(ranks[:, i])
+    plt.bar(x, ranks[ri, i], alpha=0.8)
+# plt.xticks(x, scanData.iloc[ri,:]['name'], rotation=80) # not if sorting each time
+plt.ylim([0,100])
+plt.xlabel('sorted scan')
+plt.ylabel('expected mold rank')
 
 # -----------------------------------------------------------------------
 
