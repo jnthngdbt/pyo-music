@@ -37,7 +37,7 @@ featureSubset_ABCD_NoTopBottomABC = [ 'backA', 'backB', 'backC', 'backD', 'front
 featureSubset_ABCD_NoTopBottomABC = [ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomD', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
 
 featureSubset_box1 = ['heightFront', 'heightBack', 'heightRatio', 'lengthTop', 'lengthDown', 'lengthRatio', 'slopeBack', 'slopeFront', 'slopeDown', 'slopeSide', 'parallelismTop', 'parallelismDown', 'parallelismRatio']
-featureSubset_box2 = ['heightFront', 'heightBack', 'lengthTop', 'lengthDown', 'slopeBack', 'parallelismTop', 'parallelismDown', 'frontK', 'front-planarity', 'backK', 'back-planarity', 'leftK', 'left-planarity', 'rightK', 'right-planarity']
+featureSubset_box2 = ['heightFront', 'heightBack', 'lengthTop', 'lengthDown', 'slopeBack', 'widthTopFront', 'widthTopBack', 'widthDownFront', 'widthDownBack', 'widthTopRatio', 'widthDownRatio', 'parallelismTop', 'parallelismDown', 'leftK', 'rightK']
 featureSubset_box3 = ['heightFront', 'heightBack', 'lengthTop', 'lengthDown', 'slopeBack', 'parallelismTop', 'parallelismDown', 'frontK', 'front-planarity', 'backK', 'back-planarity', 'leftK', 'left-planarity', 'rightK', 'right-planarity']
 
 # Selection
@@ -52,8 +52,12 @@ moldData['type'] = 'mold'
 data = moldData
 
 if INCLUDE_SCANS:
-    scanData = pd.read_csv("python/data/20190617.planes.goodscans.csv", index_col=False)
+    scanData = pd.read_csv("python/data/20190617.planes.allscans.csv", index_col=False)
     scanData['type'] = 'scan'
+
+    # Subsample
+    scanData = scanData.iloc[np.arange(0, scanData.shape[0], 3), :]
+
     data = data.append(scanData, ignore_index=True)
 
 if INCLUDE_MOLD_SCANS:
@@ -109,27 +113,33 @@ data = addSpecsCategory(data)
 #%%
 print("Removing outliers...")
 
-def getOutlierNegativeMask(data):
-    outlierIds = [0, 281, 311, 321, 362, 419, 476, 544, 557, 585, 588, 599, 624, 625, 627, 676, 1680, 1843, 1853, 1974, 1979, 2508, 2703, 3071, 3332, 3338, 7514, 7586, 8243, 8303, 8393 ]
-    toKeep = [i not in outlierIds for i in data['id']]
-    print('Removing:')
-    print(data[[not i for i in toKeep]])
-    return toKeep
-
-# Remove outliers.
-data = data[getOutlierNegativeMask(data)]
+from scipy import stats
+inliners = (np.abs(stats.zscore(data[featureSubset])) < 3).all(axis=1)
+print(data[np.logical_not(inliners)])
+data = data[inliners]
 
 #%%
 print("Showing data with pandas visualization...")
 
-axx = getScanData()[featureSubset].hist(bins=50, alpha=0.5)
+
+axx = getScanData()[featureSubset].hist(bins=50, alpha=0.5, figsize=(10,10))
 axx = axx.flatten()
 axx = axx[:len(featureSubset)]
 axx = getMoldData()[featureSubset].hist(bins=50, alpha=0.5, ax=axx)
 plt.suptitle('scan then mold')
 
+#%%
+
 if (len(featureSubset) < 20): 
-    pd.plotting.scatter_matrix(data, hist_kwds={'bins': 30})
+    # Subsample
+    N = moldData.shape[0]
+    d = moldData.iloc[np.arange(0, N, int(N / 100)), :] # subsample
+    sm = pd.plotting.scatter_matrix(d[featureSubset], figsize=(10,10), hist_kwds={'bins': 30})
+    #Change label rotation
+    [s.xaxis.label.set_rotation(45) for s in sm.reshape(-1)]
+    [s.yaxis.label.set_rotation(0) for s in sm.reshape(-1)]
+    [s.get_yaxis().set_label_coords(-2.0,0.5) for s in sm.reshape(-1)]
+    plt.suptitle('mold data only')
 
 #%%
 #################################
@@ -154,7 +164,7 @@ data = removeNanRows(data)
 data['moldRow'] = [int(i) for i in data['moldRow']] # convert to int
 
 print('testing moldRow')
-testi = min(700, data.values.shape[0]-1)
+testi = data.index[min(700, data.values.shape[0]-1)]
 print('does {} == {}?'.format(
     data.loc[testi, 'mold'], # expected mold of scan 1000
     data.loc[data.loc[testi, 'moldRow'], 'mold'])) # the mold located at expected mold's row of scan 1000
@@ -171,17 +181,19 @@ featDiffNames = []
 featureClassificationQuality = []
 for feat in featureSubset:
     # Feature name for the difference.
-    featDiff = feat + '-diff'
+    featDiff = feat + '-diff-norm'
     featDiffNames.append(featDiff)
     # Compute difference.
-    data[featDiff] = computeDiffWithExpectedMold(feat)
+    moldStd = getMoldData()[feat].std()
+    data[featDiff] = computeDiffWithExpectedMold(feat) / moldStd
     # Compute the quality.
-    featureClassificationQuality.append(getMoldData()[feat].std() / getScanData()[featDiff].std())
+    scanDiffStd = getScanData()[featDiff].std()
+    featureClassificationQuality.append(1 / scanDiffStd)
 
 print("Plotting features discriminant quality...")
 
 # Show differences histograms.
-getScanData()[featDiffNames].hist(bins=50)
+getScanData()[featDiffNames].hist(bins=np.arange(-1,1,0.05), figsize=(10,10))
 
 # Plot the quality for each feature.
 plt.figure()
@@ -200,13 +212,16 @@ classThresholds = {
     'lengthDown': 0.1,
     'slopeBack': 0.15,
     'parallelismTop': 0.06,
+    'widthDownBack': 0.05,
     # 'leftK': 0.0035,
 }
 
 # Normalize the feature with the difference threshold. The difference can 
-# than be compared to 1 for thresholding.
+# then be compared to 1 for thresholding.
+featureNormNames = []
 for feat in classThresholds.keys():
-    data[feat + '-norm'] = data[feat] / classThresholds[feat]
+    featureNormNames.append(feat + '-norm')
+    data[featureNormNames[-1]] = data[feat] / classThresholds[feat]
 
 #%%
 print("Computing ranks...")
@@ -215,7 +230,7 @@ def computeScanRank(scanIdx, moldData, features):
     # Compute euclidean distances.
     distWithAllMolds = np.zeros(moldData.shape[0])
     for feat in features:
-        diff = moldData.loc[:, feat + '-norm'] - getScanData().loc[scanIdx, feat + '-norm']
+        diff = moldData.loc[:, feat] - getScanData().loc[scanIdx, feat]
         diff = diff.values
         distWithAllMolds = distWithAllMolds + diff*diff
     distWithAllMolds = np.sqrt(distWithAllMolds)
@@ -238,36 +253,55 @@ print("Computing ranks for each feature...")
 nbMolds = getMoldData().shape[0]
 nbScans = getScanData().shape[0]
 
-classSize = np.zeros((nbScans, len(classThresholds) + 1))
-expectedMoldIsInList = np.ones((nbScans, len(classThresholds) + 1))
-ranks = np.zeros((nbScans, len(classThresholds) + 1))
+classSize = np.zeros((nbScans, len(featureNormNames) + 1))
+expectedMoldIsInList = np.ones((nbScans, len(featureNormNames) + 1))
+ranks = np.zeros((nbScans, len(featureNormNames) + 2))
 
 for i, idx in enumerate(getScanData().index):
     mask = np.ones(nbMolds) == 1 # mask filter to filter molds
     classSize[i, 0] = np.sum(mask)
-    ranks[i, 0] = computeScanRank(idx, getMoldData().loc[mask, :], classThresholds.keys())
-    for j, feat in enumerate(classThresholds.keys()):
+    ranks[i, 0] = computeScanRank(idx, getMoldData().loc[mask, :], featureNormNames)
+    for j, feat in enumerate(featureNormNames):
         # Find molds whose 
-        diff = np.abs(getMoldData()[feat + '-norm'].values - getScanData().loc[idx, feat + '-norm'])
+        diff = np.abs(getMoldData()[feat].values - getScanData().loc[idx, feat])
         thresh = diff < 1.0 # has been normalized
         mask = np.logical_and(mask, thresh)
 
         classSize[i, j+1] = np.sum(mask)
         expectedMoldIsInList[i, j+1] = mask[getMoldData().index.get_loc(getScanData().loc[idx, 'moldRow'])]
-        ranks[i,j+1] = computeScanRank(idx, getMoldData().loc[mask, :], classThresholds.keys())
+        ranks[i,j+1] = computeScanRank(idx, getMoldData().loc[mask, :], featureNormNames)
+
+#%%
+print('Weighted euclidean distance performance...')
+
+for i, feat in enumerate(featureSubset):
+    data[feat + '-weighted'] = data[feat] * featureClassificationQuality[i]
+
+featureWeightNames = [feat + '-weighted' for feat in classThresholds.keys()]
+
+for i, idx in enumerate(getScanData().index):
+    ranks[i, -1] = computeScanRank(idx, getMoldData(), featureWeightNames)
 
 #%%
 print("Plotting performance...")
+
+def plotShortListSizeReferenceLine():
+    plt.plot(20 * np.ones(nbScans))
 
 plt.figure(figsize=(10,6))
 x = np.arange(nbScans)
 si = np.argsort(classSize[:, -1])
 for i in np.arange(classSize.shape[1]):
-    plt.bar(x, classSize[si, i])
+    plt.plot(x, classSize[si, i], alpha=0.8)
     performance = np.sum(expectedMoldIsInList[:, i]) / nbScans
     print('Performance at classification {}: {}%'.format(i, performance * 100))
 
-plt.xticks(x, getScanData().iloc[si,:]['name'], rotation=80)
+plt.ylabel('class size')
+
+plotShortListSizeReferenceLine()
+
+if (nbScans < 300): # avoid too much label
+    plt.xticks(x, getScanData().iloc[si,:]['name'], rotation=80)
 
 #%%
 print("Plotting ranks...")
@@ -276,11 +310,16 @@ plt.figure(figsize=(10,6))
 # ri = np.argsort(ranks[:, -1])
 for i in np.arange(ranks.shape[1]):
     ri = np.argsort(ranks[:, i])
-    plt.bar(x, ranks[ri, i], alpha=0.8)
+    plt.plot(100 * x / nbScans, ranks[ri, i], alpha=0.8)
 # plt.xticks(x, getScanData().iloc[ri,:]['name'], rotation=80) # not if sorting each time
-plt.ylim([0,100])
-plt.xlabel('sorted scan')
+plt.xlabel('sorted scans (%)')
 plt.ylabel('expected mold rank')
+plt.xlim([0,100])
+plt.ylim([0,100])
+
+plotShortListSizeReferenceLine()
+
+plt.legend(['unweighted euclidean'] + list(classThresholds.keys()) + ['weighted euclidean', 'short list size objective'])
 
 # -----------------------------------------------------------------------
 
