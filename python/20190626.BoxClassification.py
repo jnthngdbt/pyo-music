@@ -4,37 +4,24 @@ import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 
-# For this to work in interactive Python, set "Notebook File Root" setting to ${fileDirname}
-from initdata import *
-
-# -----------------------------------------------------------------------
-# Some feature subsets. Select one to use.
-
-featureSubset_OriginalSpecs = [ 'eside', 'eback', 'efront', 'ematerial', 'ebathtype', 'elength']
-featureSubset_OriginalMeasures = [ 'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8']
-featureSubset_K = [ 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK']
-featureSubset_D = [ 'backD', 'frontD', 'bottomD', 'topD', 'rightD', 'leftD']
-featureSubset_DK = [ 'backD', 'frontD', 'bottomD', 'topD', 'rightD', 'leftD', 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK']
-featureSubset_MainNormalComponents = [ 'backB', 'frontB', 'bottomA', 'topA', 'rightA', 'rightB', 'leftA', 'leftB']
-featureSubset_MainPlaneComponents = [ 'backB', 'backD', 'frontB', 'frontD', 'bottomA', 'bottomD', 'topA', 'topD', 'rightA', 'rightB', 'rightD', 'leftA', 'leftB', 'leftD']
-featureSubset_ABC = [ 'backA', 'backB', 'backC', 'frontA', 'frontB', 'frontC', 'bottomA', 'bottomB', 'bottomC', 'topA', 'topB', 'topC', 'rightA', 'rightB', 'rightC', 'leftA', 'leftB', 'leftC']
-featureSubset_ABCD = [ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
-featureSubset_ABCDK = [ 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK', 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
-featureSubset_LdaTrialNope = [ 'topB', 'bottomB', 'bottomK', 'topK', 'rightK', 'leftK']
-featureSubset_UncorrelateABCDK = [ 'backK', 'frontK', 'bottomK', 'topK', 'leftK', 'backA', 'backC', 'frontA', 'frontC', 'frontD', 'bottomB', 'bottomC', 'bottomD', 'topB', 'topD', 'rightA', 'rightB', 'rightD', 'leftA']
-featureSubset_ABCD_NoTopBottomABC = [ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomD', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
-featureSubset_ABCD_NoTopBottomABC = [ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomD', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
-
-featureSubset_box1 = ['heightFront', 'heightBack', 'heightRatio', 'lengthTop', 'lengthDown', 'lengthRatio', 'slopeBack', 'slopeFront', 'slopeDown', 'slopeSide', 'parallelismTop', 'parallelismDown', 'parallelismRatio']
-featureSubset_box2 = ['heightFront', 'heightBack', 'lengthTop', 'lengthDown', 'slopeBack', 'widthTopFront', 'widthTopBack', 'widthDownFront', 'widthDownBack', 'widthTopRatio', 'widthDownRatio', 'parallelismTop', 'parallelismDown', 'leftK', 'rightK']
-featureSubset_box3 = ['heightFront', 'heightBack', 'lengthTop', 'lengthDown', 'slopeBack', 'parallelismTop', 'parallelismDown', 'frontK', 'front-planarity', 'backK', 'back-planarity', 'leftK', 'left-planarity', 'rightK', 'right-planarity']
+# For this to work in VS Codeinteractive Python, the workspace root
+# must be the folder of this file, for the folder structure to match.
+import library
+from library.initdata import *
 
 # Selection
-featureSubset = featureSubset_box2
+featureSubset = featureSubset_ABCDK + featureSubset_Angle + featureSubset_Size
 
 #%%
 
-data = importAndPreprocessData(featureSubset, includeScans=True, includeMoldScans=False, outlierScansStd=3, subsampleScans=3)
+data = importAndPreprocessData(
+    featureSubset,
+    includeScans=True, 
+    includeMoldScans=False, 
+    outlierScansStd=3, 
+    subsampleScans=1, 
+    showData=False,
+    standardize=False)
 
 def getMoldData(): return data.loc[data['type'] == 'mold', :]
 def getScanData(): return data.loc[data['type'] == 'scan', :]
@@ -65,10 +52,14 @@ print("Plotting features discriminant quality...")
 # Show differences histograms.
 getScanData()[featDiffNames].hist(bins=np.arange(-1,1,0.05), figsize=(10,10))
 
+#%%
+
 # Plot the quality for each feature.
-plt.figure()
-plt.bar(np.arange(len(featureSubset)), featureClassificationQuality)
-plt.xticks(np.arange(len(featureSubset)), featureSubset, rotation=80)
+plt.figure(figsize=(10,10))
+qi = np.argsort(featureClassificationQuality)
+# q = q[::-1] # descending
+plt.bar(np.arange(len(featureSubset)), np.array(featureClassificationQuality)[qi])
+plt.xticks(np.arange(len(featureSubset)), np.array(featureSubset)[qi], rotation=80)
 plt.ylabel('classification potential')
 
 #%%

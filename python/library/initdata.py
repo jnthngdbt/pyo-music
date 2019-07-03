@@ -12,16 +12,50 @@ plt.rcParams["font.family"] = "consolas"
 
 plt.close('all')
 
-def importAndPreprocessData(featureSubset, includeScans = False, includeMoldScans = False, subsampleScans=3, outlierScansStd=3, showData=False):
+# -----------------------------------------------------------------------
+# Some feature subsets. Select one to use.
+
+featureSubset_OriginalSpecs = [ 'eside', 'eback', 'efront', 'ematerial', 'ebathtype', 'elength']
+featureSubset_OriginalMeasures = [ 'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8']
+featureSubset_K = [ 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK']
+featureSubset_D = [ 'backD', 'frontD', 'bottomD', 'topD', 'rightD', 'leftD']
+featureSubset_DK = [ 'backD', 'frontD', 'bottomD', 'topD', 'rightD', 'leftD', 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK']
+featureSubset_MainNormalComponents = [ 'backB', 'frontB', 'bottomA', 'topA', 'rightA', 'rightB', 'leftA', 'leftB']
+featureSubset_MainPlaneComponents = [ 'backB', 'backD', 'frontB', 'frontD', 'bottomA', 'bottomD', 'topA', 'topD', 'rightA', 'rightB', 'rightD', 'leftA', 'leftB', 'leftD']
+featureSubset_ABC = [ 'backA', 'backB', 'backC', 'frontA', 'frontB', 'frontC', 'bottomA', 'bottomB', 'bottomC', 'topA', 'topB', 'topC', 'rightA', 'rightB', 'rightC', 'leftA', 'leftB', 'leftC']
+featureSubset_ABCD = [ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
+featureSubset_ABCDK = [ 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK', 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
+featureSubset_LdaTrialNope = [ 'topB', 'bottomB', 'bottomK', 'topK', 'rightK', 'leftK']
+featureSubset_UncorrelateABCDK = [ 'backK', 'frontK', 'bottomK', 'topK', 'leftK', 'backA', 'backC', 'frontA', 'frontC', 'frontD', 'bottomB', 'bottomC', 'bottomD', 'topB', 'topD', 'rightA', 'rightB', 'rightD', 'leftA']
+featureSubset_ABCD_NoTopBottomABC = [ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomD', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
+featureSubset_ABCD_NoTopBottomABC = [ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomD', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
+
+featureSubset_box1 = ['heightFront', 'heightBack', 'heightRatio', 'lengthTop', 'lengthDown', 'lengthRatio', 'slopeBack', 'slopeFront', 'slopeDown', 'slopeSide', 'parallelismTop', 'parallelismDown', 'parallelismRatio']
+featureSubset_box2 = ['heightFront', 'heightBack', 'lengthTop', 'lengthDown', 'slopeBack', 'widthTopFront', 'widthTopBack', 'widthDownFront', 'widthDownBack', 'widthTopRatio', 'widthDownRatio', 'parallelismTop', 'parallelismDown', 'leftK', 'rightK']
+featureSubset_box3 = ['heightFront', 'heightBack', 'lengthTop', 'lengthDown', 'slopeBack', 'parallelismTop', 'parallelismDown', 'frontK', 'front-planarity', 'backK', 'back-planarity', 'leftK', 'left-planarity', 'rightK', 'right-planarity']
+
+featureSubset_Size = ['heightFront', 'heightBack', 'heightRatio', 'lengthTop', 'lengthDown', 'lengthRatio', 'widthTopFront', 'widthTopBack', 'widthDownFront', 'widthDownBack', 'widthTopRatio', 'widthDownRatio']
+featureSubset_SizeNoCorr = ['heightFront', 'lengthTop', 'widthDownFront', 'widthDownBack']
+featureSubset_Angle = ['slopeBack', 'slopeFront', 'slopeDown', 'slopeSide', 'parallelismTop', 'parallelismDown', 'parallelismRatio']
+
+def importAndPreprocessData(
+    featureSubset, 
+    includeScans = False, 
+    includeMoldScans = False, 
+    subsampleScans=3, 
+    outlierScansStd=None, 
+    showData=False,
+    standardize=False):
+
     print("Creating main database...")
 
     # Merge scans and molds
-    moldData = pd.read_csv('python/data/20190617.planes.molds.csv', index_col=False)
+    moldData = pd.read_csv('data/20190617.planes.molds.csv', index_col=False)
     moldData['type'] = 'mold'
     data = moldData
 
     if includeScans:
-        scanData = pd.read_csv("python/data/20190617.planes.allscans.csv", index_col=False)
+        scanData = pd.read_csv("data/20190617.planes.allscans.csv", index_col=False)
         scanData['type'] = 'scan'
 
         # Subsample
@@ -30,12 +64,14 @@ def importAndPreprocessData(featureSubset, includeScans = False, includeMoldScan
         data = data.append(scanData, ignore_index=True)
 
     if includeMoldScans:
-        moldScanData = pd.read_csv('python/data/20190617.planes.moldscans.csv', index_col=False)
+        moldScanData = pd.read_csv('data/20190617.planes.moldscans.csv', index_col=False)
         moldScanData['type'] = 'moldscan'
         data = data.append(moldScanData, ignore_index=True)
 
     def getMoldData(): return data.loc[data['type'] == 'mold', :]
     def getScanData(): return data.loc[data['type'] == 'scan', :]
+    def getMoldScanData(): return data.loc[data['type'] == 'moldscan', :]
+    def getFullScanData(): return data.loc[(data['type'] == 'moldscan') | (data['type'] == 'scan'), :]
 
     print('appended into a single dataframe')
 
@@ -80,18 +116,33 @@ def importAndPreprocessData(featureSubset, includeScans = False, includeMoldScan
     data = addSpecsCategory(data)
 
     #%%
-    print("Removing outliers...")
+    if (outlierScansStd != None):
+        print("Removing outliers...")
 
-    from scipy import stats
-    inliners = (np.abs(stats.zscore(data[featureSubset])) < outlierScansStd).all(axis=1)
-    print(data[np.logical_not(inliners)])
-    data = data[inliners]
+        from scipy import stats
+        inliners = (np.abs(stats.zscore(data[featureSubset])) < outlierScansStd).all(axis=1)
+        print(data[np.logical_not(inliners)])
+        data = data[inliners]
+    else:
+        print("Skipping removing outliers...")
+
+    #%%
+    if (standardize):
+        print("Standardize features...")
+
+        for feat in featureSubset:
+            data[feat] = (data[feat] - data[feat].mean(axis=0)) / data[feat].std(axis=0)
+
+    #%%
+    print("Showing mold priors...")
+
+    data['mold'].hist(bins=np.arange(data['mold'].max()))
 
     #%%
     if showData:
         print("Showing data with pandas visualization...")
 
-        axx = getScanData()[featureSubset].hist(bins=50, alpha=0.5, figsize=(10,10))
+        axx = getFullScanData()[featureSubset].hist(bins=50, alpha=0.5, figsize=(10,10))
         axx = axx.flatten()
         axx = axx[:len(featureSubset)]
         axx = getMoldData()[featureSubset].hist(bins=50, alpha=0.5, ax=axx)
@@ -100,8 +151,8 @@ def importAndPreprocessData(featureSubset, includeScans = False, includeMoldScan
     #%%
         if (len(featureSubset) < 20): 
             # Subsample
-            N = moldData.shape[0]
-            d = moldData.iloc[np.arange(0, N, int(N / 100)), :] # subsample
+            N = getMoldData().shape[0]
+            d = getMoldData().iloc[np.arange(0, N, int(N / 100)), :] # subsample
             sm = pd.plotting.scatter_matrix(d[featureSubset], figsize=(10,10), hist_kwds={'bins': 30})
             #Change label rotation
             [s.xaxis.label.set_rotation(45) for s in sm.reshape(-1)]
@@ -111,7 +162,7 @@ def importAndPreprocessData(featureSubset, includeScans = False, includeMoldScan
 
     #%%
     #################################
-    if not includeScans:
+    if (not includeScans) and (not includeMoldScans):
         plt.show()
         return data
     else:
