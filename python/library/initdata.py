@@ -35,38 +35,41 @@ featureSubset_box2 = ['heightFront', 'heightBack', 'lengthTop', 'lengthDown', 's
 featureSubset_box3 = ['heightFront', 'heightBack', 'lengthTop', 'lengthDown', 'slopeBack', 'parallelismTop', 'parallelismDown', 'frontK', 'front-planarity', 'backK', 'back-planarity', 'leftK', 'left-planarity', 'rightK', 'right-planarity']
 
 featureSubset_Size = ['heightFront', 'heightBack', 'heightRatio', 'lengthTop', 'lengthDown', 'lengthRatio', 'widthTopFront', 'widthTopBack', 'widthDownFront', 'widthDownBack', 'widthTopRatio', 'widthDownRatio']
-featureSubset_SizeNoCorr = ['heightFront', 'lengthTop', 'widthDownFront', 'widthDownBack']
+featureSubset_SizeConcise = ['heightFront', 'lengthTop', 'widthDownFront', 'widthDownBack']
 featureSubset_Angle = ['slopeBack', 'slopeFront', 'slopeDown', 'slopeSide', 'parallelismTop', 'parallelismDown', 'parallelismRatio']
+featureSubset_AngleConcise = ['slopeBack', 'slopeFront', 'slopeDown', 'slopeSide', 'parallelismDown']
 
 def importAndPreprocessData(
     featureSubset, 
-    includeScans = False, 
-    includeMoldScans = False, 
+    moldsFile='data/20190617.planes.molds.csv', 
+    scansFiles=['data/20190617.planes.allscans.csv'], 
+    moldScansFiles=['data/20190617.planes.moldscans.csv'], 
     subsampleScans=3, 
     outlierScansStd=None, 
+    ignoreBfi=False,
     showData=False,
     standardize=False):
 
     print("Creating main database...")
 
     # Merge scans and molds
-    moldData = pd.read_csv('data/20190617.planes.molds.csv', index_col=False)
+    moldData = pd.read_csv(moldsFile, index_col=False)
     moldData['type'] = 'mold'
     data = moldData
 
-    if includeScans:
-        scanData = pd.read_csv("data/20190617.planes.allscans.csv", index_col=False)
-        scanData['type'] = 'scan'
+    if scansFiles != None:
+        for f in scansFiles:
+            scanData = pd.read_csv(f, index_col=False)
+            scanData['type'] = 'scan'
+            # Subsample
+            scanData = scanData.iloc[np.arange(0, scanData.shape[0], subsampleScans), :]
+            data = data.append(scanData, ignore_index=True)
 
-        # Subsample
-        scanData = scanData.iloc[np.arange(0, scanData.shape[0], subsampleScans), :]
-
-        data = data.append(scanData, ignore_index=True)
-
-    if includeMoldScans:
-        moldScanData = pd.read_csv('data/20190617.planes.moldscans.csv', index_col=False)
-        moldScanData['type'] = 'moldscan'
-        data = data.append(moldScanData, ignore_index=True)
+    if moldScansFiles != None:
+        for f in moldScansFiles:
+            moldScanData = pd.read_csv(f, index_col=False)
+            moldScanData['type'] = 'moldscan'
+            data = data.append(moldScanData, ignore_index=True)
 
     def getMoldData(): return data.loc[data['type'] == 'mold', :]
     def getScanData(): return data.loc[data['type'] == 'scan', :]
@@ -74,6 +77,11 @@ def importAndPreprocessData(
     def getFullScanData(): return data.loc[(data['type'] == 'moldscan') | (data['type'] == 'scan'), :]
 
     print('appended into a single dataframe')
+
+    #%%
+    if ignoreBfi:
+        print("Removing BFI scans...")
+        data = data[data['id'] < 6000]
 
     #%%
     print("Removing NaNs...")
@@ -136,7 +144,7 @@ def importAndPreprocessData(
     #%%
     print("Showing mold priors...")
 
-    data['mold'].hist(bins=np.arange(data['mold'].max()))
+    data[['mold', 'type']].groupby('type').hist(bins=np.arange(data['mold'].max()))
 
     #%%
     if showData:
@@ -162,7 +170,7 @@ def importAndPreprocessData(
 
     #%%
     #################################
-    if (not includeScans) and (not includeMoldScans):
+    if (scansFiles == None) and (moldScansFiles == None):
         plt.show()
         return data
     else:

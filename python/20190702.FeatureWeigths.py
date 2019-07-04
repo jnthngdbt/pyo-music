@@ -11,18 +11,29 @@ from library.initdata import *
 
 # Selection
 # featureSubset = featureSubset_ABCD
+# featureSubset = featureSubset_ABCDK
 # featureSubset = featureSubset_Angle + featureSubset_Size + featureSubset_ABCDK
-# featureSubset = featureSubset_Angle + featureSubset_Size + featureSubset_DK # should by alignment invariant
+featureSubset = featureSubset_Angle + featureSubset_Size + featureSubset_DK # should by alignment invariant
+# featureSubset = featureSubset_AngleConcise + featureSubset_SizeConcise + featureSubset_K # should by alignment invariant
 # featureSubset = featureSubset_Angle + featureSubset_Size + featureSubset_K # should by alignment invariant
-featureSubset = featureSubset_Angle + featureSubset_DK # should by alignment invariant
+# featureSubset = featureSubset_Angle + featureSubset_DK # should by alignment invariant
 
 #%%
 
 data = importAndPreprocessData(
     featureSubset,
-    includeScans=True, 
-    includeMoldScans=True, 
+    moldsFile='data/20190617.planes.molds.csv', 
+    # scansFiles=['data/20190617.planes.allscans.csv'], 
+    scansFiles=['data/20190703.planes.bfiscans.csv', 'data/20190617.planes.moldscans.csv'], 
+    # scansFiles=['data/20190703.planes.bfiscans.csv', 'data/20190617.planes.allscans.csv'], 
+    # scansFiles=['data/20190703.planes.bfiscans.csv', 'data/20190703.planes.bfiscans.rawalign.csv'], 
+    # moldScansFiles=['data/20190617.planes.moldscans.csv'], 
+    # moldScansFiles=['data/20190617.planes.goodscans.csv'], 
+    # moldScansFiles=['data/20190703.planes.bfiscans.csv', 'data/20190617.planes.allscans.csv'], 
+    moldScansFiles=['data/20190703.planes.goodscans.rawalign.csv'], 
+    # moldScansFiles=['data/20190703.planes.bfiscans.csv'], 
     outlierScansStd=None, 
+    ignoreBfi=False,
     subsampleScans=1, 
     showData=False,
     standardize=False)
@@ -38,15 +49,20 @@ def computePerformance(yPredict, yTest, classesTrain):
     # yPredict: samples x classes
     Ns = yPredict.shape[0]
 
-    plt.matshow(yPredict)
+    # plt.matshow(yPredict)
+
+    yPredictBest = []
+
+    nbConsidered = 0;
 
     plt.figure()
     ranks = 300*np.ones(Ns)
     for i in np.arange(Ns):
         if yTest[i] not in classesTrain:
-            # a = 1
-            print('expected {} not in trained classes'.format(yTest[i]))
+            a = 1
+            # print('expected {} not in trained classes'.format(yTest[i]))
         else:
+            nbConsidered += 1
             iexpected = classesTrain.index(yTest[i])
 
             sortIdx = np.argsort(yPredict[i,:])
@@ -54,22 +70,36 @@ def computePerformance(yPredict, yTest, classesTrain):
             rank = sortIdx.tolist().index(iexpected)
             ranks[i] = rank
 
+            yPredictBest.append(classesTrain[sortIdx[0]])
+
             # # print(rank)
             # print('{} == {}'.format(classesTrain[iexpected], yTest[i]))
             # print('{} == {}'.format(yPredict[i,sortIdx[0]], np.max(yPredict[i,:])))
             # print('{} == {}'.format(yPredict[i, iexpected], yPredict[i, sortIdx[rank]]))
 
             # plt.plot(i, yPredict[i, sortIdx[0]], '.')
-            plt.plot(rank, yPredict[i, sortIdx[0]], 'w.', alpha=0.5)
+            plt.plot(rank, yPredictBest[-1], 'w.', alpha=0.5)
             plt.plot(rank, yPredict[i, iexpected], 'r.', alpha=0.5)
             # plt.xlim([0,100])
             # print('max: {}, sort: {}'.format(np.max(yPredict[i,:]), yPredict[i,sortIdx[0]]))
 
+    plt.xlabel('rank')
+    plt.ylabel('score (signed distance to hyperplane)')
+
     plt.figure()
     plt.hist(ranks, bins=np.arange(0,100))
+    plt.xlabel('rank')
+
+    plt.figure()
+    plt.hist(yTest, bins=np.arange(0,600))
+    plt.xlabel('expected mold')
+
+    plt.figure()
+    plt.hist(yPredictBest, bins=np.arange(0,600))
+    plt.xlabel('predicted mold')
 
     def getPercent(sel):
-        return 100.0 * np.sum(sel)/len(ranks)
+        return '{} ({})'.format(100.0 * np.sum(sel)/len(ranks), 100.0 * np.sum(sel)/nbConsidered)
 
     print('Top 1: {}%'.format(getPercent(ranks < 1)))
     print('Top 3: {}%'.format(getPercent(ranks < 3)))
@@ -88,6 +118,9 @@ def computeLda(xTrain, xTest, yTrain, yTest):
     # p = lda.predict_proba(xTest) # samples x classes
     yPredict = c.decision_function(xTest) # samples x classes
 
+    from sklearn.metrics import accuracy_score
+    print('Accuracy: {}%'.format(100.0 * accuracy_score(yTest, c.predict(xTest))))
+
     computePerformance(yPredict, yTest, c.classes_.tolist())
 
 def computeLogisticRegression(xTrain, xTest, yTrain, yTest):
@@ -105,6 +138,13 @@ def computeLogisticRegression(xTrain, xTest, yTrain, yTest):
 def testSplitFullScans():
     allData = getFullScanData()[featureSubset]
     allLabels = getFullScanData()['mold'].values
+
+    from sklearn.model_selection import train_test_split
+    return train_test_split(allData, allLabels, test_size = 0.2, random_state = 0)
+
+def testSplitScans():
+    allData = getScanData()[featureSubset]
+    allLabels = getScanData()['mold'].values
 
     from sklearn.model_selection import train_test_split
     return train_test_split(allData, allLabels, test_size = 0.2, random_state = 0)
@@ -133,6 +173,7 @@ def testMoldScansOnScans():
 # NOTE: cannot use creaform molds for training, since classes == samples
 
 # xTrain, xTest, yTrain, yTest = testSplitFullScans()
+# xTrain, xTest, yTrain, yTest = testSplitScans()
 # xTrain, xTest, yTrain, yTest = testCreaformOnMoldScans()
 # xTrain, xTest, yTrain, yTest = testScansOnMoldScans()
 xTrain, xTest, yTrain, yTest = testMoldScansOnScans()
