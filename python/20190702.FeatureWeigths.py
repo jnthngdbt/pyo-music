@@ -12,31 +12,46 @@ from library.initdata import *
 # Selection
 # featureSubset = featureSubset_ABCD
 # featureSubset = featureSubset_ABCDK
+# featureSubset = featureSubset_ABCDK_NoTopNormal
+# featureSubset = featureSubset_ABCK + featureSubset_Size
 # featureSubset = featureSubset_Angle + featureSubset_Size + featureSubset_ABCDK
-featureSubset = featureSubset_Angle + featureSubset_Size + featureSubset_DK # should by alignment invariant
+# featureSubset = featureSubset_Angle + featureSubset_Size + featureSubset_DK # should by alignment invariant
 # featureSubset = featureSubset_AngleConcise + featureSubset_SizeConcise + featureSubset_K # should by alignment invariant
 # featureSubset = featureSubset_Angle + featureSubset_Size + featureSubset_K # should by alignment invariant
 # featureSubset = featureSubset_Angle + featureSubset_DK # should by alignment invariant
+featureSubset = featureSubset_D # should by alignment invariant
+# featureSubset = featureSubset_K # should by alignment invariant
 
 #%%
 
+# NOTES
+# - allscans contain moldscans and goodscans
+# - standardizing does not change results
+
 data = importAndPreprocessData(
     featureSubset,
-    moldsFile='data/20190617.planes.molds.csv', 
+    # moldsFile='data/20190617.planes.molds.csv', 
+    # scansFiles=['data/20190617.planes.moldscans.csv'], 
     # scansFiles=['data/20190617.planes.allscans.csv'], 
-    scansFiles=['data/20190703.planes.bfiscans.csv', 'data/20190617.planes.moldscans.csv'], 
+    # scansFiles=['data/20190703.planes.bfiscans.csv', 'data/20190617.planes.moldscans.csv'], 
     # scansFiles=['data/20190703.planes.bfiscans.csv', 'data/20190617.planes.allscans.csv'], 
     # scansFiles=['data/20190703.planes.bfiscans.csv', 'data/20190703.planes.bfiscans.rawalign.csv'], 
-    # moldScansFiles=['data/20190617.planes.moldscans.csv'], 
+    # moldScansFiles=['data/20190703.planes.bfiscans.csv'], 
     # moldScansFiles=['data/20190617.planes.goodscans.csv'], 
     # moldScansFiles=['data/20190703.planes.bfiscans.csv', 'data/20190617.planes.allscans.csv'], 
-    moldScansFiles=['data/20190703.planes.goodscans.rawalign.csv'], 
-    # moldScansFiles=['data/20190703.planes.bfiscans.csv'], 
-    outlierScansStd=None, 
+    # moldScansFiles=['data/20190703.planes.goodscans.rawalign.csv'], 
+    moldsFile='data/20190617.planes.moldscans.csv', 
+    scansFiles=['data/20190703.planes.bfiscans.rawalign.csv'], 
+    outlierMoldsStd=4, 
+    outlierScansStd=3, 
     ignoreBfi=False,
     subsampleScans=1, 
-    showData=False,
+    showData=True,
+    computeMoldRowMapping=False,
+    # rereferenceNormalFeatures=True,
     standardize=False)
+
+reduceWithPca = False
 
 def getMoldData(): return data.loc[data['type'] == 'mold', :]
 def getScanData(): return data.loc[data['type'] == 'scan', :]
@@ -110,18 +125,55 @@ def computePerformance(yPredict, yTest, classesTrain):
 
 #%%
 
+def printLdaWeights(lda, classesTrain):
+    with open('out.txt', 'w') as file:
+        weights = lda.coef_
+        nbClasses = weights.shape[0]
+        nbFeatures = weights.shape[1]
+
+        # Print header
+        hdrStr = 'mold,'
+        if reduceWithPca: 
+            for i in np.arange(nbFeatures): hdrStr += 'PC{},'.format(i)
+        else: 
+            for f in featureSubset: hdrStr += f + ','
+        file.write(hdrStr + '\n')
+
+        for i in np.arange(nbClasses):
+            rowStr = '{0:4d},'.format(classesTrain[i])
+            for j in np.arange(nbFeatures):
+                rowStr += '{},'.format(weights[i,j])
+            file.write(rowStr + '\n')
+
+def getPca(data, varianceRatio):
+    from sklearn.decomposition import PCA
+    # From the docs: "The input data is centered but not scaled for each feature before applying the SVD."
+    pca = PCA(n_components=varianceRatio, svd_solver='full') 
+    pca.fit(data)
+    return pca
+
 def computeLda(xTrain, xTest, yTrain, yTest):
     from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as DA # 'pip install -U scikit-learn', or 'conda install scikit-learn'
 
+    if reduceWithPca:
+        varianceRatio = 0.99
+        pca = getPca(xTrain, varianceRatio)
+        print('PCA reduction from {} to {} dimensions ({}%)'.format(xTrain.shape[1], pca.transform(xTrain).shape[1], varianceRatio*100.0))
+        xTrain = pca.transform(xTrain)
+        xTest = pca.transform(xTest)
+
     c = DA()
     c.fit(xTrain, yTrain) # samples x features
-    # p = lda.predict_proba(xTest) # samples x classes
+    # yPredict = c.predict_proba(xTest) # samples x classes
     yPredict = c.decision_function(xTest) # samples x classes
 
     from sklearn.metrics import accuracy_score
     print('Accuracy: {}%'.format(100.0 * accuracy_score(yTest, c.predict(xTest))))
 
-    computePerformance(yPredict, yTest, c.classes_.tolist())
+    classNames = c.classes_.tolist()
+    printLdaWeights(c, classNames)
+
+    computePerformance(yPredict, yTest, classNames)
 
 def computeLogisticRegression(xTrain, xTest, yTrain, yTest):
     from sklearn.linear_model import LogisticRegression
@@ -170,6 +222,13 @@ def testMoldScansOnScans():
     yTest = getMoldScanData()['mold'].values
     return xTrain, xTest, yTrain, yTest 
 
+def testScansOnMolds():
+    xTrain = getMoldData()[featureSubset]
+    yTrain = getMoldData()['mold'].values
+    xTest = getScanData()[featureSubset]
+    yTest = getScanData()['mold'].values
+    return xTrain, xTest, yTrain, yTest 
+
 # NOTE: cannot use creaform molds for training, since classes == samples
 
 # xTrain, xTest, yTrain, yTest = testSplitFullScans()
@@ -177,6 +236,7 @@ def testMoldScansOnScans():
 # xTrain, xTest, yTrain, yTest = testCreaformOnMoldScans()
 # xTrain, xTest, yTrain, yTest = testScansOnMoldScans()
 xTrain, xTest, yTrain, yTest = testMoldScansOnScans()
+xTrain, xTest, yTrain, yTest = testScansOnMolds()
 
 print('Number for train: {} ({})'.format(len(yTrain), xTrain.shape[0]))
 print('Number for test: {} ({})'.format(len(yTest), xTest.shape[0]))

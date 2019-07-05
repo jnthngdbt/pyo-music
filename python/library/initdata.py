@@ -25,6 +25,9 @@ featureSubset_MainPlaneComponents = [ 'backB', 'backD', 'frontB', 'frontD', 'bot
 featureSubset_ABC = [ 'backA', 'backB', 'backC', 'frontA', 'frontB', 'frontC', 'bottomA', 'bottomB', 'bottomC', 'topA', 'topB', 'topC', 'rightA', 'rightB', 'rightC', 'leftA', 'leftB', 'leftC']
 featureSubset_ABCD = [ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
 featureSubset_ABCDK = [ 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK', 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
+featureSubset_ABCDK_NoTopNormal = [ 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK', 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
+featureSubset_ABCDK_NoWeird = [ 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK', 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomA', 'bottomB', 'bottomC', 'bottomD', 'topA', 'topB', 'topC', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
+featureSubset_ABCK = [ 'backK', 'frontK', 'bottomK', 'topK', 'rightK', 'leftK', 'backA', 'backB', 'backC', 'frontA', 'frontB', 'frontC', 'bottomA', 'bottomB', 'bottomC', 'topA', 'topB', 'topC', 'rightA', 'rightB', 'rightC', 'leftA', 'leftB', 'leftC']
 featureSubset_LdaTrialNope = [ 'topB', 'bottomB', 'bottomK', 'topK', 'rightK', 'leftK']
 featureSubset_UncorrelateABCDK = [ 'backK', 'frontK', 'bottomK', 'topK', 'leftK', 'backA', 'backC', 'frontA', 'frontC', 'frontD', 'bottomB', 'bottomC', 'bottomD', 'topB', 'topD', 'rightA', 'rightB', 'rightD', 'leftA']
 featureSubset_ABCD_NoTopBottomABC = [ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomD', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
@@ -39,27 +42,102 @@ featureSubset_SizeConcise = ['heightFront', 'lengthTop', 'widthDownFront', 'widt
 featureSubset_Angle = ['slopeBack', 'slopeFront', 'slopeDown', 'slopeSide', 'parallelismTop', 'parallelismDown', 'parallelismRatio']
 featureSubset_AngleConcise = ['slopeBack', 'slopeFront', 'slopeDown', 'slopeSide', 'parallelismDown']
 
+def removeNanRows(df):
+    nanRows = df.isna().any(axis=1)
+
+    print('removing following NaN rows:')
+    print(df[nanRows == True])
+
+    return df[nanRows != True]
+
+from scipy import stats
+def removeOutliers(df, featureSubset, outlierStd):
+    if outlierStd != None:
+        inlierMask = (np.abs(stats.zscore(df[featureSubset])) < outlierStd).all(axis=1)
+        outlierMask = np.logical_not(inlierMask)
+        print(df[outlierMask])
+        df = df[inlierMask]
+    return df
+
+def rereferenceNormals(data):
+    print("Re-referencing normal features...")
+
+    def normalize(n):
+        return n / np.linalg.norm(n)
+
+    def getNormal(data, i, name):
+        n = data.iloc[i,:]
+        n = n[[name + 'A', name + 'B', name + 'C']].astype('float64')
+        n = n.values.flatten()
+        return normalize(n)
+
+    def setTransformedNormal(n, data, i, name, T):
+        n = normalize(np.dot(T, n))
+        idx = data.index[i]
+        data.at[idx, name + 'A'] = n[0]
+        data.at[idx, name + 'B'] = n[1]
+        data.at[idx, name + 'C'] = n[2]
+
+    for i in np.arange(data.shape[0]):
+        top = getNormal(data, i, 'top')
+        down = getNormal(data, i, 'bottom')
+        left = getNormal(data, i, 'left')
+        right = getNormal(data, i, 'right')
+        front = getNormal(data, i, 'front')
+        back = getNormal(data, i, 'back')
+
+        # Construct basis
+        y = normalize(-top)
+        xe = front + back # NOTE: PROBABLY A BUG IN PLANES FEATURES, BOTH FRONT AND BACK X ARE POSITIVE, BUT NOT ALWAYS
+        xe[1] = 0 # only keep x-z components
+        xe = normalize(xe)
+        z = normalize(np.cross(xe, y))
+        x = normalize(np.cross(y, z))
+        T = np.array([x,y,z])
+
+        setTransformedNormal(top, data, i, 'top', T)
+        setTransformedNormal(down, data, i, 'bottom', T)
+        setTransformedNormal(left, data, i, 'left', T)
+        setTransformedNormal(right, data, i, 'right', T)
+        setTransformedNormal(front, data, i, 'front', T)
+        setTransformedNormal(back, data, i, 'back', T)
+
+    ss = [ 'backA', 'backB', 'backC', 'frontA', 'frontB', 'frontC', 'bottomA', 'bottomB', 'bottomC', 'topA', 'topB', 'topC']
+    print(data[ss])
+    return data
+
 def importAndPreprocessData(
     featureSubset, 
-    moldsFile='data/20190617.planes.molds.csv', 
-    scansFiles=['data/20190617.planes.allscans.csv'], 
-    moldScansFiles=['data/20190617.planes.moldscans.csv'], 
+    moldsFile=None, 
+    scansFiles=None, 
+    moldScansFiles=None, 
     subsampleScans=3, 
     outlierScansStd=None, 
+    outlierMoldsStd=None,
+    computeMoldRowMapping=True,
     ignoreBfi=False,
     showData=False,
+    rereferenceNormalFeatures=False,
     standardize=False):
 
     print("Creating main database...")
 
     # Merge scans and molds
     moldData = pd.read_csv(moldsFile, index_col=False)
+    moldData = removeNanRows(moldData)
+    if rereferenceNormalFeatures: # do it before removing outliers
+        moldData = rereferenceNormals(moldData)
+    moldData = removeOutliers(moldData, featureSubset, outlierMoldsStd)
     moldData['type'] = 'mold'
     data = moldData
 
     if scansFiles != None:
         for f in scansFiles:
             scanData = pd.read_csv(f, index_col=False)
+            scanData = removeNanRows(scanData)
+            if rereferenceNormalFeatures: # do it before removing outliers
+                scanData = rereferenceNormals(scanData)
+            scanData = removeOutliers(scanData, featureSubset, outlierScansStd)
             scanData['type'] = 'scan'
             # Subsample
             scanData = scanData.iloc[np.arange(0, scanData.shape[0], subsampleScans), :]
@@ -68,6 +146,9 @@ def importAndPreprocessData(
     if moldScansFiles != None:
         for f in moldScansFiles:
             moldScanData = pd.read_csv(f, index_col=False)
+            moldScanData = removeNanRows(moldScanData)
+            if rereferenceNormalFeatures:
+                scanData = rereferenceNormals(scanData)
             moldScanData['type'] = 'moldscan'
             data = data.append(moldScanData, ignore_index=True)
 
@@ -82,19 +163,6 @@ def importAndPreprocessData(
     if ignoreBfi:
         print("Removing BFI scans...")
         data = data[data['id'] < 6000]
-
-    #%%
-    print("Removing NaNs...")
-
-    def removeNanRows(df):
-        nanRows = df.isna().any(axis=1)
-
-        print('removing following NaN rows:')
-        print(df[nanRows == True])
-
-        return df[nanRows != True]
-
-    data = removeNanRows(data)
 
     # Remove id 0, which is the scan when generating the molds data.
     data = data[data['id'] > 0]
@@ -124,17 +192,6 @@ def importAndPreprocessData(
     data = addSpecsCategory(data)
 
     #%%
-    if (outlierScansStd != None):
-        print("Removing outliers...")
-
-        from scipy import stats
-        inliners = (np.abs(stats.zscore(data[featureSubset])) < outlierScansStd).all(axis=1)
-        print(data[np.logical_not(inliners)])
-        data = data[inliners]
-    else:
-        print("Skipping removing outliers...")
-
-    #%%
     if (standardize):
         print("Standardize features...")
 
@@ -157,7 +214,7 @@ def importAndPreprocessData(
         plt.suptitle('scan then mold')
 
     #%%
-        if (len(featureSubset) < 20): 
+        if (len(featureSubset) < 10): 
             # Subsample
             N = getMoldData().shape[0]
             d = getMoldData().iloc[np.arange(0, N, int(N / 100)), :] # subsample
@@ -176,41 +233,42 @@ def importAndPreprocessData(
     else:
         #################################
 
-        #%%
-        print("Mapping scans with their corresponding expected mold...")
+        if computeMoldRowMapping:
+            #%%
+            print("Mapping scans with their corresponding expected mold...")
 
-        def getMoldRowIdx(moldIdx):
-            i = data.index[(data['type'] == 'mold') & (data['mold'] == moldIdx)].values
-            if len(i) > 0:
-                return i[0]
-            else:
-                return np.nan
+            def getMoldRowIdx(moldIdx):
+                i = data.index[(data['type'] == 'mold') & (data['mold'] == moldIdx)].values
+                if len(i) > 0:
+                    return i[0]
+                else:
+                    return np.nan
 
-        data['moldRow'] = [getMoldRowIdx(moldIdx) for moldIdx in list(data['mold'])]
-        data = removeNanRows(data)
+            data['moldRow'] = [getMoldRowIdx(moldIdx) for moldIdx in list(data['mold'])]
+            data = removeNanRows(data)
 
-        data['moldRow'] = [int(i) for i in data['moldRow']] # convert to int
+            data['moldRow'] = [int(i) for i in data['moldRow']] # convert to int
 
-        print('testing moldRow')
-        testi = data.index[min(700, data.values.shape[0]-1)]
-        print('does {} == {}?'.format(
-            data.loc[testi, 'mold'], # expected mold of scan 1000
-            data.loc[data.loc[testi, 'moldRow'], 'mold'])) # the mold located at expected mold's row of scan 1000
+            print('testing moldRow')
+            testi = data.index[min(700, data.values.shape[0]-1)]
+            print('does {} == {}?'.format(
+                data.loc[testi, 'mold'], # expected mold of scan 1000
+                data.loc[data.loc[testi, 'moldRow'], 'mold'])) # the mold located at expected mold's row of scan 1000
 
-        #%%
-        print("Remove scans where expected mold is not available...")
+            #%%
+            print("Remove scans where expected mold is not available...")
 
-        idxToKeep = []
-        idxToRemove = []
-        moldIdx = getMoldData().index
-        for idx in data.index:
-            if data.loc[idx, 'moldRow'] in moldIdx:
-                idxToKeep.append(idx)
-            else:
-                idxToRemove.append(idx)
-        data = data.loc[idxToKeep, :]
+            idxToKeep = []
+            idxToRemove = []
+            moldIdx = getMoldData().index
+            for idx in data.index:
+                if data.loc[idx, 'moldRow'] in moldIdx:
+                    idxToKeep.append(idx)
+                else:
+                    idxToRemove.append(idx)
+            data = data.loc[idxToKeep, :]
 
-        print("Removing:")
-        print(data[idxToRemove])
+            print("Removing:")
+            print(data[idxToRemove])
 
     return data
