@@ -10,7 +10,7 @@ import library
 from library.initdata import *
 
 # Selection
-# featureSubset = featureSubset_ABCD
+# featureSubset = featureSubset_ABC
 # featureSubset = featureSubset_ABCDK
 # featureSubset = featureSubset_ABCDK_NoTopNormal
 # featureSubset = featureSubset_ABCK + featureSubset_Size
@@ -19,7 +19,8 @@ from library.initdata import *
 # featureSubset = featureSubset_AngleConcise + featureSubset_SizeConcise + featureSubset_K # should by alignment invariant
 # featureSubset = featureSubset_Angle + featureSubset_Size + featureSubset_K # should by alignment invariant
 # featureSubset = featureSubset_Angle + featureSubset_DK # should by alignment invariant
-featureSubset = featureSubset_D # should by alignment invariant
+featureSubset = featureSubset_DK # should by alignment invariant
+# featureSubset = featureSubset_D # should by alignment invariant
 # featureSubset = featureSubset_K # should by alignment invariant
 
 #%%
@@ -40,8 +41,8 @@ data = importAndPreprocessData(
     # moldScansFiles=['data/20190617.planes.goodscans.csv'], 
     # moldScansFiles=['data/20190703.planes.bfiscans.csv', 'data/20190617.planes.allscans.csv'], 
     # moldScansFiles=['data/20190703.planes.goodscans.rawalign.csv'], 
-    moldsFile='data/20190617.planes.moldscans.csv', 
-    scansFiles=['data/20190703.planes.bfiscans.rawalign.csv'], 
+    moldsFile='data/planes.moldscans.csv', 
+    scansFiles=['data/planes.bfiscans.rawalign.csv'], 
     outlierMoldsStd=4, 
     outlierScansStd=3, 
     ignoreBfi=False,
@@ -49,7 +50,7 @@ data = importAndPreprocessData(
     showData=True,
     computeMoldRowMapping=False,
     # rereferenceNormalFeatures=True,
-    standardize=False)
+    standardize=True)
 
 reduceWithPca = False
 
@@ -235,7 +236,7 @@ def testScansOnMolds():
 # xTrain, xTest, yTrain, yTest = testSplitScans()
 # xTrain, xTest, yTrain, yTest = testCreaformOnMoldScans()
 # xTrain, xTest, yTrain, yTest = testScansOnMoldScans()
-xTrain, xTest, yTrain, yTest = testMoldScansOnScans()
+# xTrain, xTest, yTrain, yTest = testMoldScansOnScans()
 xTrain, xTest, yTrain, yTest = testScansOnMolds()
 
 print('Number for train: {} ({})'.format(len(yTrain), xTrain.shape[0]))

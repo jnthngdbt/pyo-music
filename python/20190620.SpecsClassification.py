@@ -17,7 +17,7 @@ plt.close('all')
 
 #%%
 
-data = pd.read_csv('python/data/20190617.planes.molds.csv', index_col=False)
+data = pd.read_csv('python/data/planes.molds.csv', index_col=False)
 
 def removeNanRows(df):
     nanRows = df.isna().any(axis=1)

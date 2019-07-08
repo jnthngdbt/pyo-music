@@ -64,27 +64,27 @@ featureSubset_UncorrelateABCDK = [ 'backK', 'frontK', 'bottomK', 'topK', 'leftK'
 featureSubset_ABCD_NoTopBottomABC = [ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomD', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
 featureSubset_ABCD_NoTopBottomABC = [ 'backA', 'backB', 'backC', 'backD', 'frontA', 'frontB', 'frontC', 'frontD', 'bottomD', 'topD', 'rightA', 'rightB', 'rightC', 'rightD', 'leftA', 'leftB', 'leftC', 'leftD']
 
-featureSubset_box_simple = ['heightFront', 'lengthTop', 'slopeBack']
-featureSubset_box = ['heightFront', 'heightBack', 'heightRatio', 'lengthTop', 'lengthDown', 'lengthRatio', 'slopeBack', 'slopeFront', 'slopeDown', 'slopeSide', 'parallelismTop', 'parallelismDown', 'parallelismRatio']
+featureSubset_box3 = ['heightFront', 'heightBack', 'lengthTop', 'lengthDown', 'slopeBack', 'parallelismTop', 'parallelismDown', 'frontK', 'front-planarity', 'backK', 'back-planarity', 'leftK', 'left-planarity', 'rightK', 'right-planarity']
+featureSubset_box = ['heightFront', 'heightBack', 'lengthTop', 'lengthDown', 'slopeBack']
 
 # Selection
-featureSubset = featureSubset_box_simple
+featureSubset = featureSubset_box
 
 #%%
 # Create the main data matrix.
 
 # Merge scans and molds
-moldData = pd.read_csv('python/data/20190617.planes.molds.csv', index_col=False)
+moldData = pd.read_csv('python/data/planes.molds.csv', index_col=False)
 moldData['type'] = 'mold'
 data = moldData
 
 if INCLUDE_SCANS:
-    scanData = pd.read_csv("python/data/20190617.planes.goodscans.csv", index_col=False)
+    scanData = pd.read_csv("python/data/planes.goodscans.csv", index_col=False)
     scanData['type'] = 'scan'
     data = data.append(scanData, ignore_index=True)
 
 if INCLUDE_MOLD_SCANS:
-    moldScanData = pd.read_csv('python/data/20190617.planes.moldscans.csv', index_col=False)
+    moldScanData = pd.read_csv('python/data/planes.moldscans.csv', index_col=False)
     moldScanData['type'] = 'moldscan'
     data = data.append(moldScanData, ignore_index=True)
 
@@ -434,13 +434,13 @@ def computePca(data, classLabels):
 
 d = data.loc[:, featureSubset].values
 
-distSamples, sortSamples = computeClustering(d, data['name'].values, (2,10), 'euclidean', 'complete', 'right')
-computeMatchingDistances(distSamples)
+# distSamples, sortSamples = computeClustering(d, data['name'].values, (2,10), 'euclidean', 'complete', 'right')
+# computeMatchingDistances(distSamples)
 
-distFeatures, sortFeatures = computeClustering(d.T, featureSubset, (10,2), 'correlation', 'complete', 'top')
+# distFeatures, sortFeatures = computeClustering(d.T, featureSubset, (10,2), 'correlation', 'complete', 'top')
 
-# Finds a non-supervised representation of data.
-pcaData = computePca(d, data['specs-category'])
+# # Finds a non-supervised representation of data.
+# pcaData = computePca(d, data['specs-category'])
 
 # Finds a supervised (uses class labels) representation of data that maximizes clusters discrimination.
 ldaData = computeLda(d, data['specs-category'])
@@ -450,17 +450,17 @@ computeMatchingDistances(distLda)
 
 # -----------------------------------------------------------------------
 
-showDistMatrix(distSamples, data['name'].values, sortSamples)
-showScanToMoldMap(data, sortSamples)
-plt.xlabel('samples distance matrix')
+# showDistMatrix(distSamples, data['name'].values, sortSamples)
+# showScanToMoldMap(data, sortSamples)
+# plt.xlabel('samples distance matrix')
 
-# showDistMatrix(distFeatures, featureNames, sortFeatures)
-showDistMatrix(distFeatures, np.array(featureSubset), np.arange(len(featureSubset), dtype=np.int16))
-plt.xlabel('features distance matrix')
+# # showDistMatrix(distFeatures, featureNames, sortFeatures)
+# showDistMatrix(distFeatures, np.array(featureSubset), np.arange(len(featureSubset), dtype=np.int16))
+# plt.xlabel('features distance matrix')
 
-showDistMatrix(distLda, data['name'].values, sortLda)
-showScanToMoldMap(data, sortLda)
-plt.xlabel('samples distance matrix in LDA space')
+# showDistMatrix(distLda, data['name'].values, sortLda)
+# showScanToMoldMap(data, sortLda)
+# plt.xlabel('samples distance matrix in LDA space')
 
 plt.show()
 
