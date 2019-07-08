@@ -42,6 +42,8 @@ featureSubset_SizeConcise = ['heightFront', 'lengthTop', 'widthDownFront', 'widt
 featureSubset_Angle = ['slopeBack', 'slopeFront', 'slopeDown', 'slopeSide', 'parallelismTop', 'parallelismDown', 'parallelismRatio']
 featureSubset_AngleConcise = ['slopeBack', 'slopeFront', 'slopeDown', 'slopeSide', 'parallelismDown']
 
+featureSubset_Edges = ['TFW', 'TBW', 'DFW', 'DBW', 'TWL', 'TWR', 'DWL', 'DWR', 'WFL', 'WFR', 'WBL', 'WBR']
+
 def removeNanRows(df):
     nanRows = df.isna().any(axis=1)
 
@@ -141,7 +143,8 @@ def importAndPreprocessData(
             scanData['type'] = 'scan'
             # Subsample
             scanData = scanData.iloc[np.arange(0, scanData.shape[0], subsampleScans), :]
-            data = data.append(scanData, ignore_index=True)
+            data = pd.concat([data, scanData], join='inner', ignore_index=True)
+            # data = data.append(scanData, ignore_index=True)
 
     if moldScansFiles != None:
         for f in moldScansFiles:
@@ -150,7 +153,8 @@ def importAndPreprocessData(
             if rereferenceNormalFeatures:
                 scanData = rereferenceNormals(scanData)
             moldScanData['type'] = 'moldscan'
-            data = data.append(moldScanData, ignore_index=True)
+            data = pd.concat([data, moldScanData], join='inner', ignore_index=True)
+            # data = data.append(moldScanData, ignore_index=True)
 
     def getMoldData(): return data.loc[data['type'] == 'mold', :]
     def getScanData(): return data.loc[data['type'] == 'scan', :]

@@ -10,17 +10,48 @@ import library
 from library.initdata import *
 
 # Selection
-featureSubset = featureSubset_ABCDK + featureSubset_Angle + featureSubset_Size
+# featureSubset = featureSubset_ABC
+# featureSubset = featureSubset_ABCDK
+# featureSubset = featureSubset_ABCDK_NoTopNormal
+# featureSubset = featureSubset_ABCK + featureSubset_Size
+# featureSubset = featureSubset_Angle + featureSubset_Size + featureSubset_ABCDK
+# featureSubset = featureSubset_Angle + featureSubset_Size + featureSubset_DK # should by alignment invariant
+# featureSubset = featureSubset_AngleConcise + featureSubset_SizeConcise + featureSubset_K # should by alignment invariant
+# featureSubset = featureSubset_Angle + featureSubset_Size + featureSubset_K # should by alignment invariant
+# featureSubset = featureSubset_Angle + featureSubset_DK # should by alignment invariant
+# featureSubset = featureSubset_DK # should by alignment invariant
+# featureSubset = featureSubset_D # should by alignment invariant
+# featureSubset = featureSubset_K # should by alignment invariant
+featureSubset = featureSubset_Edges
 
 #%%
 
+# NOTES
+# - allscans contain moldscans and goodscans
+# - standardizing does not change results
+
 data = importAndPreprocessData(
     featureSubset,
-    includeScans=True, 
-    includeMoldScans=False, 
+    # moldsFile='data/20190617.planes.molds.csv', 
+    # scansFiles=['data/20190617.planes.moldscans.csv'], 
+    # scansFiles=['data/20190617.planes.allscans.csv'], 
+    # scansFiles=['data/20190703.planes.bfiscans.csv', 'data/20190617.planes.moldscans.csv'], 
+    # scansFiles=['data/20190703.planes.bfiscans.csv', 'data/20190617.planes.allscans.csv'], 
+    # scansFiles=['data/20190703.planes.bfiscans.csv', 'data/20190703.planes.bfiscans.rawalign.csv'], 
+    # scansFiles=['data/planes.bfiscans.rawalign.csv'], 
+    # moldScansFiles=['data/20190703.planes.bfiscans.csv'], 
+    # moldScansFiles=['data/20190617.planes.goodscans.csv'], 
+    # moldScansFiles=['data/20190703.planes.bfiscans.csv', 'data/20190617.planes.allscans.csv'], 
+    # moldScansFiles=['data/20190703.planes.goodscans.rawalign.csv'], 
+    moldsFile='data/planes.moldscans.ori.rawalign.csv', 
+    scansFiles=['data/planes.goodscans.ori.rawalign.csv'], 
+    outlierMoldsStd=3, 
     outlierScansStd=3, 
+    ignoreBfi=False,
     subsampleScans=1, 
-    showData=False,
+    showData=True,
+    computeMoldRowMapping=True,
+    # rereferenceNormalFeatures=True,
     standardize=False)
 
 def getMoldData(): return data.loc[data['type'] == 'mold', :]
@@ -133,15 +164,15 @@ for i, idx in enumerate(getScanData().index):
         ranks[i,j+1] = computeScanRank(idx, getMoldData().loc[mask, :], featureNormNames)
 
 #%%
-print('Weighted euclidean distance performance...')
+# print('Weighted euclidean distance performance...')
 
-for i, feat in enumerate(featureSubset):
-    data[feat + '-weighted'] = data[feat] * featureClassificationQuality[i]
+# for i, feat in enumerate(featureSubset):
+#     data[feat + '-weighted'] = data[feat] * featureClassificationQuality[i]
 
-featureWeightNames = [feat + '-weighted' for feat in classThresholds.keys()]
+# featureWeightNames = [feat + '-weighted' for feat in classThresholds.keys()]
 
-for i, idx in enumerate(getScanData().index):
-    ranks[i, -1] = computeScanRank(idx, getMoldData(), featureWeightNames)
+# for i, idx in enumerate(getScanData().index):
+#     ranks[i, -1] = computeScanRank(idx, getMoldData(), featureWeightNames)
 
 #%%
 print("Plotting performance...")
