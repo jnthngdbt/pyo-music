@@ -207,11 +207,20 @@ def importAndPreprocessData(
     if showData:
         print("Showing data with pandas visualization...")
 
-        axx = getFullScanData()[featureSubset].hist(bins=50, alpha=0.5, figsize=(10,10))
-        axx = axx.flatten()
-        axx = axx[:len(featureSubset)]
-        axx = getMoldData()[featureSubset].hist(bins=50, alpha=0.5, ax=axx)
+        scanData = getFullScanData()
+        moldData = getMoldData()
+
+        plt.figure(figsize=(10,10))
+        Nf = len(featureSubset)
+        Nc = 5
+        Nr = np.ceil(Nf / Nc)
+        for i in np.arange(Nf):
+            plt.subplot(Nr, Nc, i+1)
+            plt.hist(scanData[featureSubset[i]], bins=50, alpha=0.5)
+            plt.hist(moldData[featureSubset[i]], bins=50, alpha=0.5)
+            plt.xlabel(featureSubset[i])
         plt.suptitle('scan then mold')
+        plt.tight_layout()
 
     #%%
         if (len(featureSubset) < 10): 
