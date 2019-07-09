@@ -43,9 +43,9 @@ data = importAndPreprocessData(
     # moldScansFiles=['data/20190617.planes.goodscans.csv'], 
     # moldScansFiles=['data/20190703.planes.bfiscans.csv', 'data/20190617.planes.allscans.csv'], 
     # moldScansFiles=['data/20190703.planes.goodscans.rawalign.csv'], 
-    moldsFile='data/planes.moldscans.ori.rawalign.csv', 
+    moldsFile='data/planes.molds.csv', 
     scansFiles=['data/planes.goodscans.ori.rawalign.csv'], 
-    outlierMoldsStd=3, 
+    outlierMoldsStd=5, 
     outlierScansStd=3, 
     ignoreBfi=False,
     subsampleScans=1, 
@@ -100,11 +100,11 @@ print("Normalizing data with defined thresholds...")
 # with the expected molds. Thresholding difference with this value should
 # keep near 100% of the expected mold.
 classThresholds = {
-    'heightFront': 0.03,
-    'lengthDown': 0.1,
-    'slopeBack': 0.15,
-    'parallelismTop': 0.06,
-    'widthDownBack': 0.05,
+    # 'heightFront': 0.03,
+    # 'lengthDown': 0.1,
+    # 'slopeBack': 0.15,
+    # 'parallelismTop': 0.06,
+    # 'widthDownBack': 0.05,
     # 'leftK': 0.0035,
 }
 
