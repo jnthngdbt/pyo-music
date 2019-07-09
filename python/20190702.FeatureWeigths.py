@@ -12,7 +12,8 @@ from library.initdata import *
 # Selection
 # featureSubset = featureSubset_ABC
 # featureSubset = featureSubset_ABCD
-# featureSubset = featureSubset_ABCDK
+featureSubset = featureSubset_ABCDK
+# featureSubset = featureSubset_ABCDK_NoTop
 # featureSubset = featureSubset_ABCDK_NoTopNormal
 # featureSubset = featureSubset_ABCK + featureSubset_Size
 # featureSubset = featureSubset_ABCK + featureSubset_Size
@@ -24,7 +25,9 @@ from library.initdata import *
 # featureSubset = featureSubset_DK # should by alignment invariant
 # featureSubset = featureSubset_D # should by alignment invariant
 # featureSubset = featureSubset_K # should by alignment invariant
-featureSubset = featureSubset_Edges + featureSubset_K
+# featureSubset = featureSubset_Edges + featureSubset_K
+# featureSubset = featureSubset_DK
+# featureSubset = featureSubset_Edges + featureSubset_ABCDK
 
 #%%
 
@@ -47,16 +50,16 @@ data = importAndPreprocessData(
     # moldScansFiles=['data/20190703.planes.goodscans.rawalign.csv'], 
     moldsFile='data/planes.moldscans.ori.rawalign.csv', 
     scansFiles=['data/planes.bfiscans.ori.rawalign.csv'], 
-    outlierMoldsStd=3, 
+    outlierMoldsStd=4, 
     outlierScansStd=3, 
     ignoreBfi=False,
     subsampleScans=1, 
-    showData=True,
+    showData=False,
     computeMoldRowMapping=False,
     # rereferenceNormalFeatures=True,
     standardize=False) # does not change results, but may help for visualization
 
-reduceWithPca = True
+reduceWithPca = False
 
 def getMoldData(): return data.loc[data['type'] == 'mold', :]
 def getScanData(): return data.loc[data['type'] == 'scan', :]
@@ -65,11 +68,18 @@ def getFullScanData(): return data.loc[(data['type'] == 'moldscan') | (data['typ
 
 #%%
 
-def computePerformance(yPredict, yTest, classesTrain):
+def computePerformance(c, yPredict, yTest, classesTrain):
+    from sklearn.metrics import accuracy_score
+    print('Accuracy: {}%'.format(100.0 * accuracy_score(yTest, c.predict(xTest))))
+
     # yPredict: samples x classes
     Ns = yPredict.shape[0]
 
-    # plt.matshow(yPredict)
+    plt.figure()
+    for i in np.arange(yPredict.shape[0]):
+        plt.plot(np.sort(yPredict[i,:]) - np.max(yPredict[i,:]))
+    plt.xlabel('class')
+    plt.ylabel('hyper-distance')
 
     yPredictBest = []
 
@@ -124,6 +134,7 @@ def computePerformance(yPredict, yTest, classesTrain):
     print('Top 5: {}%'.format(getPercent(ranks < 5)))
     print('Top 10: {}%'.format(getPercent(ranks < 10)))
     print('Top 20: {}%'.format(getPercent(ranks < 20)))
+    print('Top 30: {}%'.format(getPercent(ranks < 30)))
 
 
 #%%
@@ -158,35 +169,26 @@ def getPca(data, varianceRatio):
 def computeLda(xTrain, xTest, yTrain, yTest):
     from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as DA # 'pip install -U scikit-learn', or 'conda install scikit-learn'
 
-    if reduceWithPca:
-        varianceRatio = 0.9999
-        pca = getPca(xTrain, varianceRatio)
-        print('PCA reduction from {} to {} dimensions ({}%)'.format(xTrain.shape[1], pca.transform(xTrain).shape[1], varianceRatio*100.0))
-        xTrain = pca.transform(xTrain)
-        xTest = pca.transform(xTest)
-
     c = DA()
     c.fit(xTrain, yTrain) # samples x features
     # yPredict = c.predict_proba(xTest) # samples x classes
     yPredict = c.decision_function(xTest) # samples x classes
 
-    from sklearn.metrics import accuracy_score
-    print('Accuracy: {}%'.format(100.0 * accuracy_score(yTest, c.predict(xTest))))
-
     classNames = c.classes_.tolist()
     printLdaWeights(c, classNames)
 
-    weights = c.coef_
-    plt.figure(figsize=(10,10))
-    ax = plt.subplot(1,1,1)
-    ax.matshow(weights)
-    ax.set_aspect('auto')
-    ax.set_xticks(np.arange(len(featureSubset)))
-    ax.set_yticks(np.arange(len(classNames)))
-    ax.set_xticklabels(featureSubset, rotation=90, fontsize=10)
-    ax.set_yticklabels(classNames, fontsize=6)
+    if not reduceWithPca:
+        weights = c.coef_
+        plt.figure(figsize=(10,10))
+        ax = plt.subplot(1,1,1)
+        ax.matshow(weights)
+        ax.set_aspect('auto')
+        ax.set_xticks(np.arange(len(featureSubset)))
+        ax.set_yticks(np.arange(len(classNames)))
+        ax.set_xticklabels(featureSubset, rotation=90, fontsize=10)
+        ax.set_yticklabels(classNames, fontsize=6)
 
-    computePerformance(yPredict, yTest, classNames)
+    computePerformance(c, yPredict, yTest, classNames)
 
 def computeLogisticRegression(xTrain, xTest, yTrain, yTest):
     from sklearn.linear_model import LogisticRegression
@@ -250,6 +252,13 @@ def testScansOnMolds():
 # xTrain, xTest, yTrain, yTest = testScansOnMoldScans()
 # xTrain, xTest, yTrain, yTest = testMoldScansOnScans()
 xTrain, xTest, yTrain, yTest = testScansOnMolds()
+
+if reduceWithPca:
+    varianceRatio = 0.99
+    pca = getPca(xTrain, varianceRatio)
+    print('PCA reduction from {} to {} dimensions ({}%)'.format(xTrain.shape[1], pca.transform(xTrain).shape[1], varianceRatio*100.0))
+    xTrain = pca.transform(xTrain)
+    xTest = pca.transform(xTest)
 
 print('Number for train: {} ({})'.format(len(yTrain), xTrain.shape[0]))
 print('Number for test: {} ({})'.format(len(yTest), xTest.shape[0]))
