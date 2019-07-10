@@ -198,7 +198,7 @@ def computeLogisticRegression(xTrain, xTest, yTrain, yTest):
     # p = lda.predict_proba(xTest) # samples x classes
     yPredict = c.decision_function(xTest) # samples x classes
 
-    computePerformance(yPredict, yTest, c.classes_.tolist())
+    computePerformance(c, yPredict, yTest, c.classes_.tolist())
 
 #%% 
 

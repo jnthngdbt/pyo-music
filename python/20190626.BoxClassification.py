@@ -69,19 +69,19 @@ featDiffNames = []
 featureClassificationQuality = []
 for feat in featureSubset:
     # Feature name for the difference.
-    featDiff = feat + '-diff-norm'
+    featDiff = feat + '-diff'
     featDiffNames.append(featDiff)
     # Compute difference.
-    moldStd = getMoldData()[feat].std()
-    data[featDiff] = computeDiffWithExpectedMold(feat) / moldStd
+    data[featDiff] = computeDiffWithExpectedMold(feat)
     # Compute the quality.
+    moldStd = getMoldData()[feat].std()
     scanDiffStd = getScanData()[featDiff].std()
-    featureClassificationQuality.append(1 / scanDiffStd)
+    featureClassificationQuality.append(moldStd / scanDiffStd)
 
 print("Plotting features discriminant quality...")
 
 # Show differences histograms.
-getScanData()[featDiffNames].hist(bins=np.arange(-1,1,0.05), figsize=(10,10))
+getScanData()[featDiffNames].hist(bins=40, figsize=(10,10))
 
 #%%
 
@@ -108,12 +108,12 @@ classThresholds = {
     # 'leftK': 0.0035,
 }
 
-# Normalize the feature with the difference threshold. The difference can 
-# then be compared to 1 for thresholding.
-featureNormNames = []
-for feat in classThresholds.keys():
-    featureNormNames.append(feat + '-norm')
-    data[featureNormNames[-1]] = data[feat] / classThresholds[feat]
+# # Normalize the feature with the difference threshold. The difference can 
+# # then be compared to 1 for thresholding.
+# featureNormNames = []
+# for feat in classThresholds.keys():
+#     featureNormNames.append(feat + '-norm')
+#     data[featureNormNames[-1]] = data[feat] / classThresholds[feat]
 
 #%%
 print("Computing ranks...")
