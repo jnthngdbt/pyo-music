@@ -1,0 +1,44 @@
+digraph G {
+
+  graph [
+    bgcolor=grey10,
+    fontcolor=grey50
+  ];
+
+  node [
+    fontcolor=grey50, 
+    fontname="arial narrow",
+    color=grey50, 
+    shape=box, 
+    // style="rounded",
+  ]
+
+  edge [
+    fontcolor=grey50, 
+    color=grey50,
+  ]
+
+  // Files
+  node [
+    style=filled,
+    color=grey30,
+    fontcolor=grey60
+  ]
+  moldFeaturesCsv
+  featureToleracesCsv
+
+  // Server
+  node [
+    style=solid,
+    color=grey50,
+    fontcolor=grey50
+  ]
+  moldDataFileServer
+  clusterTest
+
+  subgraph clusterTest {
+      moldFeaturesCsv
+      featureToleracesCsv
+  }
+
+}
