@@ -63,7 +63,7 @@ def setAxe2d(fig, ax):
   ax.set_xlabel('X')
   ax.set_ylabel('Y')
   fig.tight_layout()
-  plt.axis('square')
+  # plt.axis('square')
 
 def setAxe3d(fig, ax):
   setAxe2d(fig, ax)
