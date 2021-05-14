@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import signal
 import matplotlib
 import matplotlib.pyplot as plt
 
@@ -13,15 +14,15 @@ Nt = 365
 Np = 2 # number of predictors
 Ne = 5 # number of events
 
-def cumsumStock():
-  x = np.random.normal(0, 1, Nt)
-  x = np.cumsum(x)
-  x = x + 0.2 * np.arange(0, Nt)
-  return x
+# def cumsumStock():
+#   x = np.random.normal(0, 1, Nt)
+#   x = np.cumsum(x)
+#   x = x + 0.2 * np.arange(0, Nt)
+#   return x
 
 while(1):
 
-  s = cumsumStock() # stocks baseline
+  # s = cumsumStock() # stocks baseline
 
   i = np.random.randint(0.1 * Nt, 0.9 * Nt, Ne)
 
@@ -30,12 +31,15 @@ while(1):
     p[:, k] = np.random.normal(size=2)
     
   for k in np.arange(Np):
-    p[k, :] = np.convolve(p[k, :], np.ones(3), 'same')
+    p[k, :] = p[k, :] + 0.1 * (np.random.rand(Nt) - 0.5) # must be 0 mean to avoid ramping cumsum
+    p[k, :] = np.convolve(p[k, :], 1 * signal.windows.hann(10), 'same')
+    # p[k, :] = p[k, :] + 0.1 * np.random.normal(size=Nt)
 
-  s = np.random.normal(0, 1, Nt)
-  s = s + 10 * p[0, :] + 10 * p[1, :]
+  # s = np.random.normal(0, 1, Nt)
+  # s = s + 10 * p[0, :] + 10 * p[1, :]
+  s = 10 * p[0, :] + 10 * p[1, :]
   s = np.cumsum(s)
-  s = s + 0.2 * np.arange(0, Nt)
+  # s = s + 0.05 * np.arange(0, Nt)
 
   plt.figure(figsize= 0.005 * np.array([1334, 750])) # iPhone 6, 7, 8 resolution
 
