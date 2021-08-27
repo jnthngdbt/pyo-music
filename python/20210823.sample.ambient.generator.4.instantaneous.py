@@ -215,7 +215,7 @@ exportCompressed(s, "./songs/sample.ambient.generated.sample.m4a", fs)
 maxFreq = 6000
 
 fmax = argmax(f > maxFreq)
-P = np.log(S)
+P = np.log(S, where=S>0)
 P0 = P[:fmax, :, 0]
 f0 = f[:fmax]
 plt.pcolormesh(t, f0, P0)
@@ -224,10 +224,5 @@ C = np.corrcoef(P0.T)
 
 plt.figure()
 plt.pcolormesh(t, t, C)
-
-plt.figure()
-plt.plot(s)
-for iii in np.arange(nbFfts):
-  plt.plot(iii * Tk * fs, 0, '.')
 
 plt.show()
