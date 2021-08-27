@@ -98,44 +98,23 @@ def spectrogram(x, fs, Ts, Tw):
 
   return np.abs(S)
 
-def mergeSpectra(S, c):
-  R = np.zeros(S.shape)
+def smooth(x, n, a):
+  return ndimage.convolve1d(x, np.ones(n), axis=a)
 
-  iStart = 0
-  N = 1
-
-  Sk = np.reshape(S[:,0,:], (S.shape[0], 1, S.shape[2]))
-
-  for i in np.arange(1, S.shape[1]):
-    Si = np.reshape(S[:,i,:], (S.shape[0], 1, S.shape[2]))
-
-    Pi = np.log(np.squeeze(np.sum(Si, axis=2)))
-    Pk = np.log(np.squeeze(np.sum(Sk, axis=2)))
-    C = np.corrcoef(Pi, Pk)
-
-    if np.all(C >= c):
-      Sk = Sk + (Si - Sk) / (N + 1)
-      N += 1
-    else:
-      if iStart == i-1: R[:, iStart, :] = np.squeeze(Sk)
-      else: R[:, iStart:i-1, :] = Sk
-     
-      iStart = i
-      Sk = Si
-
-  return R
-
-def smoothSpectrogram(S, n):
-  return ndimage.convolve1d(S, np.ones(n), axis=1)
-
-def reconstructSample(F, k, w):
+def reconstructSample(F, k, w, phases):
   F = interpolateFft(F, k)
-  F = randomizePhase(F)
+
+  if len(phases) == 0: 
+    F = np.abs(F) * np.exp(1j * np.random.rand(F.shape[0], F.shape[1]) * np.pi)
+  else:
+    F = np.abs(F) * np.exp(1j * phases)
 
   x = np.real(np.fft.ifft(F, axis=0))
-  x = applyWindow(x, signal.windows.hann(int(w * x.shape[0])))
 
-  return x
+  if w > 0:
+    x = applyWindow(x, signal.windows.triang(int(w * x.shape[0])))
+
+  return x, phases
 
 def filterSound(x, fc, fs):
   sos = signal.butter(6, fc, 'lp', fs=fs, output='sos')
@@ -154,8 +133,20 @@ def playSound(x):
   tmpWav = "temp.wav"
   loop(x, tmpWav)
 
+def mixSignal(s, x, n):
+  if len(s) <= 0:
+    return x
+  else:
+    Ns = s.shape[0] 
+    Nx = x.shape[0]
+    Ny = Ns + Nx - n
+    y = np.zeros((Ny, s.shape[1]))
+    y[0:Ns, :] = s
+    y[Ns-n:,:] += x
+    return y
+
 ## -------------------------------------------------------
-# seg = audiosegment.from_file("./data/03 Mission Two.m4a")
+seg = audiosegment.from_file("./data/03 Mission Two.m4a")
 # seg = audiosegment.from_file("./data/04 Mission Three.m4a")
 # seg = audiosegment.from_file("./data/07 Mission Six.m4a")
 # seg = audiosegment.from_file("./data/07 Mission Six.m4a")
@@ -168,7 +159,7 @@ def playSound(x):
 # seg = audiosegment.from_file("./data/Late.06.m4a")
 # seg = audiosegment.from_file("./data/Sam Sung 3.m4a") # wow
 # seg = audiosegment.from_file("./data/Aly Wood 2.m4a")
-seg = audiosegment.from_file("./data/Beverly Aly Hills 5.m4a") # t: 3.55, 7.5, 12.6
+# seg = audiosegment.from_file("./data/Beverly Aly Hills 5.m4a") # t: 3.55, 7.5, 12.6
 # seg = audiosegment.from_file("./data/insects.m4a")
 # seg = audiosegment.from_file("./data/smallthings.m4a") # t: 31.55, 47.95
 
@@ -182,8 +173,8 @@ if x.ndim == 1:
 
 ## -------------------------------------------------------
 Ts = 0.05 # step duration
-Tw = 0.75 # sample duration
-lowPass = 4000
+Tw = 0.25 # sample duration
+lowPass = 8000
 doBoostBass = False # when using a recording
 
 x = filterSound(x, lowPass, fs)
@@ -193,28 +184,35 @@ if doBoostBass:
 exportCompressed(x, "./songs/sample.ambient.generated.song.m4a", fs)
 
 S = spectrogram(x, fs, Ts, Tw)
-# S = mergeSpectra(S, 0.98) # meh, must have more tools to visualize and debug
-S = smoothSpectrogram(S, 3)
+# S = smooth(S, 10, 1)
 
 t = np.linspace(0, x.shape[0] / fs, num=S.shape[1])
 f = np.fft.fftfreq(S.shape[0], 1 / fs)
 
 ## -------------------------------------------------------
-Tk = 20 # desired final sample duration
-maxFreq = 6000
-timePosSec = 10
+Tk = 0.5 # desired final sample duration (slow down factor)
+winRatio = 0.6
 
-ti = argmax(t > timePosSec) # sample index to play
+nbFfts = S.shape[1]
 
-Si = np.squeeze(S[:,ti,:])
-s = reconstructSample(Si, Tk / Tw, 0.5)
+# s = np.zeros((int(Tk * fs), S.shape[2]))
+s = []
+p = []
+for i in np.arange(nbFfts):
+  print('{0}/{1}'.format(i, nbFfts))
+  Si = np.squeeze(S[:,i,:])
+  si, p = reconstructSample(Si, Tk / Tw, winRatio, p)
+  s = mixSignal(s, si, int(1.5 * winRatio * Tk * fs))
+
+# s = smooth(s, 100, 0)
 
 exportCompressed(s, "./songs/sample.ambient.generated.sample.m4a", fs)
 
-music_thread = Thread(target=lambda: playSound(s))
-music_thread.start()
+# music_thread = Thread(target=lambda: playSound(s))
+# music_thread.start()
 
 ## ------------------------------------------------------
+maxFreq = 6000
 
 fmax = argmax(f > maxFreq)
 P = np.log(S)
@@ -226,5 +224,10 @@ C = np.corrcoef(P0.T)
 
 plt.figure()
 plt.pcolormesh(t, t, C)
+
+plt.figure()
+plt.plot(s)
+for iii in np.arange(nbFfts):
+  plt.plot(iii * Tk * fs, 0, '.')
 
 plt.show()
