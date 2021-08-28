@@ -146,22 +146,24 @@ def mixSignal(s, x, n):
     return y
 
 ## -------------------------------------------------------
-seg = audiosegment.from_file("./data/03 Mission Two.m4a")
-# seg = audiosegment.from_file("./data/04 Mission Three.m4a")
-# seg = audiosegment.from_file("./data/07 Mission Six.m4a")
-# seg = audiosegment.from_file("./data/07 Mission Six.m4a")
-# seg = audiosegment.from_file("./data/07 Mission Six.m4a")
-# seg = audiosegment.from_file("./data/11 Mission Ten.m4a")
-# seg = audiosegment.from_file("./data/Big Rock.1.m4a")
-# seg = audiosegment.from_file("./data/Alone.3.m4a")
-# seg = audiosegment.from_file("./data/Jump.12.m4a")
-# seg = audiosegment.from_file("./data/Press.5.m4a")
-# seg = audiosegment.from_file("./data/Late.06.m4a")
-# seg = audiosegment.from_file("./data/Sam Sung 3.m4a") # wow
-# seg = audiosegment.from_file("./data/Aly Wood 2.m4a")
-# seg = audiosegment.from_file("./data/Beverly Aly Hills 5.m4a") # t: 3.55, 7.5, 12.6
-# seg = audiosegment.from_file("./data/insects.m4a")
-# seg = audiosegment.from_file("./data/smallthings.m4a") # t: 31.55, 47.95
+# name = "03 Mission Two"
+# name = "04 Mission Three"
+# name = "07 Mission Six"
+# name = "11 Mission Ten"
+# name = "Big Rock.1"
+name = "Alone.3"
+# name = "Jump.12"
+# name = "Press.5"
+# name = "Late.06"
+# name = "Sam Sung 3" # wow
+# name = "Aly Wood 2"
+# name = "Beverly Aly Hills 5"
+# name = "insects"
+# name = "smallthings" # t: 31
+
+nameIn = "./data/" + name + ".m4a"
+
+seg = audiosegment.from_file(nameIn)
 
 fs = seg.frame_rate
 x = seg.to_numpy_array()
@@ -174,7 +176,7 @@ if x.ndim == 1:
 ## -------------------------------------------------------
 Ts = 0.05 # step duration
 Tw = 0.25 # sample duration
-lowPass = 8000
+lowPass = 4000
 doBoostBass = False # when using a recording
 
 x = filterSound(x, lowPass, fs)
@@ -190,12 +192,11 @@ t = np.linspace(0, x.shape[0] / fs, num=S.shape[1])
 f = np.fft.fftfreq(S.shape[0], 1 / fs)
 
 ## -------------------------------------------------------
-Tk = 0.5 # desired final sample duration (slow down factor)
+Tk = 5. # desired final sample duration (slow down factor)
 winRatio = 0.6
 
 nbFfts = S.shape[1]
 
-# s = np.zeros((int(Tk * fs), S.shape[2]))
 s = []
 p = []
 for i in np.arange(nbFfts):
@@ -206,7 +207,11 @@ for i in np.arange(nbFfts):
 
 # s = smooth(s, 100, 0)
 
+# pathOut = "C:/Users/jgodbout/OneDrive/Documents/music/sample.ambient/"
+pathOut = "./songs/"
+nameOut = '{}{}.Ts{}ms.Tw{}ms.Tk{}ms.LP{}Hz.win{}.m4a'.format(pathOut, name, int(Ts*1000), int(Tw*1000), int(Tk*1000), int(lowPass), int(winRatio*100))
 exportCompressed(s, "./songs/sample.ambient.generated.sample.m4a", fs)
+exportCompressed(s, nameOut, fs)
 
 # music_thread = Thread(target=lambda: playSound(s))
 # music_thread.start()
