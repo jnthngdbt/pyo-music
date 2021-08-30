@@ -67,12 +67,13 @@ def randomizePhase(F):
   return F
 
 def applyWindow(x, w):
-  Nw = int(0.5 * len(w))
+  Nw = len(w)
+  Nh = int(0.5 * Nw)
   Nx = x.shape[0]
 
   for i in np.arange(x.shape[1]):
-    x[0:Nw, i] = x[0:Nw, i] * w[0:Nw]
-    x[Nx-Nw:, i] = x[Nx-Nw:, i] * w[Nw:]
+    x[0:Nh, i] = x[0:Nh, i] * w[0:Nh]
+    x[Nx-Nh:, i] = x[Nx-Nh:, i] * w[Nw-Nh:]
 
   return x
 
