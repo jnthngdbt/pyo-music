@@ -46,8 +46,7 @@ def interpolateFft(F, k):
   Nf = F.shape[0]
   Ng = int(Nf * k)
 
-  Gr = np.zeros((Ng, 2))
-  Gi = np.zeros((Ng, 2))
+  F = np.abs(F)
   G = np.zeros((Ng, 2))
 
   f = np.fft.fftfreq(Nf)
@@ -57,10 +56,8 @@ def interpolateFft(F, k):
   g = np.linspace(f[0], f[-1], num=Ng)
 
   for i in np.arange(F.shape[1]):
-    Gr[:,i] = np.interp(g, f, F[:,i].real)
-    Gi[:,i] = np.interp(g, f, F[:,i].imag)
+    G[:,i] = np.interp(g, f, F[:,i])
 
-  G = Gr + 1j * Gi
   G = np.fft.fftshift(G)
 
   return G
