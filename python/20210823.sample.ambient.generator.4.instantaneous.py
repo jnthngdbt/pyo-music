@@ -99,18 +99,41 @@ def spectrogram(x, fs, Ts, Tw):
 def smooth(x, n, a):
   return ndimage.convolve1d(x, np.ones(n), axis=a)
 
+def crossFadeWindow(n): # for equal power fading
+  hn = int(0.5 * n)
+  t = np.arange(hn)
+  x = np.sqrt(t)
+  x = np.concatenate([x, np.flipud(x)])
+  x = x / np.max(x)
+
+  w = np.zeros(n)
+  w[0:len(x)] = x # deal with odd window lenght, may miss 1 point
+  return w
+
+def crossFadeWindowParabola(n): # for equal power fading
+  t = np.linspace(-1, 1, num=n)
+  x = t ** 2
+  x = 1 - x / np.max(x)
+  return x
+
+def crossFadeWindowCosine(n): # for equal power fading
+  t = np.arange(n)
+  x = np.sin(np.pi * t / n)
+  return x
+
 def reconstructSample(F, k, w, phases):
   F = interpolateFft(F, k)
 
-  if len(phases) == 0: 
-    F = np.abs(F) * np.exp(1j * np.random.rand(F.shape[0], F.shape[1]) * np.pi)
-  else:
-    F = np.abs(F) * np.exp(1j * phases)
+  # Use random phases when cross-fading to avoid interferences and hear beats due to similar signals.
+  if True: #len(phases) == 0: 
+    phases = np.random.rand(F.shape[0], F.shape[1]) * np.pi
+
+  F = np.abs(F) * np.exp(1j * phases)
 
   x = np.real(np.fft.ifft(F, axis=0))
 
   if w > 0:
-    x = applyWindow(x, signal.windows.triang(int(w * x.shape[0])))
+    x = applyWindow(x, crossFadeWindow(int(w * x.shape[0])))
 
   return x, phases
 
@@ -133,7 +156,7 @@ def playSound(x):
 
 def mixSignal(s, x, n):
   if len(s) <= 0:
-    return x
+    return x, np.arange(x.shape[0])
   else:
     Ns = s.shape[0] 
     Nx = x.shape[0]
@@ -141,15 +164,17 @@ def mixSignal(s, x, n):
     y = np.zeros((Ny, s.shape[1]))
     y[0:Ns, :] = s
     y[Ns-n:,:] += x
-    return y
+    t = np.arange(Ny)
+    return y, t[Ns-n:]
 
 ## -------------------------------------------------------
-# name = "03 Mission Two"
+name = "03 Mission Two"
 # name = "04 Mission Three"
+# name = "05 Mission Four"
 # name = "07 Mission Six"
 # name = "11 Mission Ten"
 # name = "Big Rock.1"
-name = "Alone.3"
+# name = "Alone.3"
 # name = "Jump.12"
 # name = "Press.5"
 # name = "Late.06"
@@ -158,6 +183,14 @@ name = "Alone.3"
 # name = "Beverly Aly Hills 5"
 # name = "insects"
 # name = "smallthings" # t: 31
+# name = "Sam Buca - Outdoor Tone Car"
+# name = "Sam Buca - Outdoor Tone"
+# name = "Tone night 21h Aug"
+# name = "Tone outside 17h August"
+# name = "Sam Buca - Outdoor Water"
+# name = "Sam Buca - Indoor Water Mild"
+# name = "Sam Buca - Indoor Water"
+# name = "Tron Ouverture"
 
 nameIn = "./data/" + name + ".m4a"
 
@@ -174,7 +207,7 @@ if x.ndim == 1:
 ## -------------------------------------------------------
 Ts = 0.05 # step duration
 Tw = 0.25 # sample duration
-lowPass = 4000
+lowPass = 8000
 doBoostBass = False # when using a recording
 
 x = filterSound(x, lowPass, fs)
@@ -184,16 +217,19 @@ if doBoostBass:
 exportCompressed(x, "./songs/sample.ambient.generated.song.m4a", fs)
 
 S = spectrogram(x, fs, Ts, Tw)
-# S = smooth(S, 10, 1)
+# S = smooth(S, 3, 1)
 
 t = np.linspace(0, x.shape[0] / fs, num=S.shape[1])
 f = np.fft.fftfreq(S.shape[0], 1 / fs)
 
 ## -------------------------------------------------------
-Tk = 5. # desired final sample duration (slow down factor)
+Tk = 5.0 # desired final sample duration (slow down factor)
 winRatio = 0.6
+crossFadeRatio = 1.5 * winRatio
 
 nbFfts = S.shape[1]
+
+plt.figure()
 
 s = []
 p = []
@@ -201,7 +237,13 @@ for i in np.arange(nbFfts):
   print('{0}/{1}'.format(i, nbFfts))
   Si = np.squeeze(S[:,i,:])
   si, p = reconstructSample(Si, Tk / Tw, winRatio, p)
-  s = mixSignal(s, si, int(1.5 * winRatio * Tk * fs))
+
+  s, ti = mixSignal(s, si, int(crossFadeRatio * Tk * fs))
+
+  if i in [0.5 * nbFfts - 1, 0.5 * nbFfts, 0.5 * nbFfts + 1]: # debug plots
+    plt.plot(ti, si[:,0], alpha=0.6)
+
+plt.plot(s[:,0], alpha=0.3)
 
 # s = smooth(s, 100, 0)
 
@@ -221,11 +263,15 @@ fmax = argmax(f > maxFreq)
 P = np.log(S, where=S>0)
 P0 = P[:fmax, :, 0]
 f0 = f[:fmax]
+plt.figure()
 plt.pcolormesh(t, f0, P0)
 
 C = np.corrcoef(P0.T)
 
 plt.figure()
 plt.pcolormesh(t, t, C)
+
+plt.figure()
+plt.plot(crossFadeWindowCosine(500))
 
 plt.show()
