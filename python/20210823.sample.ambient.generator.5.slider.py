@@ -74,7 +74,7 @@ def reconstructSample(F, k, fadeLen, phases):
 
   # Use random phases when cross-fading to avoid interferences and hear beats due to similar signals.
   if len(phases) == 0: 
-    phases = np.random.rand(F.shape[0], F.shape[1]) * np.pi
+    phases = np.random.rand(F.shape[0], F.shape[1]) * 2.0 * np.pi
 
   F = np.abs(F) * np.exp(1j * phases)
 
@@ -98,8 +98,26 @@ def exportCompressed(x, name, fs):
   y = audiosegment.from_numpy_array(discretize(x), fs)
   y.export(name)
 
+def spectrogram(x, fs, Ts, Tw):
+  stepLen = int(Ts * fs)
+  windowLen = int(Tw * fs)
+
+  maxPos = x.shape[0] - windowLen - 1
+  nbSteps = int(maxPos / stepLen) - 1
+  nbChans = x.shape[1]
+
+  S = np.zeros((windowLen, nbSteps, nbChans)) * np.exp(1j * np.zeros((windowLen, nbSteps, nbChans)))
+
+  for i in np.arange(nbSteps):
+    print('{0}/{1}'.format(i, nbSteps))
+    pos = i * stepLen
+    xi = x[pos: pos + windowLen, :]
+    S[:, i, :] = np.fft.fft(xi, axis=0)
+
+  return np.abs(S)
+
 ## -------------------------------------------------------
-# name = "03 Mission Two"
+name = "03 Mission Two"
 # name = "04 Mission Three"
 # name = "05 Mission Four"
 # name = "07 Mission Six"
@@ -110,7 +128,7 @@ def exportCompressed(x, name, fs):
 # name = "Press.5"
 # name = "Late.06"
 # name = "Sam Sung 3" # wow
-name = "Aly Wood 2"
+# name = "Aly Wood 2"
 # name = "Beverly Aly Hills 5"
 # name = "insects"
 # name = "smallthings" # t: 31
@@ -122,19 +140,23 @@ name = "Aly Wood 2"
 # name = "Sam Buca - Indoor Water Mild"
 # name = "Sam Buca - Indoor Water"
 # name = "Tron Ouverture"
+# name = "Background noise with voice"
+# name = "TC RS212 vs SVT15E"
+# name = "bass recording jam miche 1"
 
 nameIn = "./data/" + name + ".m4a"
 
 seg = audiosegment.from_file(nameIn)
 
 ## -------------------------------------------------------
-Ts = 0.25 # step duration
+Ts = 0.05 # step duration
 Tw = 0.25 # sample duration
-lowPass = 6000
+lowPass = 8000
 doBoostBass = False # when using a recording
 
-Tk = 5.0 # desired final sample duration (slow down factor)
-fadeDur = 0.001
+Tk = 60.0 # desired final sample duration (slow down factor)
+fadeDur = 5
+
 ## -------------------------------------------------------
 
 fs = seg.frame_rate
@@ -165,11 +187,6 @@ def playSample(p):
   tmpWav = "temp.wav"
   play(si, tmpWav)
 
-Fi = np.fft.fft(x[100000: 100000 + windowLen, :], axis=0)
-si, p = reconstructSample(np.abs(Fi), Tk / Tw, int(fadeDur * 2 * fs), [])
-plt.plot(si)
-plt.show()
-
 r = tk.Tk()
 current_value = tk.IntVar()
 
@@ -186,5 +203,16 @@ slider = tk.Scale(
     variable=current_value,
     command=slider_changed
 )
+
 slider.pack()
 r.mainloop()
+
+plt.figure()
+plt.plot(x)
+
+Fi = np.fft.fft(x[100000: 100000 + windowLen, :], axis=0)
+si, p = reconstructSample(np.abs(Fi), Tk / Tw, int(fadeDur * 2 * fs), [])
+plt.figure()
+plt.plot(si)
+
+plt.show()

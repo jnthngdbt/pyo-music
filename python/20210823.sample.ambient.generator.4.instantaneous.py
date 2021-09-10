@@ -83,10 +83,10 @@ def spectrogram(x, fs, Ts, Tw):
   windowLen = int(Tw * fs)
 
   maxPos = x.shape[0] - windowLen - 1
-  nbSteps = int(maxPos / stepLen) - 1
+  nbSteps = max(1, int(maxPos / stepLen) - 1)
   nbChans = x.shape[1]
 
-  S = np.zeros((windowLen, nbSteps, nbChans))
+  S = np.zeros((windowLen, nbSteps, nbChans)) * np.exp(1j * np.zeros((windowLen, nbSteps, nbChans)))
   
   for i in np.arange(nbSteps):
     print('{0}/{1}'.format(i, nbSteps))
@@ -126,7 +126,7 @@ def reconstructSample(F, k, w, phases):
 
   # Use random phases when cross-fading to avoid interferences and hear beats due to similar signals.
   if True: #len(phases) == 0: 
-    phases = np.random.rand(F.shape[0], F.shape[1]) * np.pi
+    phases = np.random.rand(F.shape[0], F.shape[1]) * 2.0 * np.pi
 
   F = np.abs(F) * np.exp(1j * phases)
 
@@ -168,10 +168,12 @@ def mixSignal(s, x, n):
     return y, t[Ns-n:]
 
 ## -------------------------------------------------------
-name = "03 Mission Two"
+# name = "03 Mission Two"
 # name = "04 Mission Three"
 # name = "05 Mission Four"
 # name = "07 Mission Six"
+# name = "08 Mission Seven"
+# name = "09 Mission Eight"
 # name = "11 Mission Ten"
 # name = "Big Rock.1"
 # name = "Alone.3"
@@ -191,6 +193,10 @@ name = "03 Mission Two"
 # name = "Sam Buca - Indoor Water Mild"
 # name = "Sam Buca - Indoor Water"
 # name = "Tron Ouverture"
+# name = "Background noise with voice"
+# name = "TC RS212 vs SVT15E"
+# name = "bass recording jam miche 1"
+name = "Ambient input sing"
 
 nameIn = "./data/" + name + ".m4a"
 
@@ -207,7 +213,7 @@ if x.ndim == 1:
 ## -------------------------------------------------------
 Ts = 0.05 # step duration
 Tw = 0.25 # sample duration
-lowPass = 8000
+lowPass = 12000
 doBoostBass = False # when using a recording
 
 x = filterSound(x, lowPass, fs)
@@ -219,13 +225,21 @@ exportCompressed(x, "./songs/sample.ambient.generated.song.m4a", fs)
 S = spectrogram(x, fs, Ts, Tw)
 # S = smooth(S, 3, 1)
 
+P = np.squeeze(np.sum(np.log(S, where=S>0), axis=2))
+
 t = np.linspace(0, x.shape[0] / fs, num=S.shape[1])
 f = np.fft.fftfreq(S.shape[0], 1 / fs)
 
 ## -------------------------------------------------------
-Tk = 5.0 # desired final sample duration (slow down factor)
+
+# C = np.corrcoef(P.T)
+# c = np.squeeze(np.sum(C, axis=0))
+# ci = np.argsort(c)
+
+## -------------------------------------------------------
+Tk = 4.0 # desired final sample duration (slow down factor)
 winRatio = 0.6
-crossFadeRatio = 1.5 * winRatio
+crossFadeRatio = 0.9 #1.5 * winRatio
 
 nbFfts = S.shape[1]
 
@@ -249,7 +263,7 @@ plt.plot(s[:,0], alpha=0.3)
 
 # pathOut = "C:/Users/jgodbout/OneDrive/Documents/music/sample.ambient/"
 pathOut = "./songs/"
-nameOut = '{}{}.Ts{}ms.Tw{}ms.Tk{}ms.LP{}Hz.win{}.m4a'.format(pathOut, name, int(Ts*1000), int(Tw*1000), int(Tk*1000), int(lowPass), int(winRatio*100))
+nameOut = '{}{}.Ts{}ms.Tw{}ms.Tk{}ms.LP{}Hz.win{}.crossfade{}.m4a'.format(pathOut, name, int(Ts*1000), int(Tw*1000), int(Tk*1000), int(lowPass), int(winRatio*100), int(crossFadeRatio*100))
 exportCompressed(s, "./songs/sample.ambient.generated.sample.m4a", fs)
 exportCompressed(s, nameOut, fs)
 
@@ -260,16 +274,13 @@ exportCompressed(s, nameOut, fs)
 maxFreq = 6000
 
 fmax = argmax(f > maxFreq)
-P = np.log(S, where=S>0)
-P0 = P[:fmax, :, 0]
+P0 = P[:fmax, :]
 f0 = f[:fmax]
 plt.figure()
 plt.pcolormesh(t, f0, P0)
 
-C = np.corrcoef(P0.T)
-
-plt.figure()
-plt.pcolormesh(t, t, C)
+# plt.figure()
+# plt.pcolormesh(t, t, C)
 
 plt.figure()
 plt.plot(crossFadeWindowCosine(500))

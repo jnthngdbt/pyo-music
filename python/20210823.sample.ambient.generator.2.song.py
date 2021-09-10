@@ -53,7 +53,7 @@ def interpolateFft(F, k):
   return G
 
 def randomizePhase(F):
-  F = np.abs(F) * np.exp(1j * np.random.rand(F.shape[0], F.shape[1]) * np.pi)
+  F = np.abs(F) * np.exp(1j * np.random.rand(F.shape[0], F.shape[1]) * 2.0 * np.pi)
   return F
 
 def applyWindow(x, w):

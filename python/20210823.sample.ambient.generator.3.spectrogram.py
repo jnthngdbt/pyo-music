@@ -66,7 +66,7 @@ def interpolateFft(F, k):
   return G
 
 def randomizePhase(F):
-  F = np.abs(F) * np.exp(1j * np.random.rand(F.shape[0], F.shape[1]) * np.pi)
+  F = np.abs(F) * np.exp(1j * np.random.rand(F.shape[0], F.shape[1]) * 2.0 * np.pi)
   return F
 
 def applyWindow(x, w):
@@ -88,7 +88,7 @@ def spectrogram(x, fs, Ts, Tw):
   nbSteps = int(maxPos / stepLen) - 1
   nbChans = x.shape[1]
 
-  S = np.zeros((windowLen, nbSteps, nbChans))
+  S = np.zeros((windowLen, nbSteps, nbChans)) * np.exp(1j * np.zeros((windowLen, nbSteps, nbChans)))
   
   for i in np.arange(nbSteps):
     print('{0}/{1}'.format(i, nbSteps))
@@ -96,7 +96,7 @@ def spectrogram(x, fs, Ts, Tw):
     xi = x[pos: pos + windowLen, :]
     S[:, i, :] = np.fft.fft(xi, axis=0)
 
-  return np.abs(S)
+  return S
 
 def mergeSpectra(S, c):
   R = np.zeros(S.shape)
@@ -155,7 +155,7 @@ def playSound(x):
   loop(x, tmpWav)
 
 ## -------------------------------------------------------
-# seg = audiosegment.from_file("./data/03 Mission Two.m4a")
+# seg = audiosegment.from_file("./data/03 Mission Two.m4a") # 72*0.05, 88*0.05
 # seg = audiosegment.from_file("./data/04 Mission Three.m4a")
 # seg = audiosegment.from_file("./data/07 Mission Six.m4a")
 # seg = audiosegment.from_file("./data/07 Mission Six.m4a")
@@ -170,7 +170,8 @@ def playSound(x):
 # seg = audiosegment.from_file("./data/Aly Wood 2.m4a")
 seg = audiosegment.from_file("./data/Beverly Aly Hills 5.m4a") # t: 3.55, 7.5, 12.6
 # seg = audiosegment.from_file("./data/insects.m4a")
-# seg = audiosegment.from_file("./data/smallthings.m4a") # t: 31.55, 47.95
+# seg = audiosegment.from_file("./data/smallthings.m4a") # t: 2.85, 16.5, 31.55, 47.95
+# seg = audiosegment.from_file("./data/Background noise with voice.m4a") # 43*0.05
 
 fs = seg.frame_rate
 x = seg.to_numpy_array()
@@ -182,8 +183,8 @@ if x.ndim == 1:
 
 ## -------------------------------------------------------
 Ts = 0.05 # step duration
-Tw = 0.75 # sample duration
-lowPass = 4000
+Tw = 0.5 # sample duration
+lowPass = 8000
 doBoostBass = False # when using a recording
 
 x = filterSound(x, lowPass, fs)
@@ -194,22 +195,22 @@ exportCompressed(x, "./songs/sample.ambient.generated.song.m4a", fs)
 
 S = spectrogram(x, fs, Ts, Tw)
 # S = mergeSpectra(S, 0.98) # meh, must have more tools to visualize and debug
-S = smoothSpectrogram(S, 3)
+# S = smoothSpectrogram(S, 3)
 
 t = np.linspace(0, x.shape[0] / fs, num=S.shape[1])
 f = np.fft.fftfreq(S.shape[0], 1 / fs)
 
 ## -------------------------------------------------------
-Tk = 20 # desired final sample duration
-maxFreq = 6000
-timePosSec = 10
+Tk = 5 # desired final sample duration
+maxFreq = 10000
+timePosSec = 3.55
 
 ti = argmax(t > timePosSec) # sample index to play
 
 Si = np.squeeze(S[:,ti,:])
-s = reconstructSample(Si, Tk / Tw, 0.5)
+s = reconstructSample(Si, Tk / Tw, 0.)
 
-exportCompressed(s, "./songs/sample.ambient.generated.sample.m4a", fs)
+exportCompressed(s, "./songs/sample.ambient.generated.sample.mp3", fs)
 
 music_thread = Thread(target=lambda: playSound(s))
 music_thread.start()
@@ -217,10 +218,15 @@ music_thread.start()
 ## ------------------------------------------------------
 
 fmax = argmax(f > maxFreq)
-P = np.log(S)
+P = np.log(np.abs(S))
 P0 = P[:fmax, :, 0]
 f0 = f[:fmax]
+plt.figure()
 plt.pcolormesh(t, f0, P0)
+
+fp = np.squeeze(P[:,ti,:])
+plt.figure()
+plt.plot(f,fp)
 
 C = np.corrcoef(P0.T)
 
