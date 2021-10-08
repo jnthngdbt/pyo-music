@@ -156,11 +156,9 @@ def playSound(x):
 
 ## -------------------------------------------------------
 # seg = audiosegment.from_file("./data/03 Mission Two.m4a") # 72*0.05, 88*0.05
-# seg = audiosegment.from_file("./data/04 Mission Three.m4a")
-# seg = audiosegment.from_file("./data/07 Mission Six.m4a")
-# seg = audiosegment.from_file("./data/07 Mission Six.m4a")
-# seg = audiosegment.from_file("./data/07 Mission Six.m4a")
-# seg = audiosegment.from_file("./data/11 Mission Ten.m4a")
+# seg = audiosegment.from_file("./data/04 Mission Three.m4a") # 24*0.05, 38*0.05, 234*0.05
+# seg = audiosegment.from_file("./data/07 Mission Six.m4a") # 331*0.05, 545*0.05, 1760*0.05
+seg = audiosegment.from_file("./data/11 Mission Ten.m4a") # 494*0.05, 727*0.05
 # seg = audiosegment.from_file("./data/Big Rock.1.m4a")
 # seg = audiosegment.from_file("./data/Alone.3.m4a")
 # seg = audiosegment.from_file("./data/Jump.12.m4a")
@@ -168,7 +166,7 @@ def playSound(x):
 # seg = audiosegment.from_file("./data/Late.06.m4a")
 # seg = audiosegment.from_file("./data/Sam Sung 3.m4a") # wow
 # seg = audiosegment.from_file("./data/Aly Wood 2.m4a")
-seg = audiosegment.from_file("./data/Beverly Aly Hills 5.m4a") # t: 3.55, 7.5, 12.6
+# seg = audiosegment.from_file("./data/Beverly Aly Hills 5.m4a") # t: 3.55, 7.5, 12.6
 # seg = audiosegment.from_file("./data/insects.m4a")
 # seg = audiosegment.from_file("./data/smallthings.m4a") # t: 2.85, 16.5, 31.55, 47.95
 # seg = audiosegment.from_file("./data/Background noise with voice.m4a") # 43*0.05
@@ -201,14 +199,14 @@ t = np.linspace(0, x.shape[0] / fs, num=S.shape[1])
 f = np.fft.fftfreq(S.shape[0], 1 / fs)
 
 ## -------------------------------------------------------
-Tk = 5 # desired final sample duration
-maxFreq = 10000
-timePosSec = 3.55
+Tk = 20 # desired final sample duration
+timePosSec = 727*0.05
+fadeRatio = 0.1
 
 ti = argmax(t > timePosSec) # sample index to play
 
 Si = np.squeeze(S[:,ti,:])
-s = reconstructSample(Si, Tk / Tw, 0.)
+s = reconstructSample(Si, Tk / Tw, fadeRatio)
 
 exportCompressed(s, "./songs/sample.ambient.generated.sample.mp3", fs)
 
@@ -217,16 +215,48 @@ music_thread.start()
 
 ## ------------------------------------------------------
 
-fmax = argmax(f > maxFreq)
 P = np.log(np.abs(S))
+fp = np.squeeze(P[:,ti,:])
+
+Ntrend = fp.shape[0] / 50.
+ftrend = ndimage.convolve1d(fp, np.ones(int(Ntrend)), axis=0) / Ntrend
+fdetrend = fp - ftrend
+Nsmooth = 1 # 1 for no effect
+fsmooth = ndimage.convolve1d(fdetrend, np.ones(int(Nsmooth)), axis=0) / Nsmooth
+plt.figure()
+plt.plot(f, fp)
+plt.plot(f, ftrend)
+plt.plot(f, fsmooth)
+plt.figure()
+plt.plot(f,fsmooth)
+
+# Nfp = fp.shape[0]
+# fshift = np.fft.fftshift(fp)
+# fharm = np.zeros(fshift.shape)
+# for i in np.arange(3, fshift.shape[0]):
+#   comb = np.arange(i, Nfp, i)
+#   fharm[i] = np.mean(fshift[comb, :], axis=0)
+# fharm = np.fft.fftshift(fharm)
+# plt.figure()
+# plt.plot(f, fp)
+# plt.plot(f, fharm)
+# plt.figure()
+# plt.plot(f, fharm)
+
+# ffp = np.fft.fft(fp, axis=0)
+# plt.figure()
+# plt.plot(f, ffp)
+
+## ------------------------------------------------------
+
+maxFreq = 10000
+fmax = argmax(f > maxFreq)
 P0 = P[:fmax, :, 0]
 f0 = f[:fmax]
 plt.figure()
 plt.pcolormesh(t, f0, P0)
 
-fp = np.squeeze(P[:,ti,:])
-plt.figure()
-plt.plot(f,fp)
+
 
 C = np.corrcoef(P0.T)
 

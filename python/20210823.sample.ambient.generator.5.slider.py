@@ -117,11 +117,11 @@ def spectrogram(x, fs, Ts, Tw):
   return np.abs(S)
 
 ## -------------------------------------------------------
-name = "03 Mission Two"
+# name = "03 Mission Two"
 # name = "04 Mission Three"
 # name = "05 Mission Four"
 # name = "07 Mission Six"
-# name = "11 Mission Ten"
+name = "11 Mission Ten"
 # name = "Big Rock.1"
 # name = "Alone.3"
 # name = "Jump.12"
@@ -155,7 +155,7 @@ lowPass = 8000
 doBoostBass = False # when using a recording
 
 Tk = 60.0 # desired final sample duration (slow down factor)
-fadeDur = 5
+fadeDur = 0.01
 
 ## -------------------------------------------------------
 
