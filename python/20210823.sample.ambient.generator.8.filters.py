@@ -214,6 +214,7 @@ timePosSec = 72*0.05
 winRatio = 0.6
 crossFadeRatio = 0.8
 nbVariations = 100
+speed = 0.5
 
 x = filterSound(x, lowPass, fs)
 if doBoostBass:
@@ -238,12 +239,12 @@ for i in np.arange(nbVariations):
   Fi[:,:] = F[:,:] # copy
 
   # ----
-  Fi = notch(Fi, f,  200.0, i, 0.090, 0.8)
-  Fi = notch(Fi, f,  400.0, i, 0.043, 1.6)
-  Fi = notch(Fi, f,  800.0, i, 0.088, 2.4)
-  Fi = notch(Fi, f, 1600.0, i, 0.062, 0.0)
-  Fi = notch(Fi, f, 3200.0, i, 0.081, 2.8)
-  Fi = notch(Fi, f, 6400.0, i, 0.058, 2.2)
+  Fi = notch(Fi, f,  200.0, i, speed * 0.090, 0.8)
+  Fi = notch(Fi, f,  400.0, i, speed * 0.043, 1.6)
+  Fi = notch(Fi, f,  800.0, i, speed * 0.088, 2.4)
+  Fi = notch(Fi, f, 1600.0, i, speed * 0.062, 0.0)
+  Fi = notch(Fi, f, 3200.0, i, speed * 0.081, 2.8)
+  Fi = notch(Fi, f, 6400.0, i, speed * 0.058, 2.2)
   # ----
   S[:,i,:] = Fi
 
