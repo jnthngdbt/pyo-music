@@ -154,8 +154,8 @@ Tw = 0.25 # sample duration
 lowPass = 8000
 doBoostBass = False # when using a recording
 
-Tk = 60.0 # desired final sample duration (slow down factor)
-fadeDur = 0.01
+Tk = 2.0 # desired final sample duration (slow down factor)
+fadeDur = 0.0
 
 ## -------------------------------------------------------
 
@@ -190,8 +190,8 @@ def playSample(p):
 r = tk.Tk()
 current_value = tk.IntVar()
 
-def slider_changed(event):  
-    print(slider.get())
+def slider_changed(event):
+    print('{}s'.format(slider.get() * Ts))
     playSample(slider.get() * stepLen)
 
 slider = tk.Scale(
@@ -201,8 +201,9 @@ slider = tk.Scale(
     to=nbSteps,
     orient='horizontal',
     variable=current_value,
-    command=slider_changed
+    # command=slider_changed
 )
+slider.bind("<ButtonRelease-1>", slider_changed)
 
 slider.pack()
 r.mainloop()
