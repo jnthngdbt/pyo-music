@@ -137,7 +137,7 @@ def boostBass(x, k, fc, fs):
 
 def exportCompressed(x, name, fs):
   y = audiosegment.from_numpy_array(discretize(x), fs)
-  y.export(name)
+  y.export(name) # NOTE: folder must exist
 
 def playSound(x):
   tmpWav = "temp.wav"
@@ -180,6 +180,10 @@ def notch(F, f, fn, ti, lfo, phase):
   return F * notch
 
 ## -------------------------------------------------------
+# NOTE: if file not found error:
+#       - pip install audiosegment, then ffmpeg (may need to go through choco)
+#       - must run all thoses commands as admin, must relaunch vscode
+
 # seg = audiosegment.from_file("./data/03 Mission Two.m4a") # 72*0.05, 88*0.05
 # seg = audiosegment.from_file("./data/04 Mission Three.m4a") # 24*0.05, 38*0.05, 234*0.05
 # seg = audiosegment.from_file("./data/07 Mission Six.m4a") # 331*0.05, 545*0.05, 1760*0.05
