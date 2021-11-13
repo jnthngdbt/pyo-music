@@ -3,8 +3,8 @@
 import os
 import audiosegment
 
-dir = "C:\\Users\\jgodbout\\Documents\\git\\sandbox\\python\\songs\\"
+dir = "C:\\Users\\jgodbout\\Documents\\git\\sandbox\\python\\data\\"
 for file in os.listdir(dir):
   if file.endswith(".m4a"):
     seg = audiosegment.from_file(dir + file)
-    seg.export(dir + file + ".mp3")
+    seg.export(dir + file + ".aiff", format="aiff")
