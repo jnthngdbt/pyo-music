@@ -160,7 +160,7 @@ def notch(F, f, fn, ti, lfo, phase):
   fi = argmax(f > fn)
   Nhw = int(0.5 * fi) # sample based half-bandwidth
 
-  win = signal.windows.boxcar(2 * Nhw)
+  win = signal.windows.tukey(2 * Nhw)
   notch = np.zeros(Fi.shape)
   i = fi-Nhw
   j = fi+Nhw
