@@ -262,7 +262,7 @@ showBands(f, bands)
 if doBoostBass:
   x = boostBass(x, 5, 500, fs)
 
-exportCompressed(x, "./songs/sample.ambient.generated.song.m4a", fs)
+exportCompressed(x, "./songs/sample.ambient.input.song.m4a", fs)
 
 tx = np.linspace(0, x.shape[0] / fs, num=x.shape[0])
 ti = argmax(tx > timePosSec) # sample index to play
@@ -270,6 +270,9 @@ ti = argmax(tx > timePosSec) # sample index to play
 ts = np.linspace(0, Ts, num=Ns)
 
 F = computeFft(x, ti, Tw)
+
+exportCompressed(reconstructSample(F, Ts / Tw, 0.2), "./songs/sample.ambient.generated.spectrum.m4a", fs)
+
 s = np.zeros((Ns, Nc))
 for i in np.arange(len(bands)):
   print('{0}/{1}'.format(i, len(bands)))
@@ -295,7 +298,7 @@ for i in np.arange(len(bands)):
 
 pathOut = "./songs/"
 nameOut = '{}{}.bands.Tw{}ms.Ts{}ms.f0{}Hz.{}bands.m4a'.format(pathOut, name, int(Tw*1000), int(Ts*1000), firstBandFreq, nbBands)
-exportCompressed(s, "./songs/sample.ambient.generated.sample.m4a", fs)
+exportCompressed(s, "./songs/sample.ambient.generated.song.m4a", fs)
 exportCompressed(s, nameOut, fs)
 
 music_thread = Thread(target=lambda: playSound(s))
