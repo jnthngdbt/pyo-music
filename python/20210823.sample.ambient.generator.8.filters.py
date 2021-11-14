@@ -184,23 +184,27 @@ def notch(F, f, fn, ti, lfo, phase):
 #       - pip install audiosegment, then ffmpeg (may need to go through choco)
 #       - must run all thoses commands as admin, must relaunch vscode
 
-# seg = audiosegment.from_file("./data/03 Mission Two.m4a") # 72*0.05, 88*0.05
-# seg = audiosegment.from_file("./data/04 Mission Three.m4a") # 24*0.05, 38*0.05, 234*0.05
-# seg = audiosegment.from_file("./data/07 Mission Six.m4a") # 331*0.05, 545*0.05, 1760*0.05
-seg = audiosegment.from_file("./data/09 Mission Eight.m4a") # 17.6, 49.05, 51.85, 54.35
-# seg = audiosegment.from_file("./data/11 Mission Ten.m4a") # 494*0.05, 727*0.05
-# seg = audiosegment.from_file("./data/Big Rock.1.m4a") # 127.5
-# seg = audiosegment.from_file("./data/Alone.3.m4a")
-# seg = audiosegment.from_file("./data/Jump.12.m4a") # 12.05 35.95 50.45 56.15 68.7
-# seg = audiosegment.from_file("./data/Press.5.m4a")
-# seg = audiosegment.from_file("./data/Late.06.m4a")
-# seg = audiosegment.from_file("./data/Sam Sung 3.m4a") # 51.8
-# seg = audiosegment.from_file("./data/Aly Wood 2.m4a") # 52 (dude)
-# seg = audiosegment.from_file("./data/Beverly Aly Hills 5.m4a") # t: 3.55, 7.5, 12.6
-# seg = audiosegment.from_file("./data/insects.m4a")
-# seg = audiosegment.from_file("./data/smallthings.m4a") # t: 1.85, 2.45, 2.85, 16.6, 17, 21.85, 33, 43.1,  44.8, 45.5, 47.1, 47.9, 50.1
-# seg = audiosegment.from_file("./data/Background noise with voice.m4a") # 43*0.05, 1.75
-# seg = audiosegment.from_file("./data/Tron Ouverture.m4a") # 697*0.05, 843*0.05, 55.4 58.9, 107.9, 125.25  130.9 135.7
+# name = "03 Mission Two"                # 72*0.05, 88*0.05
+# name = "04 Mission Three"              # 24*0.05, 38*0.05, 234*0.05
+# name = "07 Mission Six"                # 331*0.05, 545*0.05, 1760*0.05
+name = "09 Mission Eight"                # 17.6, 49.05, 51.85, 54.35
+# name = "11 Mission Ten"                # 494*0.05, 727*0.05
+# name = "Big Rock.1"                    # 127.5
+# name = "Alone.3"         
+# name = "Jump.12"                       # 12.05 35.95 50.45 56.15 68.7
+# name = "Press.5"         
+# name = "Late.06"         
+# name = "Sam Sung 3"                    # 51.8
+# name = "Aly Wood 2"                    # 52 (dude)
+# name = "Beverly Aly Hills 5"           # t: 3.55, 7.5, 12.6
+# name = "insects.m4a")   
+# name = "smallthings"                   # t: 1.85, 2.45, 2.85, 16.6, 17, 21.85, 33, 43.1,  44.8, 45.5, 47.1, 47.9, 50.1
+# name = "Background noise with voice"   # 43*0.05, 1.75
+# name = "Tron Ouverture"                # 697*0.05, 843*0.05, 55.4 58.9, 107.9, 125.25  130.9 135.7
+
+nameIn = "./data/" + name + ".m4a"
+
+seg = audiosegment.from_file(nameIn)
 
 fs = seg.frame_rate
 x = seg.to_numpy_array()
@@ -255,7 +259,10 @@ for i in np.arange(nbVariations):
   si = reconstructSample(Fi, Tk / Tw, winRatio)
   s, ti = mixSignal(s, si, int(crossFadeRatio * Tk * fs))
 
-exportCompressed(s, "./songs/sample.ambient.generated.sample.mp3", fs)
+pathOut = "./songs/"
+nameOut = '{}.filters.Tw{}ms.Tk{}ms.LP{}Hz.win{}.crossfade{}.m4a'.format(pathOut, name, int(Tw*1000), int(Tk*1000), int(lowPass), int(winRatio*100), int(crossFadeRatio*100))
+exportCompressed(s, "./songs/sample.ambient.generated.sample.m4a", fs)
+exportCompressed(s, nameOut, fs)
 
 music_thread = Thread(target=lambda: playSound(s))
 music_thread.start()
