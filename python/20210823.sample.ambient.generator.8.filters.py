@@ -187,8 +187,9 @@ def notch(F, f, fn, ti, lfo, phase):
 # seg = audiosegment.from_file("./data/03 Mission Two.m4a") # 72*0.05, 88*0.05
 # seg = audiosegment.from_file("./data/04 Mission Three.m4a") # 24*0.05, 38*0.05, 234*0.05
 # seg = audiosegment.from_file("./data/07 Mission Six.m4a") # 331*0.05, 545*0.05, 1760*0.05
+seg = audiosegment.from_file("./data/09 Mission Eight.m4a") # 17.6, 49.05, 51.85, 54.35
 # seg = audiosegment.from_file("./data/11 Mission Ten.m4a") # 494*0.05, 727*0.05
-seg = audiosegment.from_file("./data/Big Rock.1.m4a") # 127.5
+# seg = audiosegment.from_file("./data/Big Rock.1.m4a") # 127.5
 # seg = audiosegment.from_file("./data/Alone.3.m4a")
 # seg = audiosegment.from_file("./data/Jump.12.m4a") # 12.05 35.95 50.45 56.15 68.7
 # seg = audiosegment.from_file("./data/Press.5.m4a")
@@ -211,10 +212,10 @@ if x.ndim == 1:
 
 ## -------------------------------------------------------
 Tw = 0.25 # sample duration
-lowPass = 2000
+lowPass = 4000
 doBoostBass = False # when using a recording
 Tk = 6 # desired final sample duration
-timePosSec = 127.5
+timePosSec = 51.85
 winRatio = 0.6
 crossFadeRatio = 0.8
 nbVariations = 100
