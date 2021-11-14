@@ -117,9 +117,11 @@ def crossFadeWindow(n): # for equal power fading
   w[0:len(x)] = x # deal with odd window lenght, may miss 1 point
   return w
 
-def reconstructSample(F, k, w):
+def reconstructSample(F, k, w, randomPhases):
   F = interpolateFft(F, k)
-  F = randomizePhase(F)
+
+  if randomPhases:
+    F = randomizePhase(F)
 
   x = np.real(np.fft.ifft(F, axis=0))
   # x = applyWindow(x, crossFadeWindow(int(w * x.shape[0])))
@@ -136,9 +138,9 @@ def boostBass(x, k, fc, fs):
   sos = signal.butter(2, fc, 'lp', fs=fs, output='sos')
   return x + k * signal.sosfilt(sos, x, axis=0)
 
-def exportCompressed(x, name, fs):
+def exportCompressed(x, name, fs, format = "mp3"):
   y = audiosegment.from_numpy_array(discretize(x), fs)
-  y.export(name) # NOTE: folder must exist
+  y.export(name + "." + format, format=format) # NOTE: folder must exist
 
 def playSound(x):
   tmpWav = "temp.wav"
@@ -214,11 +216,11 @@ def showBands(f, bands):
 # name = "03 Mission Two"                # 72*0.05, 88*0.05
 # name = "04 Mission Three"              # 24*0.05, 38*0.05, 234*0.05
 # name = "07 Mission Six"                # 331*0.05, 545*0.05, 1760*0.05
-name = "09 Mission Eight"                # 17.6, 49.05, 51.85, 54.35
+# name = "09 Mission Eight"                # 17.6, 49.05, 51.85, 54.35
 # name = "11 Mission Ten"                # 494*0.05, 727*0.05
 # name = "Big Rock.1"                    # 127.5
 # name = "Alone.3"         
-# name = "Jump.12"                       # 12.05 35.95 50.45 56.15 68.7
+name = "Jump.12"                       # 12.05 35.95 50.45 56.15 68.7
 # name = "Press.5"         
 # name = "Late.06"         
 # name = "Sam Sung 3"                    # 51.8
@@ -243,9 +245,10 @@ if x.ndim == 1:
 
 ## -------------------------------------------------------
 Tw = 0.25 # sample duration
+Ts = 120 # desired final song duration
+songWindowFactor = 0.2
 doBoostBass = False # when using a recording
-Ts = 60 # desired final song duration
-timePosSec = 54.35
+timePosSec = 56.15
 
 firstBandFreq = 64
 nbBands = 6 # (use as low pass filter) 0:64, 1:128, 2:256, 3:512, 4:1024, 5:2048, 6:4096, 7:8192
@@ -262,7 +265,7 @@ showBands(f, bands)
 if doBoostBass:
   x = boostBass(x, 5, 500, fs)
 
-exportCompressed(x, "./songs/sample.ambient.input.song.m4a", fs)
+exportCompressed(x, "./songs/sample.ambient.input.song", fs)
 
 tx = np.linspace(0, x.shape[0] / fs, num=x.shape[0])
 ti = argmax(tx > timePosSec) # sample index to play
@@ -270,8 +273,9 @@ ti = argmax(tx > timePosSec) # sample index to play
 ts = np.linspace(0, Ts, num=Ns)
 
 F = computeFft(x, ti, Tw)
+F = randomizePhase(F)
 
-exportCompressed(reconstructSample(F, Ts / Tw, 0.2), "./songs/sample.ambient.generated.spectrum.m4a", fs)
+exportCompressed(reconstructSample(F, Ts / Tw, songWindowFactor, True), "./songs/sample.ambient.generated.spectrum", fs)
 
 s = np.zeros((Ns, Nc))
 for i in np.arange(len(bands)):
@@ -282,7 +286,7 @@ for i in np.arange(len(bands)):
   Fi = F.copy()
   Fi[:,0] = w * F[:,0]
   Fi[:,1] = w * F[:,1]
-  si = reconstructSample(Fi, Ts / Tw, 0.2)
+  si = reconstructSample(Fi, Ts / Tw, songWindowFactor, True)
   
   lfoFreq = 0.01 + 0.05 * np.random.rand()
   lfoPhase = 2.0 * np.pi * np.random.rand()
@@ -292,13 +296,13 @@ for i in np.arange(len(bands)):
   si[:,0] *= amp
   si[:,1] *= amp
 
-  exportCompressed(si, "./songs/sample.ambient.band{}.m4a".format(i), fs)
+  exportCompressed(si, "./songs/sample.ambient.band{}".format(i), fs)
 
   s = s + si
 
 pathOut = "./songs/"
-nameOut = '{}{}.bands.Tw{}ms.Ts{}ms.f0{}Hz.{}bands.m4a'.format(pathOut, name, int(Tw*1000), int(Ts*1000), firstBandFreq, nbBands)
-exportCompressed(s, "./songs/sample.ambient.generated.song.m4a", fs)
+nameOut = '{}{}.bands.Tw{}ms.Ts{}ms.f0{}Hz.{}bands'.format(pathOut, name, int(Tw*1000), int(Ts*1000), firstBandFreq, nbBands)
+exportCompressed(s, "./songs/sample.ambient.generated.song", fs)
 exportCompressed(s, nameOut, fs)
 
 music_thread = Thread(target=lambda: playSound(s))
