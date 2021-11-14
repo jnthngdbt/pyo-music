@@ -11,8 +11,9 @@ from scipy import signal
 ## -------------------------------------------------------
 def discretize(x, volume=1.0):
   A = volume * (2**15-1) # int16 scale factor; 2^16/2, since signed, -1 to avoid saturation
-  x *= A/np.max(np.abs(x)) # normalize the signal to span the int16 domain
-  return x.astype(np.int16)
+  y = x.copy()
+  y *= A/np.max(np.abs(x)) # normalize the signal to span the int16 domain
+  return y.astype(np.int16)
 
 def write(x, name, volume=1.0):
   scipy.io.wavfile.write(name, fs, discretize(x, volume))
