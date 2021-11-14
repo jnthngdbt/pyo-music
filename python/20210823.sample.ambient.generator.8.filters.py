@@ -261,7 +261,7 @@ for i in np.arange(nbVariations):
   s, ti = mixSignal(s, si, int(crossFadeRatio * Tk * fs))
 
 pathOut = "./songs/"
-nameOut = '{}.filters.Tw{}ms.Tk{}ms.LP{}Hz.win{}.crossfade{}.m4a'.format(pathOut, name, int(Tw*1000), int(Tk*1000), int(lowPass), int(winRatio*100), int(crossFadeRatio*100))
+nameOut = '{}{}.filters.Tw{}ms.Tk{}ms.LP{}Hz.win{}.crossfade{}.m4a'.format(pathOut, name, int(Tw*1000), int(Tk*1000), int(lowPass), int(winRatio*100), int(crossFadeRatio*100))
 exportCompressed(s, "./songs/sample.ambient.generated.sample.m4a", fs)
 exportCompressed(s, nameOut, fs)
 

@@ -243,13 +243,12 @@ if x.ndim == 1:
 
 ## -------------------------------------------------------
 Tw = 0.25 # sample duration
-lowPass = 2000
 doBoostBass = False # when using a recording
 Ts = 60 # desired final song duration
 timePosSec = 54.35
 
 firstBandFreq = 64
-nbBands = 8 # 64, 128, 256, 512, 1024, 2048, 4096, 8192
+nbBands = 6 # (use as low pass filter) 0:64, 1:128, 2:256, 3:512, 4:1024, 5:2048, 6:4096, 7:8192
 
 bands = [firstBandFreq * 2**i for i in np.arange(nbBands)]
 Nw = int(Tw*fs)
@@ -260,7 +259,6 @@ f = np.fft.fftfreq(Nw, 1 / fs)
 print(bands)
 showBands(f, bands)
 
-x = filterSound(x, lowPass, fs)
 if doBoostBass:
   x = boostBass(x, 5, 500, fs)
 
@@ -296,7 +294,7 @@ for i in np.arange(len(bands)):
   s = s + si
 
 pathOut = "./songs/"
-nameOut = '{}.bands.Tw{}ms.Ts{}ms.LP{}Hz.f0{}Hz.{}bands.m4a'.format(pathOut, name, int(Tw*1000), int(Ts*1000), int(lowPass), firstBandFreq, nbBands)
+nameOut = '{}{}.bands.Tw{}ms.Ts{}ms.f0{}Hz.{}bands.m4a'.format(pathOut, name, int(Tw*1000), int(Ts*1000), firstBandFreq, nbBands)
 exportCompressed(s, "./songs/sample.ambient.generated.sample.m4a", fs)
 exportCompressed(s, nameOut, fs)
 
