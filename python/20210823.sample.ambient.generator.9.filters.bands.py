@@ -117,16 +117,9 @@ def crossFadeWindow(n): # for equal power fading
   w[0:len(x)] = x # deal with odd window lenght, may miss 1 point
   return w
 
-def reconstructSample(F, k, w, randomPhases):
-  F = interpolateFft(F, k)
-
-  if randomPhases:
-    F = randomizePhase(F)
-
+def inverseFft(F, w):
   x = np.real(np.fft.ifft(F, axis=0))
-  # x = applyWindow(x, crossFadeWindow(int(w * x.shape[0])))
   x = applyWindow(x, signal.windows.hann(int(w * x.shape[0])))
-
   return x
 
 def filterSound(x, fc, fs):
@@ -164,15 +157,14 @@ def notch(F, f, fn, ti, lfo, phase):
   Nhw = int(0.5 * fi) # sample based half-bandwidth
 
   win = signal.windows.tukey(2 * Nhw)
+  win = duplicate1dArrayToChannels(F.shape[1])
+
   notch = np.zeros(Fi.shape)
   i = fi-Nhw
   j = fi+Nhw
 
-  notch[i:j,0] = win
-  notch[i:j,1] = win
-
-  notch[-j:-i,0] = win
-  notch[-j:-i,1] = win
+  notch[i:j, :] = win
+  notch[-j:-i, :] = win # symetrical negative frequency part
 
   amp = np.sin(2.0 * np.pi * ti * lfo + phase)
   amp = np.clip(1.0 * amp, -1.0, 1.0)
@@ -207,20 +199,30 @@ def showBands(f, bands):
     plt.plot(f, w)
   plt.plot(f, sum)
 
+def duplicate1dArrayToChannels(x, nbChannels):
+  return np.tile(x, (nbChannels, 1)).T # copy as 2 equal columns
+
+def modulateSin(s, t):
+  lfoFreq = 0.01 + 0.05 * np.random.rand()
+  lfoPhase = 2.0 * np.pi * np.random.rand()
+  amp = np.sin(2.0 * np.pi * t * lfoFreq + lfoPhase)
+  amp = 0.5 + 0.5 * amp
+  amp = duplicate1dArrayToChannels(amp, s.shape[1])
+  return s * amp
 
 ## -------------------------------------------------------
 # NOTE: if file not found error:
 #       - pip install audiosegment, then ffmpeg (may need to go through choco)
 #       - must run all thoses commands as admin, must relaunch vscode
 
-# name = "03 Mission Two"                # 72*0.05, 88*0.05
+name = "03 Mission Two"                # 72*0.05, 88*0.05
 # name = "04 Mission Three"              # 24*0.05, 38*0.05, 234*0.05
 # name = "07 Mission Six"                # 331*0.05, 545*0.05, 1760*0.05
 # name = "09 Mission Eight"                # 17.6, 49.05, 51.85, 54.35
 # name = "11 Mission Ten"                # 494*0.05, 727*0.05
 # name = "Big Rock.1"                    # 127.5
 # name = "Alone.3"         
-name = "Jump.12"                       # 12.05 35.95 50.45 56.15 68.7
+# name = "Jump.12"                       # 12.05 35.95 50.45 56.15 68.7
 # name = "Press.5"         
 # name = "Late.06"         
 # name = "Sam Sung 3"                    # 51.8
@@ -245,10 +247,10 @@ if x.ndim == 1:
 
 ## -------------------------------------------------------
 Tw = 0.25 # sample duration
-Ts = 120 # desired final song duration
+Ts = 60 # desired final song duration
 songWindowFactor = 0.2
 doBoostBass = False # when using a recording
-timePosSec = 56.15
+timePosSec = 88*0.05
 
 firstBandFreq = 64
 nbBands = 6 # (use as low pass filter) 0:64, 1:128, 2:256, 3:512, 4:1024, 5:2048, 6:4096, 7:8192
@@ -273,28 +275,25 @@ ti = argmax(tx > timePosSec) # sample index to play
 ts = np.linspace(0, Ts, num=Ns)
 
 F = computeFft(x, ti, Tw)
+F = interpolateFft(F, Ts / Tw)
 F = randomizePhase(F)
 
-exportCompressed(reconstructSample(F, Ts / Tw, songWindowFactor, True), "./songs/sample.ambient.generated.spectrum", fs)
+f = np.fft.fftfreq(F.shape[0], 1 / fs)
+
+exportCompressed(inverseFft(F, songWindowFactor), "./songs/sample.ambient.generated.spectrum", fs)
 
 s = np.zeros((Ns, Nc))
 for i in np.arange(len(bands)):
   print('{0}/{1}'.format(i, len(bands)))
   
   w = getBandWindow(f, bands[0], i)
+  w = duplicate1dArrayToChannels(w, Nc)
 
-  Fi = F.copy()
-  Fi[:,0] = w * F[:,0]
-  Fi[:,1] = w * F[:,1]
-  si = reconstructSample(Fi, Ts / Tw, songWindowFactor, True)
-  
-  lfoFreq = 0.01 + 0.05 * np.random.rand()
-  lfoPhase = 2.0 * np.pi * np.random.rand()
-  amp = np.sin(2.0 * np.pi * ts * lfoFreq + lfoPhase)
-  amp = 0.5 + 0.5 * amp
+  Fi = w * F
+  Fi = randomizePhase(Fi)
 
-  si[:,0] *= amp
-  si[:,1] *= amp
+  si = inverseFft(Fi, songWindowFactor)
+  si = modulateSin(si, ts)
 
   exportCompressed(si, "./songs/sample.ambient.band{}".format(i), fs)
 
