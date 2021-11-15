@@ -127,8 +127,8 @@ def reconstructSample(F, k, w):
 
   return x
 
-def filterSound(x, fc, fs):
-  sos = signal.butter(6, fc, 'lp', fs=fs, output='sos')
+def filterSound(x, fc, fs, type):
+  sos = signal.butter(6, fc, type, fs=fs, output='sos')
   x = signal.sosfilt(sos, x, axis=0)
   return x
 
@@ -136,9 +136,9 @@ def boostBass(x, k, fc, fs):
   sos = signal.butter(2, fc, 'lp', fs=fs, output='sos')
   return x + k * signal.sosfilt(sos, x, axis=0)
 
-def exportCompressed(x, name, fs):
+def exportCompressed(x, name, fs, format = "mp3"):
   y = audiosegment.from_numpy_array(discretize(x), fs)
-  y.export(name) # NOTE: folder must exist
+  y.export(name + "." + format, format=format) # NOTE: folder must exist
 
 def playSound(x):
   tmpWav = "temp.wav"
@@ -187,9 +187,9 @@ def notch(F, f, fn, ti, lfo, phase):
 
 # name = "03 Mission Two"                # 72*0.05, 88*0.05
 # name = "04 Mission Three"              # 24*0.05, 38*0.05, 234*0.05
-# name = "07 Mission Six"                # 331*0.05, 545*0.05, 1760*0.05
-name = "09 Mission Eight"                # 17.6, 49.05, 51.85, 54.35
-# name = "11 Mission Ten"                # 494*0.05, 727*0.05
+# name = "07 Mission Six"                # 78.55 85.8 88.45 120.15 // 331*0.05, 545*0.05, 1760*0.05
+# name = "09 Mission Eight"                # 17.6, 49.05, 51.85, 54.35
+name = "11 Mission Ten"                # 494*0.05, 727*0.05
 # name = "Big Rock.1"                    # 127.5
 # name = "Alone.3"         
 # name = "Jump.12"                       # 12.05 35.95 50.45 56.15 68.7
@@ -217,20 +217,25 @@ if x.ndim == 1:
 
 ## -------------------------------------------------------
 Tw = 0.25 # sample duration
-lowPass = 4000
-doBoostBass = False # when using a recording
 Tk = 6 # desired final sample duration
-timePosSec = 51.85
+lowPass = 2000
+doBoostBass = False # when using a recording
+
+timePosSec = 727*0.05
+
 winRatio = 0.6
 crossFadeRatio = 0.8
+
 nbVariations = 100
 speed = 0.5
+## -------------------------------------------------------
 
-x = filterSound(x, lowPass, fs)
+x = filterSound(x, lowPass, fs, 'lp')
+x = filterSound(x, 150, fs, 'hp')
 if doBoostBass:
   x = boostBass(x, 5, 500, fs)
 
-exportCompressed(x, "./songs/sample.ambient.generated.song.m4a", fs)
+exportCompressed(x, "./songs/sample.ambient.input.song", fs)
 
 t = np.linspace(0, x.shape[0] / fs, num=x.shape[0])
 ti = argmax(t > timePosSec) # sample index to play
@@ -239,6 +244,8 @@ specShape = (int(Tw * fs), nbVariations, x.shape[1])
 
 F = computeFft(x, ti, Tw)
 f = np.fft.fftfreq(specShape[0], 1 / fs)
+
+exportCompressed(reconstructSample(F, Tk / Tw, winRatio), "./songs/sample.ambient.generated.spectrum", fs)
 
 s = []
 S = np.zeros(specShape) * np.exp(1j * np.zeros(specShape))
@@ -261,8 +268,8 @@ for i in np.arange(nbVariations):
   s, ti = mixSignal(s, si, int(crossFadeRatio * Tk * fs))
 
 pathOut = "./songs/"
-nameOut = '{}{}.filters.Tw{}ms.Tk{}ms.LP{}Hz.win{}.crossfade{}.m4a'.format(pathOut, name, int(Tw*1000), int(Tk*1000), int(lowPass), int(winRatio*100), int(crossFadeRatio*100))
-exportCompressed(s, "./songs/sample.ambient.generated.sample.m4a", fs)
+nameOut = '{}{}.filters.{}s.Tw{}ms.Tk{}ms.LP{}Hz.win{}.crossfade{}'.format(pathOut, name, int(timePosSec), int(Tw*1000), int(Tk*1000), int(lowPass), int(winRatio*100), int(crossFadeRatio*100))
+exportCompressed(s, "./songs/sample.ambient.generated.song", fs)
 exportCompressed(s, nameOut, fs)
 
 music_thread = Thread(target=lambda: playSound(s))
