@@ -136,9 +136,10 @@ def boostBass(x, k, fc, fs):
   sos = signal.butter(2, fc, 'lp', fs=fs, output='sos')
   return x + k * signal.sosfilt(sos, x, axis=0)
 
-def exportCompressed(x, name, fs, format = "mp3"):
+def exportCompressed(x, name, album, fs, format = "mp3"):
   y = audiosegment.from_numpy_array(discretize(x), fs)
-  y.export(name + "." + format, format=format) # NOTE: folder must exist
+  info = {"title": name, "album": album, "artist": "Jonathan Godbout", "genre": "Space Ambient"}
+  y.export("./songs/" + name + "." + format, format=format, tags=info) # NOTE: folder must exist
 
 def playSound(x):
   tmpWav = "temp.wav"
@@ -235,7 +236,7 @@ x = filterSound(x, 150, fs, 'hp')
 if doBoostBass:
   x = boostBass(x, 5, 500, fs)
 
-exportCompressed(x, "./songs/sample.ambient.input.song", fs)
+exportCompressed(x, "sample.ambient.input.song", name, fs)
 
 t = np.linspace(0, x.shape[0] / fs, num=x.shape[0])
 ti = argmax(t > timePosSec) # sample index to play
@@ -245,7 +246,7 @@ specShape = (int(Tw * fs), nbVariations, x.shape[1])
 F = computeFft(x, ti, Tw)
 f = np.fft.fftfreq(specShape[0], 1 / fs)
 
-exportCompressed(reconstructSample(F, Tk / Tw, winRatio), "./songs/sample.ambient.generated.spectrum", fs)
+exportCompressed(reconstructSample(F, Tk / Tw, winRatio), "sample.ambient.generated.spectrum", name, fs)
 
 s = []
 S = np.zeros(specShape) * np.exp(1j * np.zeros(specShape))
@@ -267,10 +268,9 @@ for i in np.arange(nbVariations):
   si = reconstructSample(Fi, Tk / Tw, winRatio)
   s, ti = mixSignal(s, si, int(crossFadeRatio * Tk * fs))
 
-pathOut = "./songs/"
-nameOut = '{}{}.filters.{}s.Tw{}ms.Tk{}ms.LP{}Hz.win{}.crossfade{}'.format(pathOut, name, int(timePosSec), int(Tw*1000), int(Tk*1000), int(lowPass), int(winRatio*100), int(crossFadeRatio*100))
-exportCompressed(s, "./songs/sample.ambient.generated.song", fs)
-exportCompressed(s, nameOut, fs)
+nameOut = '{}.filters.{}s.Tw{}ms.Tk{}ms.LP{}Hz.win{}.crossfade{}'.format(name, int(timePosSec), int(Tw*1000), int(Tk*1000), int(lowPass), int(winRatio*100), int(crossFadeRatio*100))
+exportCompressed(s, nameOut, name, fs)
+exportCompressed(s, "sample.ambient.generated.song", name, fs)
 
 music_thread = Thread(target=lambda: playSound(s))
 music_thread.start()
