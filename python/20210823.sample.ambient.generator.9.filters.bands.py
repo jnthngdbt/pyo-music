@@ -175,9 +175,9 @@ def notch(F, f, fn, ti, lfo, phase):
   return F * notch
 
 def getBandWindow(f, f0, idx):
-  currFreq = f0 * 2**(idx)
-  prevFreq = f0 * 2**(idx-1) if idx > 0 else 0
-  nextFreq = f0 * 2**(idx+1)
+  currFreq = f0 * 2.**(idx)
+  prevFreq = f0 * 2.**(idx-1)
+  nextFreq = f0 * 2.**(idx+1)
   f1 = currFreq - 0.5 * (currFreq - prevFreq)
   f2 = currFreq + 0.5 * (nextFreq - currFreq)
   i1 = int(0.9 * argmax(f > f1)) # expand for overlap, % or prev frequency
@@ -215,11 +215,11 @@ def modulateSin(s, t):
 #       - pip install audiosegment, then ffmpeg (may need to go through choco)
 #       - must run all thoses commands as admin, must relaunch vscode
 
-name = "03 Mission Two"                # 72*0.05, 88*0.05
+# name = "03 Mission Two"                # 72*0.05, 88*0.05
 # name = "04 Mission Three"              # 24*0.05, 38*0.05, 234*0.05
-# name = "07 Mission Six"                # 331*0.05, 545*0.05, 1760*0.05
+# name = "07 Mission Six"                # 78.55 85.8 88.45 120.15 // 331*0.05, 545*0.05, 1760*0.05
 # name = "09 Mission Eight"                # 17.6, 49.05, 51.85, 54.35
-# name = "11 Mission Ten"                # 494*0.05, 727*0.05
+name = "11 Mission Ten"                # 494*0.05, 727*0.05
 # name = "Big Rock.1"                    # 127.5
 # name = "Alone.3"         
 # name = "Jump.12"                       # 12.05 35.95 50.45 56.15 68.7
@@ -246,19 +246,19 @@ if x.ndim == 1:
   x = np.concatenate([x, x], axis=1)
 
 ## -------------------------------------------------------
-Tw = 0.25 # sample duration
+Tw = 1.0 # sample duration
 Ts = 60 # desired final song duration
 songWindowFactor = 0.2
 doBoostBass = False # when using a recording
-timePosSec = 88*0.05
+timePosSec = 727*0.05
 
-firstBandFreq = 64
-nbBands = 6 # (use as low pass filter) 0:64, 1:128, 2:256, 3:512, 4:1024, 5:2048, 6:4096, 7:8192
+firstBandFreq = 256
+nbBands = 5 # (use as low pass filter) 0:64, 1:128, 2:256, 3:512, 4:1024, 5:2048, 6:4096, 7:8192
 
 bands = [firstBandFreq * 2**i for i in np.arange(nbBands)]
-Nw = int(Tw*fs)
-Ns = int(Ts*fs)
-Nc = x.shape[1]
+Nw = int(Tw*fs) # sample window
+Ns = int(Ts*fs) # final song
+Nc = x.shape[1] # number of channels
 f = np.fft.fftfreq(Nw, 1 / fs)
 
 print(bands)
