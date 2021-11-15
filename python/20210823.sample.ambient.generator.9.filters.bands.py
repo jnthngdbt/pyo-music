@@ -119,7 +119,8 @@ def crossFadeWindow(n): # for equal power fading
 
 def inverseFft(F, w):
   x = np.real(np.fft.ifft(F, axis=0))
-  x = applyWindow(x, signal.windows.hann(int(w * x.shape[0])))
+  if w > 0.0:
+    x = applyWindow(x, signal.windows.hann(int(w * x.shape[0])))
   return x
 
 def filterSound(x, fc, fs):
@@ -203,12 +204,21 @@ def duplicate1dArrayToChannels(x, nbChannels):
   return np.tile(x, (nbChannels, 1)).T # copy as 2 equal columns
 
 def modulateSin(s, t):
-  lfoFreq = 0.01 + 0.05 * np.random.rand()
+  lfoFreq = 0.01 + 0.03 * np.random.rand()
   lfoPhase = 2.0 * np.pi * np.random.rand()
   amp = np.sin(2.0 * np.pi * t * lfoFreq + lfoPhase)
   amp = 0.5 + 0.5 * amp
   amp = duplicate1dArrayToChannels(amp, s.shape[1])
   return s * amp
+
+def delay(x, n):
+  x[n:,:] += x[0:-n]
+
+def applyDelays(x, fs, nbDelays, delaySec):
+  for _ in np.arange(nbDelays):
+    jitter = 0.1 * np.random.rand()
+    delay(x, int(delaySec * (1.0 + jitter) * fs))
+  return x
 
 ## -------------------------------------------------------
 # NOTE: if file not found error:
@@ -250,10 +260,14 @@ Tw = 1.0 # sample duration
 Ts = 60 # desired final song duration
 songWindowFactor = 0.2
 doBoostBass = False # when using a recording
-timePosSec = 727*0.05
+
+timePosSec = 494*0.05
 
 firstBandFreq = 256
-nbBands = 5 # (use as low pass filter) 0:64, 1:128, 2:256, 3:512, 4:1024, 5:2048, 6:4096, 7:8192
+nbBands = 3 # (use as low pass filter) 0:64, 1:128, 2:256, 3:512, 4:1024, 5:2048, 6:4096, 7:8192
+
+nbDelays = 5
+delaySec = 1.0
 
 bands = [firstBandFreq * 2**i for i in np.arange(nbBands)]
 Nw = int(Tw*fs) # sample window
@@ -298,6 +312,9 @@ for i in np.arange(len(bands)):
   exportCompressed(si, "./songs/sample.ambient.band{}".format(i), fs)
 
   s = s + si
+
+# s = applyDelays(s, fs, nbDelays, delaySec)
+s = applyWindow(s, signal.windows.hann(int(songWindowFactor * Ns)))
 
 pathOut = "./songs/"
 nameOut = '{}{}.bands.Tw{}ms.Ts{}ms.f0{}Hz.{}bands'.format(pathOut, name, int(Tw*1000), int(Ts*1000), firstBandFreq, nbBands)
