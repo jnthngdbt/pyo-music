@@ -190,7 +190,7 @@ def notch(F, f, fn, ti, lfo, phase):
 # name = "04 Mission Three"              # 24*0.05, 38*0.05, 234*0.05
 # name = "07 Mission Six"                # 78.55 85.8 88.45 120.15 // 331*0.05, 545*0.05, 1760*0.05
 # name = "09 Mission Eight"                # 17.6, 49.05, 51.85, 54.35
-name = "11 Mission Ten"                # 494*0.05, 727*0.05
+# name = "11 Mission Ten"                # 24.65, 26.1, 29.9, 32.35, 727*0.05
 # name = "Big Rock.1"                    # 127.5
 # name = "Alone.3"         
 # name = "Jump.12"                       # 12.05 35.95 50.45 56.15 68.7
@@ -198,13 +198,31 @@ name = "11 Mission Ten"                # 494*0.05, 727*0.05
 # name = "Late.06"         
 # name = "Sam Sung 3"                    # 51.8
 # name = "Aly Wood 2"                    # 52 (dude)
-# name = "Beverly Aly Hills 5"           # t: 3.55, 7.5, 12.6
-# name = "insects.m4a")   
+name = "Beverly Aly Hills 5"           # t: 3.55, 7.5/7.9, 10.9, 12.8, 15.8/17.75 // 23.7, 27.0, 30.1, 32.5, 35.15
+# name = "insects"   
 # name = "smallthings"                   # t: 1.85, 2.45, 2.85, 16.6, 17, 21.85, 33, 43.1,  44.8, 45.5, 47.1, 47.9, 50.1
 # name = "Background noise with voice"   # 43*0.05, 1.75
 # name = "Tron Ouverture"                # 697*0.05, 843*0.05, 55.4 58.9, 107.9, 125.25  130.9 135.7
 
 nameIn = "./data/" + name + ".m4a"
+
+## -------------------------------------------------------
+timePosSec = 7.9
+
+Tw = 0.25 # sample duration
+Tk = 6 # desired final sample duration
+
+highPass = 150
+lowPass = 2000
+doBoostBass = False # when using a recording
+
+sampleWinRatio = 0.6
+songFadeDurSec = 8.0
+crossFadeRatio = 0.8
+
+nbVariations = 128
+speed = 0.3
+## -------------------------------------------------------
 
 seg = audiosegment.from_file(nameIn)
 
@@ -216,23 +234,11 @@ if x.ndim == 1:
   x = x.reshape(len(x), 1)
   x = np.concatenate([x, x], axis=1)
 
-## -------------------------------------------------------
-Tw = 0.25 # sample duration
-Tk = 6 # desired final sample duration
-lowPass = 2000
-doBoostBass = False # when using a recording
-
-timePosSec = 727*0.05
-
-winRatio = 0.6
-crossFadeRatio = 0.8
-
-nbVariations = 100
-speed = 0.5
-## -------------------------------------------------------
+nameInfo = '{}.filters.'.format(name)
+nameParams = "{}s.{}x.Tw{}ms.Tk{}ms.LP{}Hz.win{}.crossfade{}".format(int(timePosSec), int(speed * 100), int(Tw*1000), int(Tk*1000), int(lowPass), int(sampleWinRatio*100), int(crossFadeRatio*100))
 
 x = filterSound(x, lowPass, fs, 'lp')
-x = filterSound(x, 150, fs, 'hp')
+x = filterSound(x, highPass, fs, 'hp')
 if doBoostBass:
   x = boostBass(x, 5, 500, fs)
 
@@ -246,7 +252,9 @@ specShape = (int(Tw * fs), nbVariations, x.shape[1])
 F = computeFft(x, ti, Tw)
 f = np.fft.fftfreq(specShape[0], 1 / fs)
 
-exportCompressed(reconstructSample(F, Tk / Tw, winRatio), "sample.ambient.generated.spectrum", name, fs)
+Fs = reconstructSample(F, 20.0 / Tw, sampleWinRatio)
+exportCompressed(Fs, "sample.ambient.generated.spectrum", name, fs)
+exportCompressed(Fs, nameInfo + "spectrum." + nameParams, name, fs)
 
 s = []
 S = np.zeros(specShape) * np.exp(1j * np.zeros(specShape))
@@ -265,17 +273,18 @@ for i in np.arange(nbVariations):
   # ----
   S[:,i,:] = Fi
 
-  si = reconstructSample(Fi, Tk / Tw, winRatio)
+  si = reconstructSample(Fi, Tk / Tw, sampleWinRatio)
   s, ti = mixSignal(s, si, int(crossFadeRatio * Tk * fs))
 
-nameOut = '{}.filters.{}s.Tw{}ms.Tk{}ms.LP{}Hz.win{}.crossfade{}'.format(name, int(timePosSec), int(Tw*1000), int(Tk*1000), int(lowPass), int(winRatio*100), int(crossFadeRatio*100))
-exportCompressed(s, nameOut, name, fs)
+s = applyWindow(s, signal.windows.hann(2 * int(songFadeDurSec * fs)))
+
+exportCompressed(s, nameInfo + nameParams, name, fs)
 exportCompressed(s, "sample.ambient.generated.song", name, fs)
 
 music_thread = Thread(target=lambda: playSound(s))
 music_thread.start()
 
-maxFreq = 10000
+maxFreq = 5000
 ts = Tk * (1.0 - crossFadeRatio) * np.arange(nbVariations)
 fmax = argmax(f > maxFreq)
 S0 = np.abs(S[:fmax, :, 0])
