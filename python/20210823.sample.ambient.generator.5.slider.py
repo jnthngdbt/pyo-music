@@ -4,9 +4,10 @@ import audiosegment
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-from numpy.core.fromnumeric import argmax
+from numpy.core.fromnumeric import argmax, size
 import scipy.io.wavfile
 import tkinter as tk
+from PIL import Image, ImageOps, ImageTk
 from scipy import signal
 import winsound
 from threading import Thread
@@ -122,13 +123,13 @@ def spectrogram(x, fs, Ts, Tw):
 # name = "04 Mission Three"
 # name = "05 Mission Four"
 # name = "07 Mission Six"
-name = "09 Mission Eight"
+# name = "09 Mission Eight"
 # name = "11 Mission Ten"
 # name = "Big Rock.1"
 # name = "Alone.3"
 # name = "Jump.12"
 # name = "Press.5"
-# name = "Late.06"
+name = "Late.06"
 # name = "Sam Sung 3" # wow
 # name = "Aly Wood 2"
 # name = "Beverly Aly Hills 5"
@@ -156,8 +157,10 @@ Tw = 0.25 # sample duration
 lowPass = 8000
 doBoostBass = False # when using a recording
 
-Tk = 2.0 # desired final sample duration (slow down factor)
+Tk = 4.0 # desired final sample duration (slow down factor)
 fadeDur = 0.0
+
+tkWinWidth = 1200
 
 ## -------------------------------------------------------
 
@@ -175,12 +178,15 @@ if doBoostBass:
 
 exportCompressed(x, "./songs/sample.ambient.generated.song.m4a", fs)
 
+S = spectrogram(x, fs, Ts, Tw)
+f = np.fft.fftfreq(S.shape[0], 1 / fs)
+t = np.linspace(0, x.shape[0] / fs, num=S.shape[1])
+
 ## -------------------------------------------------------
 
-pos = 100000
 windowLen = int(Tw * fs)
 stepLen = int(Ts * fs)
-nbSteps = (x.shape[0] - windowLen) / stepLen
+nbSteps = S.shape[1]
 
 def playSample(p):
   xi = x[p: p + windowLen, :]
@@ -198,7 +204,7 @@ def slider_changed(event):
 
 slider = tk.Scale(
     r,
-    length=1000,
+    length=tkWinWidth,
     from_=0,
     to=nbSteps,
     orient='horizontal',
@@ -206,16 +212,18 @@ slider = tk.Scale(
     # command=slider_changed
 )
 slider.bind("<ButtonRelease-1>", slider_changed)
-
 slider.pack()
-r.mainloop()
 
-plt.figure()
-plt.plot(x)
+maxFreq = 4000
+fmax = argmax(f > maxFreq)
+P0 = np.log(S[:fmax, :, 0])
+f0 = f[:fmax]
+dpi = 100
+plt.figure(figsize=(1.05 * tkWinWidth / dpi, 0.5*tkWinWidth / dpi), dpi=dpi, ) # try to fit slider width
+plt.pcolormesh(t, f0, P0)
+plt.tight_layout()
 
-Fi = np.fft.fft(x[100000: 100000 + windowLen, :], axis=0)
-si, p = reconstructSample(np.abs(Fi), Tk / Tw, int(fadeDur * 2 * fs), [])
-plt.figure()
-plt.plot(si)
-
+plt.ion() # non blocking
 plt.show()
+
+r.mainloop()
