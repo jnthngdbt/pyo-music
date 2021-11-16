@@ -178,25 +178,22 @@ def notch(F, f, fn, ti, lfo, phase):
 
 def getBandWindow(f, f0, idx):
   currFreq = f0 * 2.**(idx)
-  prevFreq = f0 * 2.**(idx-1)
-  nextFreq = f0 * 2.**(idx+1)
-  f1 = currFreq - 0.5 * (currFreq - prevFreq)
-  f2 = currFreq + 0.5 * (nextFreq - currFreq)
-  i1 = int(1.0 * argmax(f > f1)) # expand for overlap, % or prev frequency
-  i2 = int(1.0 * argmax(f > f2)) # expand for overlap, % or next frequency
-
+  f1 = 0 if idx == 0 else 0.5 * currFreq
+  f2 = currFreq
+  i1 = argmax(f > f1)
+  i2 = argmax(f > f2)
   Nw = i2-i1
 
   w = np.zeros(len(f))
-  w[i1:i2] = signal.windows.boxcar(Nw) # not ideal, will be scaled
+  w[i1:i2] = signal.windows.boxcar(Nw)
 
   return w
 
-def showBands(f, bands):
+def showBands(f, f0, nbBands):
   sum = np.zeros(f.shape)
   plt.figure()
-  for i in np.arange(len(bands)):
-    w = getBandWindow(f, bands[0], i)
+  for i in np.arange(nbBands):
+    w = getBandWindow(f, f0, i)
     sum += w
     plt.plot(f, w)
   plt.plot(f, sum)
@@ -204,8 +201,8 @@ def showBands(f, bands):
 def duplicate1dArrayToChannels(x, nbChannels):
   return np.tile(x, (nbChannels, 1)).T # copy as 2 equal columns
 
-def modulateSin(s, t):
-  lfoFreq = 0.01 + 0.03 * np.random.rand()
+def modulateSin(s, t, minLfo, maxLfo):
+  lfoFreq = minLfo + (maxLfo - minLfo) * np.random.rand()
   lfoPhase = 2.0 * np.pi * np.random.rand()
   amp = np.sin(2.0 * np.pi * t * lfoFreq + lfoPhase)
   amp = 0.5 + 0.5 * amp
@@ -252,8 +249,10 @@ x = seg.to_numpy_array()
 x = x / x.max()
 
 ## -------------------------------------------------------
-Tw = 1.0 # sample duration
-Ts = 60 # desired final song duration
+Tw = 0.25 # sample duration
+Ts = 180 # desired final song duration
+minLfo = 0.005
+maxLfo = 0.015
 songWindowFactor = 0.2
 doBoostBass = False # when using a recording
 
@@ -268,7 +267,6 @@ delaySec = 1.0
 ## -------------------------------------------------------
 
 fs = seg.frame_rate
-bands = [firstBandFreq * 2**i for i in np.arange(nbBands)]
 Nw = int(Tw*fs) # sample window
 Ns = int(Ts*fs) # final song
 Nc = x.shape[1] # number of channels
@@ -278,12 +276,11 @@ nameInfo = '{}.filters.'.format(name)
 nameParams = '{}.bands.Tw{}ms.Ts{}ms.f0{}Hz.{}bands'.format(name, int(Tw*1000), int(Ts*1000), firstBandFreq, nbBands)
 ## -------------------------------------------------------
 
+showBands(f, firstBandFreq, nbBands)
+
 if x.ndim == 1:
   x = x.reshape(len(x), 1)
   x = np.concatenate([x, x], axis=1)
-
-print(bands)
-showBands(f, bands)
 
 if doBoostBass:
   x = boostBass(x, 5, 500, fs)
@@ -306,17 +303,17 @@ exportCompressed(Fs, "sample.ambient.generated.spectrum", name, fs)
 exportCompressed(Fs, nameInfo + "spectrum." + nameParams, name, fs)
 
 s = np.zeros((Ns, Nc))
-for i in np.arange(len(bands)):
-  print('{0}/{1}'.format(i, len(bands)))
+for i in np.arange(nbBands):
+  print('{0}/{1}'.format(i, nbBands))
   
-  w = getBandWindow(f, bands[0], i)
+  w = getBandWindow(f, firstBandFreq, i)
   w = duplicate1dArrayToChannels(w, Nc)
 
   Fi = w * F
   Fi = randomizePhase(Fi)
 
   si = inverseFft(Fi, songWindowFactor)
-  si = modulateSin(si, ts)
+  si = modulateSin(si, ts, minLfo, maxLfo)
 
   exportCompressed(si, "sample.ambient.band{}".format(i), name, fs)
 
