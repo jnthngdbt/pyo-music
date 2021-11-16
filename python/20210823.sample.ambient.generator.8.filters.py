@@ -181,6 +181,9 @@ def notch(F, f, fn, ti, lfo, phase):
 
   return F * notch
 
+def smooth(x, n, a=0):
+  return ndimage.convolve1d(x, np.ones(n), axis=a)
+
 ## -------------------------------------------------------
 # NOTE: if file not found error:
 #       - pip install audiosegment, then ffmpeg (may need to go through choco)
@@ -293,6 +296,10 @@ f0 = f[:fmax]
 
 plt.figure()
 plt.plot(s)
+
+plt.figure()
+plt.plot(f, np.abs(F))
+plt.xlim([0, maxFreq])
 
 plt.figure()
 plt.pcolormesh(ts, f0, S0)
