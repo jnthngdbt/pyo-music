@@ -124,12 +124,12 @@ def spectrogram(x, fs, Ts, Tw):
 # name = "05 Mission Four"
 # name = "07 Mission Six"
 # name = "09 Mission Eight"
-# name = "11 Mission Ten"
+name = "11 Mission Ten"
 # name = "Big Rock.1"
 # name = "Alone.3"
 # name = "Jump.12"
 # name = "Press.5"
-name = "Late.06"
+# name = "Late.06"
 # name = "Sam Sung 3" # wow
 # name = "Aly Wood 2"
 # name = "Beverly Aly Hills 5"
@@ -164,7 +164,10 @@ sliderWidth = 1200
 dpi = 100
 figsizeSpectro = (1.05 * sliderWidth / dpi, 0.5*sliderWidth / dpi)
 figsizeFft = (1.05 * sliderWidth / dpi, 0.2*sliderWidth / dpi)
-maxFreq = 4000
+maxFreqPlots = 4000
+
+sliderMinFreq = 0
+sliderMaxFreq = maxFreqPlots
 
 ## -------------------------------------------------------
 
@@ -192,43 +195,122 @@ windowLen = int(Tw * fs)
 stepLen = int(Ts * fs)
 nbSteps = S.shape[1]
 
+r = tk.Tk()
+sliderPosValue = tk.IntVar()
+sliderLowFreqValue = tk.IntVar()
+sliderHighFreqValue = tk.IntVar()
+sliderVolumeValue = tk.IntVar()
+
 fig, fftax = plt.subplots(figsize=figsizeFft, dpi=dpi)
 plt.tight_layout()
 
 def playSample(p):
   xi = x[p: p + windowLen, :]
   Fi = np.fft.fft(xi, axis=0)
+  Fi = applyFilter(f, Fi, sliderLowFreq.get(), sliderHighFreq.get())
   si, p = reconstructSample(np.abs(Fi), Tk / Tw, int(fadeDur * 2 * fs), [])
   tmpWav = "temp.wav"
-  play(si, tmpWav)
+  play(si, tmpWav, volume=sliderVolume.get()/100.0)
 
 def showSpectrum(S, i):
+  F = S[:,i,0]
   fftax.clear()
-  fftax.plot(f, S[:,i,0])
-  fftax.set_xlim([0, maxFreq])
+  fftax.plot(f, F)
+  fftax.set_xlim([0, maxFreqPlots])
 
-r = tk.Tk()
-current_value = tk.IntVar()
+  Fw = getFilterWindow(f, sliderLowFreq.get(), sliderHighFreq.get())
+  fftax.plot(f, Fw * 0.5 * np.max(F))
 
-def slider_changed(event):
-    print('{}s'.format(slider.get() * Ts))
-    playSample(slider.get() * stepLen)
-    showSpectrum(S, slider.get())
+def duplicate1dArrayToChannels(x, nbChannels):
+  return np.tile(x, (nbChannels, 1)).T # copy as 2 equal columns
 
-slider = tk.Scale(
+def getFilterWindow(f, minFreq, maxFreq):
+  ti = argmax(f > minFreq)
+  tj = argmax(f > maxFreq)
+  Nw = tj - ti
+  print('[{}, {}]Hz: [{}, {}]'.format(minFreq, maxFreq, ti, tj))
+
+  w = signal.windows.boxcar(Nw)
+
+  Fw = np.zeros(len(f))
+  Fw[ti:tj] = w
+  Fw[-tj:-ti] = w
+  return Fw
+
+def applyFilter(f, F, minFreq, maxFreq):
+  w = getFilterWindow(f, minFreq, maxFreq)
+  w = duplicate1dArrayToChannels(w, F.shape[1])
+  return F * w
+
+def update():
+  playSample(sliderPos.get() * stepLen)
+  showSpectrum(S, sliderPos.get(), )
+
+def sliderPosChanged(event):
+  print('{}s'.format(sliderPos.get() * Ts))
+  update()
+
+sliderPos = tk.Scale(
     r,
     length=sliderWidth,
     from_=0,
     to=nbSteps,
     orient='horizontal',
-    variable=current_value,
+    variable=sliderPosValue,
     # command=slider_changed
 )
-slider.bind("<ButtonRelease-1>", slider_changed)
-slider.pack()
+sliderPos.bind("<ButtonRelease-1>", sliderPosChanged)
+sliderPos.pack()
 
-fmax = argmax(f > maxFreq)
-P0 = np.log(S[:fmax, :, 0])
+def sliderLowFreqChanged(event):
+  update()
+
+sliderLowFreq = tk.Scale(
+    r,
+    length=sliderWidth,
+    from_=sliderMinFreq,
+    to=sliderMaxFreq,
+    orient='horizontal',
+    variable=sliderLowFreqValue,
+    # command=slider_changed
+)
+sliderLowFreq.bind("<ButtonRelease-1>", sliderLowFreqChanged)
+sliderLowFreq.pack()
+
+def sliderHighFreqChanged(event):
+  update()
+
+sliderHighFreq = tk.Scale(
+    r,
+    length=sliderWidth,
+    from_=sliderMinFreq,
+    to=sliderMaxFreq,
+    orient='horizontal',
+    variable=sliderHighFreqValue,
+    # command=slider_changed
+)
+sliderHighFreq.set(sliderMaxFreq)
+sliderHighFreq.bind("<ButtonRelease-1>", sliderHighFreqChanged)
+sliderHighFreq.pack()
+
+def sliderVolumeChanged(event):
+  update()
+
+sliderVolume = tk.Scale(
+    r,
+    length=sliderWidth,
+    from_=0,
+    to=100,
+    orient='horizontal',
+    variable=sliderVolumeValue,
+    # command=slider_changed
+)
+sliderVolume.bind("<ButtonRelease-1>", sliderVolumeChanged)
+sliderVolume.pack()
+
+fmax = argmax(f > maxFreqPlots)
+S0 = S[:fmax, :, 0]
+P0 = np.log(S0, where=S0>0)
 f0 = f[:fmax]
 plt.figure(figsize=figsizeSpectro, dpi=dpi, ) # try to fit slider width
 plt.pcolormesh(t, f0, P0)
