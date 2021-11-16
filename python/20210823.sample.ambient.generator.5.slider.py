@@ -160,7 +160,11 @@ doBoostBass = False # when using a recording
 Tk = 4.0 # desired final sample duration (slow down factor)
 fadeDur = 0.0
 
-tkWinWidth = 1200
+sliderWidth = 1200
+dpi = 100
+figsizeSpectro = (1.05 * sliderWidth / dpi, 0.5*sliderWidth / dpi)
+figsizeFft = (1.05 * sliderWidth / dpi, 0.2*sliderWidth / dpi)
+maxFreq = 4000
 
 ## -------------------------------------------------------
 
@@ -188,6 +192,9 @@ windowLen = int(Tw * fs)
 stepLen = int(Ts * fs)
 nbSteps = S.shape[1]
 
+fig, fftax = plt.subplots(figsize=figsizeFft, dpi=dpi)
+plt.tight_layout()
+
 def playSample(p):
   xi = x[p: p + windowLen, :]
   Fi = np.fft.fft(xi, axis=0)
@@ -195,16 +202,22 @@ def playSample(p):
   tmpWav = "temp.wav"
   play(si, tmpWav)
 
+def showSpectrum(S, i):
+  fftax.clear()
+  fftax.plot(f, S[:,i,0])
+  fftax.set_xlim([0, maxFreq])
+
 r = tk.Tk()
 current_value = tk.IntVar()
 
 def slider_changed(event):
     print('{}s'.format(slider.get() * Ts))
     playSample(slider.get() * stepLen)
+    showSpectrum(S, slider.get())
 
 slider = tk.Scale(
     r,
-    length=tkWinWidth,
+    length=sliderWidth,
     from_=0,
     to=nbSteps,
     orient='horizontal',
@@ -214,12 +227,10 @@ slider = tk.Scale(
 slider.bind("<ButtonRelease-1>", slider_changed)
 slider.pack()
 
-maxFreq = 4000
 fmax = argmax(f > maxFreq)
 P0 = np.log(S[:fmax, :, 0])
 f0 = f[:fmax]
-dpi = 100
-plt.figure(figsize=(1.05 * tkWinWidth / dpi, 0.5*tkWinWidth / dpi), dpi=dpi, ) # try to fit slider width
+plt.figure(figsize=figsizeSpectro, dpi=dpi, ) # try to fit slider width
 plt.pcolormesh(t, f0, P0)
 plt.tight_layout()
 
