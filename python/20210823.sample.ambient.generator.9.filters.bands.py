@@ -181,13 +181,13 @@ def getBandWindow(f, f0, idx):
   nextFreq = f0 * 2.**(idx+1)
   f1 = currFreq - 0.5 * (currFreq - prevFreq)
   f2 = currFreq + 0.5 * (nextFreq - currFreq)
-  i1 = int(0.9 * argmax(f > f1)) # expand for overlap, % or prev frequency
-  i2 = int(1.1 * argmax(f > f2)) # expand for overlap, % or next frequency
+  i1 = int(1.0 * argmax(f > f1)) # expand for overlap, % or prev frequency
+  i2 = int(1.0 * argmax(f > f2)) # expand for overlap, % or next frequency
 
   Nw = i2-i1
 
   w = np.zeros(len(f))
-  w[i1:i2] = signal.windows.tukey(Nw) # not ideal, will be scaled
+  w[i1:i2] = signal.windows.boxcar(Nw) # not ideal, will be scaled
 
   return w
 
@@ -229,7 +229,7 @@ def applyDelays(x, fs, nbDelays, delaySec):
 # name = "04 Mission Three"              # 24*0.05, 38*0.05, 234*0.05
 # name = "07 Mission Six"                # 78.55 85.8 88.45 120.15 // 331*0.05, 545*0.05, 1760*0.05
 # name = "09 Mission Eight"                # 17.6, 49.05, 51.85, 54.35
-name = "11 Mission Ten"                # 494*0.05, 727*0.05
+name = "11 Mission Ten"                # 3.35, 24.65, 26.1, 29.9, 32.35, 727*0.05
 # name = "Big Rock.1"                    # 127.5
 # name = "Alone.3"         
 # name = "Jump.12"                       # 12.05 35.95 50.45 56.15 68.7
@@ -237,8 +237,8 @@ name = "11 Mission Ten"                # 494*0.05, 727*0.05
 # name = "Late.06"         
 # name = "Sam Sung 3"                    # 51.8
 # name = "Aly Wood 2"                    # 52 (dude)
-# name = "Beverly Aly Hills 5"           # t: 3.55, 7.5, 12.6
-# name = "insects.m4a")   
+# name = "Beverly Aly Hills 5"           # t: 3.55, 7.5/7.9, 10.9, 12.8, 15.8/17.75 // 23.7, 27.0, 30.1, 32.5, 35.15
+# name = "insects"   
 # name = "smallthings"                   # t: 1.85, 2.45, 2.85, 16.6, 17, 21.85, 33, 43.1,  44.8, 45.5, 47.1, 47.9, 50.1
 # name = "Background noise with voice"   # 43*0.05, 1.75
 # name = "Tron Ouverture"                # 697*0.05, 843*0.05, 55.4 58.9, 107.9, 125.25  130.9 135.7
@@ -261,9 +261,9 @@ Ts = 60 # desired final song duration
 songWindowFactor = 0.2
 doBoostBass = False # when using a recording
 
-timePosSec = 494*0.05
+timePosSec = 3.35
 
-firstBandFreq = 256
+firstBandFreq = 512
 nbBands = 3 # (use as low pass filter) 0:64, 1:128, 2:256, 3:512, 4:1024, 5:2048, 6:4096, 7:8192
 
 nbDelays = 5
