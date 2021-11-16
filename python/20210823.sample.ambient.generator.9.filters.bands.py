@@ -132,9 +132,10 @@ def boostBass(x, k, fc, fs):
   sos = signal.butter(2, fc, 'lp', fs=fs, output='sos')
   return x + k * signal.sosfilt(sos, x, axis=0)
 
-def exportCompressed(x, name, fs, format = "mp3"):
+def exportCompressed(x, name, album, fs, format = "mp3"):
   y = audiosegment.from_numpy_array(discretize(x), fs)
-  y.export(name + "." + format, format=format) # NOTE: folder must exist
+  info = {"title": name, "album": album, "artist": "Jonathan Godbout", "genre": "Space Ambient"}
+  y.export("./songs/" + name + "." + format, format=format, tags=info) # NOTE: folder must exist
 
 def playSound(x):
   tmpWav = "temp.wav"
@@ -247,13 +248,8 @@ nameIn = "./data/" + name + ".m4a"
 
 seg = audiosegment.from_file(nameIn)
 
-fs = seg.frame_rate
 x = seg.to_numpy_array()
 x = x / x.max()
-
-if x.ndim == 1:
-  x = x.reshape(len(x), 1)
-  x = np.concatenate([x, x], axis=1)
 
 ## -------------------------------------------------------
 Tw = 1.0 # sample duration
@@ -269,11 +265,22 @@ nbBands = 3 # (use as low pass filter) 0:64, 1:128, 2:256, 3:512, 4:1024, 5:2048
 nbDelays = 5
 delaySec = 1.0
 
+## -------------------------------------------------------
+
+fs = seg.frame_rate
 bands = [firstBandFreq * 2**i for i in np.arange(nbBands)]
 Nw = int(Tw*fs) # sample window
 Ns = int(Ts*fs) # final song
 Nc = x.shape[1] # number of channels
 f = np.fft.fftfreq(Nw, 1 / fs)
+
+nameInfo = '{}.filters.'.format(name)
+nameParams = '{}.bands.Tw{}ms.Ts{}ms.f0{}Hz.{}bands'.format(name, int(Tw*1000), int(Ts*1000), firstBandFreq, nbBands)
+## -------------------------------------------------------
+
+if x.ndim == 1:
+  x = x.reshape(len(x), 1)
+  x = np.concatenate([x, x], axis=1)
 
 print(bands)
 showBands(f, bands)
@@ -281,7 +288,7 @@ showBands(f, bands)
 if doBoostBass:
   x = boostBass(x, 5, 500, fs)
 
-exportCompressed(x, "./songs/sample.ambient.input.song", fs)
+exportCompressed(x, "sample.ambient.input.song", name, fs)
 
 tx = np.linspace(0, x.shape[0] / fs, num=x.shape[0])
 ti = argmax(tx > timePosSec) # sample index to play
@@ -294,7 +301,9 @@ F = randomizePhase(F)
 
 f = np.fft.fftfreq(F.shape[0], 1 / fs)
 
-exportCompressed(inverseFft(F, songWindowFactor), "./songs/sample.ambient.generated.spectrum", fs)
+Fs = inverseFft(F, songWindowFactor)
+exportCompressed(Fs, "sample.ambient.generated.spectrum", name, fs)
+exportCompressed(Fs, nameInfo + "spectrum." + nameParams, name, fs)
 
 s = np.zeros((Ns, Nc))
 for i in np.arange(len(bands)):
@@ -309,17 +318,15 @@ for i in np.arange(len(bands)):
   si = inverseFft(Fi, songWindowFactor)
   si = modulateSin(si, ts)
 
-  exportCompressed(si, "./songs/sample.ambient.band{}".format(i), fs)
+  exportCompressed(si, "sample.ambient.band{}".format(i), name, fs)
 
   s = s + si
 
 # s = applyDelays(s, fs, nbDelays, delaySec)
 s = applyWindow(s, signal.windows.hann(int(songWindowFactor * Ns)))
 
-pathOut = "./songs/"
-nameOut = '{}{}.bands.Tw{}ms.Ts{}ms.f0{}Hz.{}bands'.format(pathOut, name, int(Tw*1000), int(Ts*1000), firstBandFreq, nbBands)
-exportCompressed(s, "./songs/sample.ambient.generated.song", fs)
-exportCompressed(s, nameOut, fs)
+exportCompressed(s, nameInfo + nameParams, name, fs)
+exportCompressed(s, "sample.ambient.generated.song", name, fs)
 
 music_thread = Thread(target=lambda: playSound(s))
 music_thread.start()
