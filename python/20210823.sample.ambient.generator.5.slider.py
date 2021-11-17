@@ -154,7 +154,7 @@ seg = audiosegment.from_file(nameIn)
 ## -------------------------------------------------------
 Ts = 0.05 # step duration
 Tw = 0.25 # sample duration
-lowPass = 8000
+lowPass = 20000
 doBoostBass = False # when using a recording
 
 Tk = 4.0 # desired final sample duration (slow down factor)
@@ -201,7 +201,10 @@ sliderLowFreqValue = tk.IntVar()
 sliderHighFreqValue = tk.IntVar()
 sliderVolumeValue = tk.IntVar()
 
-fig, fftax = plt.subplots(figsize=figsizeFft, dpi=dpi)
+fftfig, fftax = plt.subplots(figsize=figsizeFft, dpi=dpi)
+plt.tight_layout()
+
+fft2fig, fft2ax = plt.subplots(figsize=figsizeFft, dpi=dpi)
 plt.tight_layout()
 
 def playSample(p):
@@ -209,17 +212,21 @@ def playSample(p):
   Fi = np.fft.fft(xi, axis=0)
   Fi = applyFilter(f, Fi, sliderLowFreq.get(), sliderHighFreq.get())
   si, p = reconstructSample(np.abs(Fi), Tk / Tw, int(fadeDur * 2 * fs), [])
+
+  Fo = np.fft.fft(si, axis=0) # output signal FFT
+  showSpectrum(np.abs(Fo[:,0]), fft2ax)
+
   tmpWav = "temp.wav"
   play(si, tmpWav, volume=sliderVolume.get()/100.0)
 
-def showSpectrum(S, i):
-  F = S[:,i,0]
-  fftax.clear()
-  fftax.plot(f, F)
-  fftax.set_xlim([0, maxFreqPlots])
+def showSpectrum(F, ax):
+  f = np.fft.fftfreq(F.shape[0], 1 / fs)
+  ax.clear()
+  ax.plot(f, F)
+  ax.set_xlim([0, maxFreqPlots])
 
   Fw = getFilterWindow(f, sliderLowFreq.get(), sliderHighFreq.get())
-  fftax.plot(f, Fw * 0.5 * np.max(F))
+  ax.plot(f, Fw * 0.5 * np.max(F))
 
 def duplicate1dArrayToChannels(x, nbChannels):
   return np.tile(x, (nbChannels, 1)).T # copy as 2 equal columns
@@ -228,7 +235,6 @@ def getFilterWindow(f, minFreq, maxFreq):
   ti = argmax(f > minFreq)
   tj = argmax(f > maxFreq)
   Nw = tj - ti
-  print('[{}, {}]Hz: [{}, {}]'.format(minFreq, maxFreq, ti, tj))
 
   w = signal.windows.boxcar(Nw)
 
@@ -238,13 +244,15 @@ def getFilterWindow(f, minFreq, maxFreq):
   return Fw
 
 def applyFilter(f, F, minFreq, maxFreq):
+  if maxFreq < sliderMaxFreq:
   w = getFilterWindow(f, minFreq, maxFreq)
   w = duplicate1dArrayToChannels(w, F.shape[1])
-  return F * w
+    F = F * w
+  return F
 
 def update():
   playSample(sliderPos.get() * stepLen)
-  showSpectrum(S, sliderPos.get(), )
+  showSpectrum(S[:,sliderPos.get(),0], fftax)
 
 def sliderPosChanged(event):
   print('{}s'.format(sliderPos.get() * Ts))
@@ -305,6 +313,7 @@ sliderVolume = tk.Scale(
     variable=sliderVolumeValue,
     # command=slider_changed
 )
+sliderVolume.set(50)
 sliderVolume.bind("<ButtonRelease-1>", sliderVolumeChanged)
 sliderVolume.pack()
 
