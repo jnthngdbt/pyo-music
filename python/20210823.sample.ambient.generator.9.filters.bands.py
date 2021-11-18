@@ -43,6 +43,10 @@ def play(s, f, volume=1.0, loop=False):
     winsound.PlaySound(f, 0)
     play = loop
 
+def playSound(x):
+  tmpWav = "temp.wav"
+  loop(x, tmpWav)
+
 ## -------------------------------------------------------
 def interpolateFft(F, k):
   Nf = F.shape[0]
@@ -82,40 +86,14 @@ def applyWindow(x, w):
   return x
 
 ## -------------------------------------------------------
-def spectrogram(x, fs, Ts, Tw):
-  stepLen = int(Ts * fs)
-  windowLen = int(Tw * fs)
-
-  maxPos = x.shape[0] - windowLen - 1
-  nbSteps = int(maxPos / stepLen) - 1
-  nbChans = x.shape[1]
-
-  S = np.zeros((windowLen, nbSteps, nbChans)) * np.exp(1j * np.zeros((windowLen, nbSteps, nbChans)))
-  
-  for i in np.arange(nbSteps):
-    print('{0}/{1}'.format(i, nbSteps))
-    pos = i * stepLen
-    xi = x[pos: pos + windowLen, :]
-    S[:, i, :] = np.fft.fft(xi, axis=0)
-
-  return S
-
 def computeFft(x, i, Tw):
   Nw = int(Tw * fs)
+  w = signal.windows.hann(Nw)
+  w = duplicate1dArrayToChannels(w, x.shape[1])
   xi = x[i: i + Nw, :]
-  F = np.fft.fft(xi, axis=0)
+  xw = w * xi
+  F = np.fft.fft(xw, axis=0)
   return F
-
-def crossFadeWindow(n): # for equal power fading
-  hn = int(0.5 * n)
-  t = np.arange(hn)
-  x = np.sqrt(t)
-  x = np.concatenate([x, np.flipud(x)])
-  x = x / np.max(x)
-
-  w = np.zeros(n)
-  w[0:len(x)] = x # deal with odd window lenght, may miss 1 point
-  return w
 
 def inverseFft(F, w):
   x = np.real(np.fft.ifft(F, axis=0))
@@ -136,45 +114,6 @@ def exportCompressed(x, name, album, fs, format = "mp3"):
   y = audiosegment.from_numpy_array(discretize(x), fs)
   info = {"title": name, "album": album, "artist": "Jonathan Godbout", "genre": "Space Ambient"}
   y.export("./songs/" + name + "." + format, format=format, tags=info) # NOTE: folder must exist
-
-def playSound(x):
-  tmpWav = "temp.wav"
-  loop(x, tmpWav)
-
-def mixSignal(s, x, n):
-  if len(s) <= 0:
-    return x, np.arange(x.shape[0])
-  else:
-    Ns = s.shape[0] 
-    Nx = x.shape[0]
-    Ny = Ns + Nx - n
-    y = np.zeros((Ny, s.shape[1]))
-    y[0:Ns, :] = s
-    y[Ns-n:,:] += x
-    t = np.arange(Ny)
-    return y, t[Ns-n:]
-
-def notch(F, f, fn, ti, lfo, phase):
-  fi = argmax(f > fn)
-  Nhw = int(0.5 * fi) # sample based half-bandwidth
-
-  win = signal.windows.tukey(2 * Nhw)
-  win = duplicate1dArrayToChannels(F.shape[1])
-
-  notch = np.zeros(Fi.shape)
-  i = fi-Nhw
-  j = fi+Nhw
-
-  notch[i:j, :] = win
-  notch[-j:-i, :] = win # symetrical negative frequency part
-
-  amp = np.sin(2.0 * np.pi * ti * lfo + phase)
-  amp = np.clip(1.0 * amp, -1.0, 1.0)
-  amp = 0.5 + 0.5 * amp
-
-  notch = 1.0 - amp * notch
-
-  return F * notch
 
 def getBandWindow(f, f0, idx):
   currFreq = f0 * 2.**(idx)
@@ -223,11 +162,11 @@ def applyDelays(x, fs, nbDelays, delaySec):
 #       - pip install audiosegment, then ffmpeg (may need to go through choco)
 #       - must run all thoses commands as admin, must relaunch vscode
 
-# name = "03 Mission Two"                # 72*0.05, 88*0.05
+name = "03 Mission Two"                # 72*0.05, 88*0.05
 # name = "04 Mission Three"              # 24*0.05, 38*0.05, 234*0.05
 # name = "07 Mission Six"                # 78.55 85.8 88.45 120.15 // 331*0.05, 545*0.05, 1760*0.05
-# name = "09 Mission Eight"                # 17.6, 49.05, 51.85, 54.35
-name = "11 Mission Ten"                # 3.35, 24.65, 26.1, 29.9, 32.35, 727*0.05
+# name = "09 Mission Eight"              # 17.6, 49.05, 51.85, 54.35
+# name = "11 Mission Ten"                # 3.35, 24.65, 26.1, 29.9, 32.35, 727*0.05
 # name = "Big Rock.1"                    # 127.5
 # name = "Alone.3"         
 # name = "Jump.12"                       # 12.05 35.95 50.45 56.15 68.7
@@ -240,6 +179,27 @@ name = "11 Mission Ten"                # 3.35, 24.65, 26.1, 29.9, 32.35, 727*0.0
 # name = "smallthings"                   # t: 1.85, 2.45, 2.85, 16.6, 17, 21.85, 33, 43.1,  44.8, 45.5, 47.1, 47.9, 50.1
 # name = "Background noise with voice"   # 43*0.05, 1.75
 # name = "Tron Ouverture"                # 697*0.05, 843*0.05, 55.4 58.9, 107.9, 125.25  130.9 135.7
+# name = "TC RS212 vs SVT15E" # 13.25
+# name = "bass recording jam miche 1"
+
+## -------------------------------------------------------
+
+timePosSec = 88*0.05
+
+firstBandFreq = 400
+nbBands = 3 # (use as low pass filter) 0:64, 1:128, 2:256, 3:512, 4:1024, 5:2048, 6:4096, 7:8192
+
+Tw = 0.25 # sample duration
+Ts = 180 # desired final song duration
+minLfo = 0.010
+maxLfo = 0.015
+songWindowDur = 16.0
+doBoostBass = False # when using a recording
+
+nbDelays = 5
+delaySec = 1.0
+
+## -------------------------------------------------------
 
 nameIn = "./data/" + name + ".m4a"
 
@@ -248,23 +208,9 @@ seg = audiosegment.from_file(nameIn)
 x = seg.to_numpy_array()
 x = x / x.max()
 
-## -------------------------------------------------------
-Tw = 0.25 # sample duration
-Ts = 180 # desired final song duration
-minLfo = 0.005
-maxLfo = 0.015
-songWindowFactor = 0.2
-doBoostBass = False # when using a recording
-
-timePosSec = 3.35
-
-firstBandFreq = 512
-nbBands = 3 # (use as low pass filter) 0:64, 1:128, 2:256, 3:512, 4:1024, 5:2048, 6:4096, 7:8192
-
-nbDelays = 5
-delaySec = 1.0
-
-## -------------------------------------------------------
+if x.ndim == 1:
+  x = x.reshape(len(x), 1)
+  x = np.concatenate([x, x], axis=1)
 
 fs = seg.frame_rate
 Nw = int(Tw*fs) # sample window
@@ -272,8 +218,11 @@ Ns = int(Ts*fs) # final song
 Nc = x.shape[1] # number of channels
 f = np.fft.fftfreq(Nw, 1 / fs)
 
+songWindowFactor = songWindowDur / Ts
+
 nameInfo = '{}.filters.'.format(name)
 nameParams = '{}.bands.Tw{}ms.Ts{}ms.f0{}Hz.{}bands'.format(name, int(Tw*1000), int(Ts*1000), firstBandFreq, nbBands)
+
 ## -------------------------------------------------------
 
 showBands(f, firstBandFreq, nbBands)
