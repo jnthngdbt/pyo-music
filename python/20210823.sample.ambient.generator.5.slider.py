@@ -96,10 +96,6 @@ def boostBass(x, k, fc, fs):
   sos = signal.butter(2, fc, 'lp', fs=fs, output='sos')
   return x + k * signal.sosfilt(sos, x, axis=0)
 
-def exportCompressed(x, name, fs):
-  y = audiosegment.from_numpy_array(discretize(x), fs)
-  y.export(name)
-
 def spectrogram(x, fs, Ts, Tw):
   stepLen = int(Ts * fs)
   windowLen = int(Tw * fs)
@@ -116,15 +112,15 @@ def spectrogram(x, fs, Ts, Tw):
     xi = x[pos: pos + windowLen, :]
     S[:, i, :] = np.fft.fft(xi, axis=0)
 
-  return np.abs(S)
+  return S
 
 ## -------------------------------------------------------
-# name = "03 Mission Two"
+name = "03 Mission Two"
 # name = "04 Mission Three"
 # name = "05 Mission Four"
 # name = "07 Mission Six"
 # name = "09 Mission Eight"
-name = "11 Mission Ten"
+# name = "11 Mission Ten"
 # name = "Big Rock.1"
 # name = "Alone.3"
 # name = "Jump.12"
@@ -183,8 +179,6 @@ x = filterSound(x, lowPass, fs)
 if doBoostBass:
   x = boostBass(x, 5, 500, fs)
 
-exportCompressed(x, "./songs/sample.ambient.generated.song.m4a", fs)
-
 S = spectrogram(x, fs, Ts, Tw)
 f = np.fft.fftfreq(S.shape[0], 1 / fs)
 t = np.linspace(0, x.shape[0] / fs, num=S.shape[1])
@@ -207,9 +201,7 @@ plt.tight_layout()
 fft2fig, fft2ax = plt.subplots(figsize=figsizeFft, dpi=dpi)
 plt.tight_layout()
 
-def playSample(p):
-  xi = x[p: p + windowLen, :]
-  Fi = np.fft.fft(xi, axis=0)
+def playSample(f, Fi):
   Fi = applyFilter(f, Fi, sliderLowFreq.get(), sliderHighFreq.get())
   si, p = reconstructSample(np.abs(Fi), Tk / Tw, int(fadeDur * 2 * fs), [])
 
@@ -220,13 +212,14 @@ def playSample(p):
   play(si, tmpWav, volume=sliderVolume.get()/100.0)
 
 def showSpectrum(F, ax):
-  f = np.fft.fftfreq(F.shape[0], 1 / fs)
+  Fi = np.abs(F)
+  f = np.fft.fftfreq(Fi.shape[0], 1 / fs)
   ax.clear()
-  ax.plot(f, F)
+  ax.plot(f, Fi)
   ax.set_xlim([0, maxFreqPlots])
 
   Fw = getFilterWindow(f, sliderLowFreq.get(), sliderHighFreq.get())
-  ax.plot(f, Fw * 0.5 * np.max(F))
+  ax.plot(f, Fw * 0.5 * np.max(Fi))
 
 def duplicate1dArrayToChannels(x, nbChannels):
   return np.tile(x, (nbChannels, 1)).T # copy as 2 equal columns
@@ -245,14 +238,18 @@ def getFilterWindow(f, minFreq, maxFreq):
 
 def applyFilter(f, F, minFreq, maxFreq):
   if maxFreq < sliderMaxFreq:
-  w = getFilterWindow(f, minFreq, maxFreq)
-  w = duplicate1dArrayToChannels(w, F.shape[1])
+    w = getFilterWindow(f, minFreq, maxFreq)
+    w = duplicate1dArrayToChannels(w, F.shape[1])
     F = F * w
   return F
 
 def update():
-  playSample(sliderPos.get() * stepLen)
-  showSpectrum(S[:,sliderPos.get(),0], fftax)
+  i = sliderPos.get()
+  F = np.squeeze(S[:,i,:])
+  playSample(f, F)
+  showSpectrum(F[0], fftax)
+
+# ------------------------------------------------------------
 
 def sliderPosChanged(event):
   print('{}s'.format(sliderPos.get() * Ts))
@@ -318,7 +315,7 @@ sliderVolume.bind("<ButtonRelease-1>", sliderVolumeChanged)
 sliderVolume.pack()
 
 fmax = argmax(f > maxFreqPlots)
-S0 = S[:fmax, :, 0]
+S0 = np.abs(S[:fmax, :, 0])
 P0 = np.log(S0, where=S0>0)
 f0 = f[:fmax]
 plt.figure(figsize=figsizeSpectro, dpi=dpi, ) # try to fit slider width
