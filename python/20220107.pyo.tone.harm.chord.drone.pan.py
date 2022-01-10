@@ -14,10 +14,7 @@ nbNotes = len(notes)
 
 def randRange(a,b):
   r = b - a
-  return a + r * np.random.rand()
-
-def randPhase():
-  return 2.0 * np.pi * np.random.rand()
+  return a + r * np.random.rand()   
 
 oscLfos = [None] * nbNotes
 oscs = [None] * nbNotes
@@ -28,10 +25,10 @@ pans = [None] * nbNotes
 for i, note in enumerate(notes):
   f = midiToHz(note + root)
 
-  oscLfos[i] = LFO(randRange(0.01, 0.04), sharp=0.5, type=3).range(0, 1)
+  oscLfos[i] = Sine(freq=randRange(0.01, 0.04), phase=np.random.rand()).range(0, 1)
   oscs[i] = Osc(h, freq=[f, f + 1], mul=oscLfos[i]).mix(2)
 
-  panLfos[i] = LFO(randRange(0.01, 0.04), sharp=0.5, type=3).range(0.3, 0.7)
+  panLfos[i] = Sine(freq=randRange(0.01, 0.04), phase=np.random.rand()).range(0.3, 0.7)
   pans[i] = Pan(oscs[i], outs=2, pan=panLfos[i])
 
 x = 0.0 * Sine()
@@ -39,7 +36,6 @@ for sig in pans:
   x = x + sig
 
 d = Delay(x, delay=[.15,.2,.25, .3, .35], feedback=.5, mul=.4)
-# d.out()
 d.ctrl()
 
 r = Freeverb(d, size=[.79,.8], damp=.9, bal=.3, mul=0.3)
