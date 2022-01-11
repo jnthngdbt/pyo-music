@@ -5,17 +5,34 @@ import numpy as np
 s = Server().boot()
 s.start()
 
-# notes = [-2, 0, 3, 5, 7, 10, 12, 15, 17, 22, 24] # minor
-notes = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24] # major
+#        0  1  2  3  4  5  6  7  8  9  10 11
+scale = [1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0] # minor
+scale = [1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0] # major
+scale = [1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0] # minor small
+scale = [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0] # major small
 
-root = 20
-nbNotes = len(notes)
+root = 12
+octaves = [0,1,2]
 
 padSize = 262144
 padFreq = 440
 padRatio = s.getSamplingRate() / padSize
 
-table = PadSynthTable(basefreq=padFreq, size=padSize)
+notes = np.nonzero(scale)[0]
+for i in octaves:
+  notes = np.concatenate([notes, i * 12 + notes], axis=0)
+
+nbNotes = len(notes)
+
+table = PadSynthTable(
+  basefreq=padFreq, 
+  size=padSize, 
+  spread=1, # 1: def strings, 2:shallower/pure, in between: creepy (near 1, slight dissonnance) // freq = basefreq * pow(n, spread)
+  bw=50, # 20: org, 50: def strings, 70: dreamy more highs
+  bwscl=1, # 1: def string, 2: dreamy, 3: flute/wind
+  damp=0.7, # 0.7: def, 1: big high synth, 0.5: mellow // amp = pow(damp, n)
+  nharms=64, # 64: def 
+)
 
 def randRange(a,b):
   r = b - a
@@ -29,10 +46,9 @@ pans = [None] * nbNotes
 
 for i, note in enumerate(notes):
   f = midiToHz(note + root)
-
   freqRatio = f / padFreq
 
-  oscLfos[i] = Sine(freq=randRange(0.01, 0.04), phase=np.random.rand()).range(0, 1)
+  oscLfos[i] = Sine(freq=randRange(0.01, 0.04), phase=0.75).range(0, 1)
   oscs[i] = Osc(table, freq=freqRatio, mul=oscLfos[i]).mix(2)
 
   panLfos[i] = Sine(freq=randRange(0.01, 0.04), phase=np.random.rand()).range(0.3, 0.7)
@@ -41,9 +57,11 @@ for i, note in enumerate(notes):
 x = 0.0 * Sine()
 for sig in pans:
   x = x + sig
+# x.out()
 
-d = Delay(x, delay=[.15,.2,.25, .3, .35], feedback=.5, mul=.4)
+d = Delay(x, delay=np.arange(0.15, 0.3, 0.05).tolist(), feedback=.5, mul=.5)
 d.ctrl()
+# d.out()
 
 r = Freeverb(d, size=[.79,.8], damp=.9, bal=.3, mul=0.3)
 r.out()
