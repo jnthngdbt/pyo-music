@@ -49,7 +49,7 @@ for i, note in enumerate(notes):
   freqRatio = f / padFreq
 
   oscLfos[i] = Sine(freq=randRange(0.01, 0.04), phase=0.75).range(0, 1)
-  oscs[i] = Osc(table, freq=freqRatio, mul=oscLfos[i]).mix(2)
+  oscs[i] = Osc(table, freq=freqRatio, mul=oscLfos[i])
 
   panLfos[i] = Sine(freq=randRange(0.01, 0.04), phase=np.random.rand()).range(0.3, 0.7)
   pans[i] = Pan(oscs[i], outs=2, pan=panLfos[i])
