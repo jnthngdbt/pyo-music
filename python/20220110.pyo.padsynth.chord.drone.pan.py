@@ -1,4 +1,3 @@
-from numpy.core.fromnumeric import size
 from pyo import *
 import numpy as np
 

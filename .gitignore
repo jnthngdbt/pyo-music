@@ -4,3 +4,4 @@
 .idea
 python/songs/*
 !python/songs/.gitkeep
+python/20220111.pyo.example.template.py
