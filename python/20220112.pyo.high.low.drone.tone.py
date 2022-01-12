@@ -9,6 +9,7 @@ padFreq = 440
 padRatio = s.getSamplingRate() / padSize
 
 # For high note (85-97)
+# - for soft high with bit of air: bw=40, damp=0.2, bwscl=2.0
 oscFreqHigh = padRatio * midiToHz(97) / padFreq
 th = PadSynthTable(
   basefreq=padFreq, 
@@ -22,6 +23,7 @@ th = PadSynthTable(
 
 # For low note (36)
 # - for low string: damp=0.9 (grittier)
+# - for low string: damp=0.85, bw = 40, bwscl=1.1
 # - for low bass: damp=0.5
 # - for low growl: midi 25, damp=0.9 (0.95 more open)
 oscFreqLow = padRatio * midiToHz(25) / padFreq
@@ -49,9 +51,9 @@ tl = PadSynthTable(
 xl = Osc(tl, freq=oscFreqLow)
 xh = Osc(th, freq=oscFreqHigh)
 
-x = xl + .1 * xh
+x = 1.0 * xl + .3 * xh
 
-d = Delay(x, delay=[.1,.2], feedback=.5, mul=.7)
+d = Delay(x, delay=[.05,.08], feedback=.5, mul=.7)
 d.out()
 
 s.gui(locals())
