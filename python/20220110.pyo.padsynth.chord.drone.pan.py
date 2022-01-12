@@ -13,10 +13,10 @@ scale = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # peak
 scale = [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0] # major small
 scale = [1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0] # riff
 
-root = 36
+root = 24
 octaves = [0,1,2]
 
-padSize = 262144
+padSize = 262144 * 2
 padFreq = 440
 padRatio = s.getSamplingRate() / padSize
 
@@ -69,9 +69,9 @@ r = Freeverb(d, size=[.79,.8], damp=.9, bal=.3, mul=0.3)
 # r.out()
 r.ctrl()
 
-lfoLpTable = TriangleTable()
-lfoLp = Osc(lfoLpTable, freq=0.01, phase=0.25).range(4000, 6000)
-lp = MoogLP(r, freq=lfoLp, res=0.2)
+# lfoLpTable = TriangleTable()
+# lfoLp = Osc(lfoLpTable, freq=0.01, phase=0.25).range(4000, 10000)
+lp = MoogLP(r, freq=20000, res=0.0)
 lp.out()
 
 # NOTE: Scope does not work with LFO: wx._core.wxAssertionError: C++ assertion "x > double((-2147483647 - 1))...
