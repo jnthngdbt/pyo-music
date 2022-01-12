@@ -13,7 +13,7 @@ scale = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # peak
 scale = [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0] # major small
 scale = [1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0] # riff
 
-root = 12
+root = 36
 octaves = [0,1,2]
 
 padSize = 262144
@@ -48,7 +48,7 @@ pans = [None] * nbNotes
 
 for i, note in enumerate(notes):
   f = midiToHz(note + root)
-  freqRatio = f / padFreq
+  freqRatio = padRatio * f / padFreq
 
   oscLfos[i] = Sine(freq=randRange(0.01, 0.04), phase=0.75).range(0, 1)
   oscs[i] = Osc(table, freq=freqRatio, mul=oscLfos[i])
