@@ -11,9 +11,9 @@ class Pad:
     self.ratio = s.getSamplingRate() / self.size
     self.table = PadSynthTable(basefreq=self.basefreq, size=self.size, 
       spread=1, # for slight dissonnance
-      bw=50, # pure > noisy
-      bwscl=1, # breathing
-      damp=0.7) # mellow/bright
+      bw=50, # def: 50, pure > noisy
+      bwscl=1.5, # def: 1, breathing
+      damp=0.7) # def: 0.7, mellow/bright
 
   def freq(self, midi=48):
     f = midiToHz(midi)
@@ -28,32 +28,60 @@ class Instrument:
       self.osc = Osc(self.pad.table, freq=np.zeros(self.maxchnls).tolist()).stop()
       self.pan = Pan(self.osc, outs=2, pan=0.5, spread=0.5).stop()
       self.delay = Delay(self.pan, delay=[0.15, 0.2, 0.25, 0.3], feedback=0.5).stop()
-      self.env = Fader(fadein=2, fadeout=2, dur=1).stop()
+      self.env = Fader().stop()
 
       self.mix = 0.1 * self.delay * self.env
 
     def play(self, notes=[48, 55], dur=8, delay=0):
-        notes = self.expand(notes=notes)
-        self.osc.freq = self.pad.freq(notes)
+      notes = self.expand(notes=notes)
+      self.osc.freq = self.pad.freq(notes)
 
-        self.env.dur = dur
+      self.env.dur = dur
+      self.env.fadein = 0.5 * dur
+      self.env.fadeout = 0.5 * dur
 
-        self.osc.play(dur=dur, delay=delay)
-        self.pan.play(dur=dur, delay=delay)
-        self.delay.play(dur=dur, delay=delay)
-        self.env.play(dur=dur, delay=delay)
+      self.osc.play(dur=dur, delay=delay)
+      self.pan.play(dur=dur, delay=delay)
+      self.delay.play(dur=dur, delay=delay)
+      self.env.play(dur=dur, delay=delay)
 
-        self.mix.out(dur=dur, delay=delay)
+      self.mix.out(dur=dur, delay=delay)
 
-    def expand(self, notes=[48, 52, 55], octaves=[0,1]):
+      return self
+
+    def expand(self, notes=[48, 52, 55], octaves=[0,1,2]):
       x = []
       notes = np.array(notes)
       for i in octaves:
         x = np.concatenate([x, i * 12 + notes], axis=0)
       return x.tolist()
 
-k = Instrument()
-k.play(notes=[45, 48, 52], dur=8)
+# Using 2 instances to allow overlapping.
+ins = [Instrument(), Instrument()]
 
+chords = [
+  [45, 48, 52], # Am
+  [41, 45, 48], # F
+  [43, 48, 52], # C invert
+  [43, 47, 50], # G
+  [45, 48, 52], # Am
+  [41, 45, 48, 53], # F power
+  [48, 52, 55], # C
+  [43, 47, 50, 55], # G power
+]
+
+dur = 12
+delay = 0.6 * dur # somehow overlap must be < 0.5
+
+i = 0
+
+def playChord():
+  global i
+  insIdx = i % len(ins)
+  chordIdx = i % len(chords)
+  ins[insIdx].play(notes=chords[chordIdx], dur=dur)
+  i += 1
+
+p = Pattern(playChord, time=delay).play()
 
 s.gui(locals())
