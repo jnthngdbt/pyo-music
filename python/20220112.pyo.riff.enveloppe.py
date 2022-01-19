@@ -65,15 +65,17 @@ class Peak:
 # Using 2 instances to allow overlapping.
 ins = [Instrument(), Instrument()]
 
+root = 36
+
 chords = [
-  [45, 48, 52], # Am
-  [41, 45, 48], # F
-  [43, 48, 52], # C invert
-  [43, 47, 50], # G
-  [45, 48, 52], # Am
-  [41, 45, 48, 53], # F power
-  [48, 52, 55], # C
-  [43, 47, 50, 55], # G power
+  [x + root for x in [-3, 0, 4]], # Am
+  [x + root for x in [-7, -3, 0]], # F
+  [x + root for x in [-5, 0, 4]], # C invert
+  [x + root for x in [-5, -1, 2]], # G
+  [x + root for x in [-3, 0, 4]], # Am
+  [x + root for x in [-7, -3, 0, 5]], # F power
+  [x + root for x in [0, 4, 7]], # C
+  [x + root for x in [-5, -1, 2, 7]], # G power
 ]
 
 dur = 12
