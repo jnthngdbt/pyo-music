@@ -115,7 +115,7 @@ def spectrogram(x, fs, Ts, Tw):
   return S
 
 ## -------------------------------------------------------
-name = "03 Mission Two"
+# name = "03 Mission Two"
 # name = "04 Mission Three"
 # name = "05 Mission Four"
 # name = "07 Mission Six"
@@ -130,7 +130,7 @@ name = "03 Mission Two"
 # name = "Aly Wood 2"
 # name = "Beverly Aly Hills 5"
 # name = "insects"
-# name = "smallthings" # t: 31
+name = "smallthings" # t: 31
 # name = "Sam Buca - Outdoor Tone Car"
 # name = "Sam Buca - Outdoor Tone"
 # name = "Tone night 21h Aug"
@@ -183,6 +183,12 @@ S = spectrogram(x, fs, Ts, Tw)
 f = np.fft.fftfreq(S.shape[0], 1 / fs)
 t = np.linspace(0, x.shape[0] / fs, num=S.shape[1])
 
+fmax = argmax(f > maxFreqPlots)
+S0 = np.abs(S[:fmax, :, 0])
+P0 = np.log(S0, where=S0>0)
+f0 = f[:fmax]
+C0 = np.corrcoef(P0.T)
+
 ## -------------------------------------------------------
 
 windowLen = int(Tw * fs)
@@ -200,6 +206,9 @@ plt.tight_layout()
 
 fft2fig, fft2ax = plt.subplots(figsize=figsizeFft, dpi=dpi)
 plt.tight_layout()
+
+# ratiofig, ratioax = plt.subplots(figsize=figsizeFft, dpi=dpi)
+# plt.tight_layout()
 
 def playSample(f, Fi):
   Fi = applyFilter(f, Fi, sliderLowFreq.get(), sliderHighFreq.get())
@@ -245,9 +254,61 @@ def applyFilter(f, F, minFreq, maxFreq):
 
 def update():
   i = sliderPos.get()
-  F = np.squeeze(S[:,i,:])
+  # F = np.squeeze(S[:,i,:])
+  F = averageCorr(S, C0, i)
   playSample(f, F)
-  showSpectrum(F[0], fftax)
+  showSpectrum(F[:,0], fftax)
+#   computeRatios(f, F)
+
+# # ------------------------------------------------------------
+
+def averageCorr(S, C, i):
+  idx = np.argsort(C[i,:])
+  idx = idx[::-1] # reverse 
+  Fa = np.abs(np.squeeze(S[:,i,:]))
+  N = 1000
+  for j in np.arange(N):
+    Fa += np.abs(np.squeeze(S[:,j,:])) / N
+
+  Fp = np.random.rand(Fa.shape[0], Fa.shape[1]) * 2.0 * np.pi
+  F = Fa * np.exp(1j * Fp)
+  return F
+
+# # ------------------------------------------------------------
+
+# def computeRatios(f, F):
+#   fmax = argmax(f > 2000)
+#   Fi = np.abs(F[:fmax,0])
+
+#   Nf = len(Fi)
+#   Nr = int(Nf*(Nf-1)/2)
+
+#   ratio = np.zeros(Nr)
+#   k = 0
+
+#   for i in np.arange(0, Nf):
+#     for j in np.arange(i+1, Nf):
+#       ratio[k] = Fi[i] / Fi[j]
+#       k += 1
+
+#   ratioax.hist(ratio, bins=100)
+
+# def computeRoots(f, F):
+#   fmax = argmax(f > 1000)
+#   Fi = np.abs(F[:,0])
+
+#   Nf = len(Fi)
+#   Nr = int(Nf*(Nf-1)/2)
+
+#   ratio = np.zeros(Nr)
+#   k = 0
+
+#   for i in np.arange(0, Nf):
+#     for j in np.arange(i+1, Nf):
+#       ratio[k] = Fi[i] / Fi[j]
+#       k += 1
+
+#   ratioax.hist(ratio, bins=100)
 
 # ------------------------------------------------------------
 
@@ -318,8 +379,14 @@ fmax = argmax(f > maxFreqPlots)
 S0 = np.abs(S[:fmax, :, 0])
 P0 = np.log(S0, where=S0>0)
 f0 = f[:fmax]
-plt.figure(figsize=figsizeSpectro, dpi=dpi, ) # try to fit slider width
+plt.figure(figsize=figsizeSpectro, dpi=dpi) # try to fit slider width
 plt.pcolormesh(t, f0, P0)
+plt.tight_layout()
+
+C = np.corrcoef(P0.T)
+
+plt.figure(figsize=figsizeSpectro, dpi=dpi) # try to fit slider width
+plt.pcolormesh(t, t, C)
 plt.tight_layout()
 
 plt.ion() # non blocking
