@@ -12,7 +12,7 @@ class Pad:
     self.table = PadSynthTable(basefreq=self.basefreq, size=self.size, 
       spread=1, # for slight dissonnance
       bw=50, # def: 50, pure > noisy
-      bwscl=1.5, # def: 1, breathing
+      bwscl=1.2, # def: 1, breathing
       damp=0.7) # def: 0.7, mellow/bright
 
   def freq(self, midi=48):
