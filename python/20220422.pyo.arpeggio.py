@@ -3,9 +3,11 @@ import numpy as np
 
 s = Server().boot()
 
-# major = [0,2,4,5,7,9,11]
-major = [0,2,4,7,9]
-minor = [0,3,5,7,10]
+notes = [0,2,4,5,7,9,11] # major
+notes = [0,2,4,7,9] # major
+notes = [0,3,5,7,10] # minor
+notes = [0,7,10] # minor
+notes = [0,7,11] # major
 
 def expand(notes=[48, 52, 55], octaves=[0,1,2]):
   x = []
@@ -15,7 +17,7 @@ def expand(notes=[48, 52, 55], octaves=[0,1,2]):
   return x.tolist()
 
 class Arpeggio:
-  def __init__(self, root=49, notes=minor, bps=4.0, decay=0.25, mirror=False, mul=1.0) -> None:
+  def __init__(self, root=49, notes=[0,3,5,7,10], bps=4.0, decay=0.25, mirror=False, mul=1.0) -> None:
     self.idx = 0
     self.root = root
     self.notes = notes
@@ -42,7 +44,7 @@ class Arpeggio:
     self.env.play()
     self.idx = (self.idx + 1) % len(self.notes)
 
-a = Arpeggio(root=37, notes=expand(minor, octaves=[0,1]), bps=10, decay=0.2, mirror=True, mul=0.1)
+a = Arpeggio(root=49, notes=expand(notes, octaves=[0,1]), bps=10, decay=0.2, mirror=True, mul=0.1)
 
 s.start()
 s.gui(locals())
