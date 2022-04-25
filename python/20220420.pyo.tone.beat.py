@@ -11,7 +11,7 @@ class ToneBeatSimple:
     self.table = HarmTable([1, 0.3, 0.1, 0.02, 0.005])
     self.note = Osc(table=self.table, freq=[f, f*1.01])
 
-    self.env = Adsr(attack=.012, decay=decay, sustain=.0, release=.0, dur=.2)
+    self.env = Adsr(attack=.01, decay=decay, sustain=.0, release=.0, dur=.2)
     self.env.ctrl()
 
     self.out = mul * self.note * self.env
@@ -30,9 +30,9 @@ class Peak:
     self.band = Biquadx([self.noise1, self.noise2], freq=midiToHz(note), q=12, type=2, stages=2, mul=mul).out()
     self.band.ctrl()
 
-pk = Peak(note=85, mul=0.05)
-tbSlow = ToneBeatSimple(note=49, bps=4, decay=0.25, mul=0.1)
-tbFast = ToneBeatSimple(note=61, bps=8, decay=0.1, mul=0.00)
+pk = Peak(note=85, mul=1.0)
+tbSlow = ToneBeatSimple(note=49, bps=3.2, decay=0.24, mul=0.1)
+# tbFast = ToneBeatSimple(note=61, bps=8, decay=0.1, mul=0.00)
 
 s.start()
 s.gui(locals())
