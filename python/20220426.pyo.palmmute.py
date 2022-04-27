@@ -43,7 +43,8 @@ class PalmMute:
     self.idx = (self.idx + 1) % len(self.notes)
 
 dur = 0.175
-r1 = PalmMute(root=37, notes=[9,9,9,9,9,9,9,9,5,5,5,5,5,5,5,5,0,0,0,0,0,0,0,0,7,7,7,7,7,7,7,7], dur=dur, mul=1)
+r1 = PalmMute(root=37, notes=[ 9, 9, 9, 9, 9, 9, 9, 9, 5, 5, 5, 5, 5, 5, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7], dur=dur, mul=1)
+# r2 = PalmMute(root=37, notes=[12,12,12,11,11,11,12,12,19,19,19,12,12,12,11,11], dur=dur, mul=0.6)
 r2 = PalmMute(root=37, notes=[12], dur=dur, mul=0.4)
 
 s.start()
