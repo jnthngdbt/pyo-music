@@ -24,7 +24,7 @@ class KickBeat:
     self.osc.out()
 
 
-k = KickBeat(intervals=defint, dur=0.2)
+k = KickBeat(intervals=defint, dur=0.25)
 
 s.start()
 s.gui(locals())
