@@ -9,24 +9,22 @@ defint = [0, 8, 2, 3, 3]
 
 
 class KickBeat:
-  def __init__(self, intervals=defint, time=0.25) -> None:
-    self.seq = Seq(time=time, seq=intervals, poly=1, onlyonce=False, speed=1).play()
-    self.env = CosTable([(0,0.0000),(339,0.9636),(1591,0.0000),(8191,0.0000)])
-    self.env.graph()
-    self.amp = TrigEnv(self.seq, table=self.env, dur=.25, mul=10)
-    self.noiseL = BrownNoise()
-    self.noiseR = BrownNoise()
-    self.lp = ButBP([self.noiseL, self.noiseR], freq=40, q=4, mul=self.amp)
-    self.lp.ctrl()
-    self.effect = Freeverb(self.lp, size=0.5, damp=0.5, bal=0.5, mul=1)
-    self.effect.ctrl()
-    # self.effect.ctrl([
-    #     SLMap(0, 10, 'lin', 'mul', 10)
-    # ])
-    self.effect.out()
+  def __init__(self, intervals=defint, dur=0.25) -> None:
+    self.peakPos = 340
+    self.peakFreq = 400
+
+    self.seq = Seq(time=dur, seq=intervals, poly=1, onlyonce=False, speed=1).play()
+    self.ampenv = LinTable([(0,0),(self.peakPos,1),(8191,0)])
+    self.pitchenv = LinTable([(0,0.0000),(self.peakPos,1.0000),(804,0.2364),(5043,0.0848),(8192,0.0667)])
+    self.ampenv.graph(title="Amplitude")
+    self.pitchenv.graph(title="Pitch")
+    self.amp = TrigEnv(self.seq, table=self.ampenv, dur=dur, mul=0.5)
+    self.pitch = TrigEnv(self.seq, table=self.pitchenv, dur=dur, mul=self.peakFreq)
+    self.osc = Sine(freq=self.pitch, mul=self.amp).mix(2)
+    self.osc.out()
 
 
-k = KickBeat(intervals=defint, time=0.2)
+k = KickBeat(intervals=defint, dur=0.2)
 
 s.start()
 s.gui(locals())
