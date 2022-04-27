@@ -3,12 +3,6 @@ import numpy as np
 
 s = Server().boot()
 
-notes = [0,2,4,5,7,9,11] # major
-notes = [0,2,4,7,9] # major
-notes = [0,3,5,7,10] # minor
-notes = [0,7,10] # minor
-notes = [0,7,11] # major
-
 def expand(notes=[48, 52, 55], octaves=[0,1,2]):
   x = []
   notes = np.array(notes)
@@ -25,7 +19,7 @@ class PalmMute:
     self.table = HarmTable([1, 0.3, 0.1, 0.02, 0.005])
     self.osc = Osc(table=self.table, freq=[100,101], mul=mul)
 
-    self.env = Linseg([(0.0000,0.0000),(0.0064,0.3254),(0.0348,0.0690),(0.0943,0.0000)])
+    self.env = Linseg([(0.0000,0.0000),(0.0047,0.8),(0.0109,0.47),(0.0943,0.0000)])
     self.env.graph()
 
     self.effect = Freeverb(self.osc, size=0.8, damp=0.5, bal=0.1, mul=self.env)
@@ -42,10 +36,10 @@ class PalmMute:
     self.env.play()
     self.idx = (self.idx + 1) % len(self.notes)
 
-dur = 0.175
-r1 = PalmMute(root=37, notes=[ 9, 9, 9, 9, 9, 9, 9, 9, 5, 5, 5, 5, 5, 5, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7], dur=dur, mul=1)
-# r2 = PalmMute(root=37, notes=[12,12,12,11,11,11,12,12,19,19,19,12,12,12,11,11], dur=dur, mul=0.6)
-r2 = PalmMute(root=37, notes=[12], dur=dur, mul=0.4)
+dur = 0.2
+r1 = PalmMute(root=37, notes=[ 9, 9, 9, 9, 9, 9, 9, 9, 5, 5, 5, 5, 5, 5, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7], dur=dur, mul=0.5)
+r2 = PalmMute(root=49, notes=[12,12,12,11,11,11,12,12,19,19,19,12,12,12,11,11], dur=dur, mul=0.1)
+r3 = PalmMute(root=61, notes=[12], dur=2*dur, mul=0.05)
 
 s.start()
 s.gui(locals())
