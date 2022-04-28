@@ -9,7 +9,7 @@ defint = [0, 8, 2, 3, 3]
 
 
 class KickBeat:
-  def __init__(self, intervals=defint, dur=0.25) -> None:
+  def __init__(self, intervals=defint, dur=0.25, mul=1) -> None:
     self.peakPos = 340
     self.peakFreq = 400
 
@@ -18,13 +18,13 @@ class KickBeat:
     self.pitchenv = LinTable([(0,0.0000),(self.peakPos,1.0000),(804,0.2364),(5043,0.0848),(8192,0.0667)])
     self.ampenv.graph(title="Amplitude")
     self.pitchenv.graph(title="Pitch")
-    self.amp = TrigEnv(self.seq, table=self.ampenv, dur=dur, mul=0.5)
+    self.amp = TrigEnv(self.seq, table=self.ampenv, dur=dur, mul=mul)
     self.pitch = TrigEnv(self.seq, table=self.pitchenv, dur=dur, mul=self.peakFreq)
     self.osc = Sine(freq=self.pitch, mul=self.amp).mix(2)
     self.osc.out()
 
 
-k = KickBeat(intervals=defint, dur=0.25)
+k = KickBeat(intervals=defint, dur=0.25, mul=0.15)
 
 s.start()
 s.gui(locals())
