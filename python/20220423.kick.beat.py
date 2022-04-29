@@ -10,12 +10,11 @@ defint = [0, 8, 2, 3, 3]
 
 class KickBeat:
   def __init__(self, intervals=defint, dur=0.25, mul=1) -> None:
-    self.peakPos = 340
     self.peakFreq = 400
 
     self.seq = Seq(time=dur, seq=intervals, poly=1, onlyonce=False, speed=1).play()
-    self.ampenv = LinTable([(0,0),(self.peakPos,1),(8191,0)])
-    self.pitchenv = LinTable([(0,0.0000),(self.peakPos,1.0000),(804,0.2364),(5043,0.0848),(8192,0.0667)])
+    self.ampenv = LinTable([(0,0),(600,1),(8191,0)])
+    self.pitchenv = LinTable([(0,0.0000),(340,1.0000),(804,0.2364),(5043,0.0848),(8192,0.0667)])
     self.ampenv.graph(title="Amplitude")
     self.pitchenv.graph(title="Pitch")
     self.amp = TrigEnv(self.seq, table=self.ampenv, dur=dur, mul=mul)
