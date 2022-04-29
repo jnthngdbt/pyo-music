@@ -10,7 +10,7 @@ def expand(notes=[48, 52, 55], octaves=[0,1,2]):
     x = np.concatenate([x, i * 12 + notes], axis=0)
   return x.tolist()
 
-dur = 0.25
+dur = 0.2
 
 class PalmMute:
   def __init__(self, root=49, notes=[0,3,5,7,10], spec=[1.], dur=0.25, extend=False, mul=1.0) -> None:
@@ -21,14 +21,12 @@ class PalmMute:
     self.mul = Sig(mul)
     self.mul.ctrl()
 
-    self.table = HarmTable(spec) #, 0.3, 0.1, 0.02, 0.005
-    self.osc = Osc(table=self.table, freq=100, mul=0.2*self.mul)
-
-    self.env = Linseg([(0.0000,0.0000),(0.0068,0.5273),(0.0140,0.2301),(0.0943,0.0000)])
+    self.env = Linseg([(0.0000,0.0000),(0.0115,0.5017),(0.0224,0.2237),(dur,0.0000)])
     self.env.graph()
 
-    self.effect = Delay(self.osc, delay=[0, .01], feedback=0., mul=self.env)
-    self.effect.out()
+    self.table = HarmTable(spec) #, 0.3, 0.1, 0.02, 0.005
+    self.osc = Osc(table=self.table, freq=100, phase=[0, 0.5], mul=0.2*self.mul*self.env)
+    self.osc.out()
 
     self.pat = Pattern(self.play, time=dur)
     self.pat.play()
@@ -40,12 +38,11 @@ class PalmMute:
     self.env.play()
     self.idx = (self.idx + 1) % len(self.notes)
 
-base = 30
+base = 25
 r1 = PalmMute(root=base   , notes=[ 9, 9, 9, 9, 9, 9, 9, 9, 5, 5, 5, 5, 5, 5, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7], dur=dur, mul=0.8, spec=[1, 1, .8]) # , .5, .3, .2, .1, .05
-# r4 = PalmMute(root=base   , notes=[16,16,16,16,16,16,16,16,17,17,17,17,17,17,17,17,16,16,16,16,16,16,16,16,14,14,14,14,14,14,14,14], dur=dur, mul=0.5, spec=[.8, 1, .8]) # , .5, .3, .2, .1, .05
-r2 = PalmMute(root=base+12, notes=[12,12,12,11,11,11,12,12,19,19,19,12,12,12,11,11], dur=dur, mul=0.2, spec=[1, 1, .2])
-# r2 = PalmMute(root=base+12, notes=[12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,11,11,11,11,11,11,11,11], dur=dur, mul=0.2)
-r3 = PalmMute(root=base+36, notes=[0], dur=2*dur, extend=True, mul=0.05, spec=[.8, 1, .2])
+# r2 = PalmMute(root=base+12, notes=[12,12,12,11,11,11,12,12,19,19,19,12,12,12,11,11], dur=dur, mul=0.2, spec=[1, 1, .2])
+r3 = PalmMute(root=base+12, notes=[16,16,16,16,16,16,16,16,17,17,17,17,17,17,17,17,16,16,16,16,16,16,16,16,14,14,14,14,14,14,14,14], dur=dur, mul=0.1, spec=[.8, 1, .8]) # , .5, .3, .2, .1, .05
+r4 = PalmMute(root=base+24, notes=[12,7,11,7], dur=dur, mul=0.05, spec=[1,1])
 
 
 s.start()
