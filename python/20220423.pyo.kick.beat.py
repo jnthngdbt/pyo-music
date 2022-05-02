@@ -17,8 +17,8 @@ class KickBeat:
     self.peakFreq = 400
 
     self.seq = Seq(time=dur, seq=intervals, poly=1, onlyonce=False, speed=1).play()
-    self.ampenv = LinTable([(0,0),(600,1),(8191,0)])
-    self.pitchenv = LinTable([(0,0.0000),(340,1.0000),(804,0.2364),(5043,0.0848),(8192,0.0667)])
+    self.ampenv = LinTable([(0,0.0000),(600,1.0000),(6564,0.6788),(8191,0.0000)])
+    self.pitchenv = LinTable([(0,0.0000),(340,1.0000),(804,0.2364),(8192,0.0667)])
     self.ampenv.graph(title="Amplitude")
     self.pitchenv.graph(title="Pitch")
     self.amp = TrigEnv(self.seq, table=self.ampenv, dur=dur, mul=mul)
@@ -26,7 +26,7 @@ class KickBeat:
     self.osc = Sine(freq=self.pitch, mul=self.amp).mix(2)
     self.osc.out()
 
-k = KickBeat(intervals=beatToIntervals(beat), dur=0.2, mul=0.15)
+k = KickBeat(intervals=beatToIntervals(beat), dur=0.2, mul=0.2)
 
 s.start()
 s.gui(locals())
