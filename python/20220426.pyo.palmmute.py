@@ -21,7 +21,7 @@ class PalmMute:
     self.mul = Sig(mul)
     self.mul.ctrl()
 
-    self.env = Linseg([(0.0000,0.0000),(0.0115,0.5017),(0.0224,0.2237),(dur,0.0000)])
+    self.env = Linseg([(0.0000,0.0000),(0.0166,0.2341),(0.1450,0.1885),(0.2000,0.0000)])
     self.env.graph()
 
     self.table = HarmTable(spec) #, 0.3, 0.1, 0.02, 0.005
@@ -38,13 +38,14 @@ class PalmMute:
     self.env.play()
     self.idx = (self.idx + 1) % len(self.notes)
 
-base = 25
+base = 32
 r = [
-    PalmMute(root=base   , notes=[ 9, 9, 9, 9, 9, 9, 9, 9, 5, 5, 5, 5, 5, 5, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7], dur=dur, mul=1, spec=[.8, 1, .8 , .5, .3, .2, .1, .05]), # , .5, .3, .2, .1, .05
-    # PalmMute(root=base+12, notes=[12,12,12,11,11,11,12,12,19,19,19,12,12,12,11,11], dur=dur, mul=0.2, spec=[1, 1, .2]),
-    PalmMute(root=base+12, notes=[16,16,16,16,16,16,16,16,17,17,17,17,17,17,17,17,16,16,16,16,16,16,16,16,14,14,14,14,14,14,14,14], dur=dur, mul=0.1, spec=[.8, 1, .8]), # , .5, .3, .2, .1, .05
-    PalmMute(root=base+24, notes=[12,7,11,7], dur=dur, mul=0.05, spec=[1,1]),
-    # PalmMute(root=base+60, notes=[ 0, 5, 7,12], dur=dur, mul=0.005, spec=[1]),
+    PalmMute(root=base   , notes=[ 9, 9, 9, 9, 9, 9, 9, 9, 5, 5, 5, 5, 5, 5, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7], dur=dur, mul=.6, spec=[.8, 1, .8 , .5, .3, .2, .1, .05]), # , .5, .3, .2, .1, .05
+    PalmMute(root=base+12, notes=[12,12,12,11,11,11,12,12,19,19,19,12,12,12,11,11], dur=dur, mul=0.35, spec=[1, 1, .2]),
+    PalmMute(root=base+12, notes=[12], dur=dur, mul=0.17, spec=[1, 1, .2]),
+    PalmMute(root=base+12, notes=[16,16,16,16,16,16,16,16,17,17,17,17,17,17,17,17,16,16,16,16,16,16,16,16,14,14,14,14,14,14,14,14], dur=dur, mul=0.17, spec=[.8, 1, .8]), # , .5, .3, .2, .1, .05
+    PalmMute(root=base+24, notes=[12,7,11,7], dur=dur, mul=0.15, spec=[1,1]),
+    # PalmMute(root=base+36, notes=[12], dur=2*dur, mul=0.005, spec=[1]),
 ]
 
 
