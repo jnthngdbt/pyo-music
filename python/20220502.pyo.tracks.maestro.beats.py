@@ -3,6 +3,13 @@ import numpy as np
 
 s = Server().boot()
 
+def expand(notes=[48, 52, 55], octaves=[0,1,2]):
+    x = []
+    notes = np.array(notes)
+    for i in octaves:
+        x = np.concatenate([x, i * 12 + notes], axis=0)
+    return x.tolist()
+
 class Track:
     def __init__(self, name, root, beat, note, speed, mul):
         self.name = name
@@ -148,40 +155,83 @@ class Snare (Track):
     def play(self, note=0):
         self.trig.play()
 
+class Arpeggio (Track):
+    def __init__(self, name="Arpeggio", root=49, beat=[1], speed=1, mul=1,
+                 notes=[0,3,5,7,10], dur=0.2, decay=0.25, doMirror=False) -> None:
+        super().__init__(name, root, beat, [0], speed, mul)
+        self.idx = 0
+        self.notes = notes
+
+        if doMirror:
+          self.notes = self.notes + self.namenotes[-2:0:-1] # weird slicing: all except first and last, reversed
+
+        self.table = HarmTable([1]) # , 0.3, 0.1, 0.02, 0.005
+        self.osc = Osc(table=self.table, freq=[100,101])
+
+        self.effect = Freeverb(self.osc, size=0.8, damp=0.5, bal=0.5)
+        # self.effect.ctrl()
+
+        self.env = Adsr(attack=.012, decay=decay, sustain=.0, release=.0, dur=dur)
+        self.env.ctrl()
+
+        self.out = self.mul * self.effect * self.env
+        self.out.out()
+
+    def play(self, note=0):
+        note = self.root + self.notes[self.idx]
+        f = midiToHz(note)
+        self.osc.freq = [f, f+1]
+        self.env.play()
+        self.idx = (self.idx + 1) % len(self.notes)
+
+class Peak:
+  def __init__(self, note=48, mul=1.0) -> None:
+    self.noise1 = PinkNoise()
+    self.noise2 = PinkNoise()
+    self.band = Biquadx([self.noise1, self.noise2], freq=midiToHz(note), q=9, type=2, stages=2, mul=mul).out()
+
 root = 25
+dur = .2
+
+P = Peak(note=root+60, mul=0.16)
+
 M = Maestro(time=0.125, tracks=[
         BassBeat(name="Bass Beat", mul = 0.2, root = root, attack=0.02, sustain=0.5,
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
-            beat = [ 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0 ],
+            beat = [ 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0 ],
             note = [ 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7]
         ),
-        GuitarPlucking(name="Guitar High Pluck", mul = 0.05, root = root+48,
-            #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
-            beat = [ 1 ],
-            note = [ 0 ]
-        ),
+        # GuitarPlucking(name="Guitar High Pluck", mul = 0.05, root = root+48,
+        #     #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
+        #     beat = [ 1 ],
+        #     note = [ 0 ]
+        # ),
         # BassPlucking(name="Bass Pluck Root", mul = 0.8, root = root+12,
         #     #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
         #     beat = [ 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1 ],
         #     note = [ 0 ]
         # ),
-        # BassPlucking(name="Bass Pluck 12 Beat", mul = 0.8, root = root+12,
+        # BassBeat(name="Bass Pluck 12 Beat", mul = 0.008, root = root+12,
         #     #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
         #     beat = [ 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0 ],
         #     note = [ 12 ]
         # ),
-        BassPlucking(name="Bass Pluck Harm Beat", mul = 0.8, root = root+12,
+        BassBeat(name="Bass Pluck Harm Beat", mul = 0.012, root = root+12,
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
             beat = [ 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0 ],
             note = [ 0, 0,16, 0, 0,16, 0, 0,16, 0, 0,16, 0, 0,16, 0, 0, 0,17, 0, 0,17, 0, 0,17, 0, 0,17, 0, 0,17, 0, 0, 0,16, 0, 0,16, 0, 0,16, 0, 0,16, 0, 0,16, 0, 0, 0,14, 0, 0,14, 0, 0,14, 0, 0,14, 0, 0,14, 0 ]
         ),
-        KickBeat(name="Kick", mul = 0.4, dur = 0.2,
+        KickBeat(name="Kick", mul = 0.4, dur = dur,
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
             beat = [ 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0 ]
         ),
-        Snare(name="Snare", mul = 0.4, dur = 0.2,
+        Snare(name="Snare", mul = 0.4, dur = dur,
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
             beat = [ 0, 0, 0, 0, 1, 0, 0, 0 ]
+        ),
+        Arpeggio(name="Arpeggio", mul=0.004, root=root+48, notes=expand([0,4,7,11], octaves=[0,1,2,3]), dur=dur, decay=dur*0.95, doMirror=False,
+            #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
+            beat = [ 1 ]
         ),
 ])
 
