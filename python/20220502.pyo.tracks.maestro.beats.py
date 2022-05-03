@@ -111,6 +111,43 @@ class KickBeat (Track):
     def play(self, note=0):
         self.trig.play()
 
+class Snare (Track):
+    def __init__(self, name="Snare", beat=[1], speed=1, mul=1,
+                 dur=0.25) -> None:
+        super().__init__(name, 0, beat, [0], speed, mul)
+        self.peakFreq = 400
+
+        self.trig = Trig()
+
+        self.ampenv = LinTable([(0,0.0000),(733,0.1091),(1484,0.1091),(8191,0.0000)])
+        self.pitchenv = LinTable([(0,0.0000),(340,1.0000),(804,0.2364),(8192,0.0667)])
+        self.noiseenv = LinTable([(0,0.0000),(357,0.9091),(1609,0.0061)])
+        self.revenv = LinTable([(0,0.0000),(340,1.0000),(1627,0.1091),(8192,0.0000)])
+        self.ampenv.graph(title=self.name + " Punch Amplitude")
+        self.pitchenv.graph(title=self.name + " Punch Pitch")
+        self.noiseenv.graph(title=self.name + " Noise Amplitude")
+        self.revenv.graph(title=self.name + " Noise Reverb")
+
+        self.amp = TrigEnv(self.trig, table=self.ampenv, dur=dur, mul=self.mul)
+        self.pitch = TrigEnv(self.trig, table=self.pitchenv, dur=dur, mul=self.peakFreq)
+        self.noiseamp = TrigEnv(self.trig, table=self.noiseenv, dur=dur, mul=self.mul)
+        self.revamp = TrigEnv(self.trig, table=self.revenv, dur=dur, mul=1)
+
+        self.osc = Sine(freq=self.pitch, mul=self.amp).mix(2)
+        self.osc.out()
+
+        self.noise = PinkNoise(mul=self.noiseamp).mix(2)
+        self.filter = ButBP(self.noise, freq=1000, q=2)
+        self.filter.ctrl()
+
+        self.effect = Freeverb(self.filter, size=1, damp=.5, bal=self.revamp)
+        self.effect.ctrl()
+
+        self.effect.out()
+
+    def play(self, note=0):
+        self.trig.play()
+
 root = 25
 M = Maestro(time=0.125, tracks=[
         BassBeat(name="Bass Beat", mul = 0.2, root = root, attack=0.02, sustain=0.5,
@@ -141,6 +178,10 @@ M = Maestro(time=0.125, tracks=[
         KickBeat(name="Kick", mul = 0.4, dur = 0.2,
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
             beat = [ 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0 ]
+        ),
+        Snare(name="Snare", mul = 0.4, dur = 0.2,
+            #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
+            beat = [ 0, 0, 0, 0, 1, 0, 0, 0 ]
         ),
 ])
 
