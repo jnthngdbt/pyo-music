@@ -41,9 +41,9 @@ class Snare (Track):
 
         self.trig = Trig()
 
-        self.ampenv = LinTable([(0,0.0000),(232,1.0000),(733,0.1455),(8191,0.0000)])
+        self.ampenv = LinTable([(0,0.0000),(232,0.1455),(733,0.1455),(8191,0.0000)])
         self.pitchenv = LinTable([(0,0.0000),(340,1.0000),(1001,0.1818),(8192,0.0667)])
-        self.noiseenv = ExpTable([(0,0.0000),(125,1.0000),(8192,0.0242)])
+        self.noiseenv = ExpTable([(0,0.0000),(125,1.0000),(7887,0.0242),(8192,0.0000)])
         self.ampenv.graph(title=self.name + " Punch Amplitude")
         self.pitchenv.graph(title=self.name + " Punch Pitch")
         self.noiseenv.graph(title=self.name + " Noise Amplitude")
