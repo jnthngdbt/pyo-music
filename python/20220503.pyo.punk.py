@@ -35,42 +35,32 @@ class Maestro:
 
 class Snare (Track):
     def __init__(self, name="Snare", beat=[1], speed=1, mul=1,
-                 dur=0.25) -> None:
+                 dur=0.125, cutoff=2000) -> None:
         super().__init__(name, 0, beat, [0], speed, mul)
         self.peakFreq = 400
 
         self.trig = Trig()
 
-        self.ampenv = LinTable([(0,0.0000),(554,0.0667),(1377,0.0485),(8191,0.0000)])
-        self.pitchenv = LinTable([(0,0.0000),(340,1.0000),(787,0.1807),(8192,0.0000)])
-        self.noisepitchenv = LinTable([(0,0.0000),(340,1.0000),(787,0.1807),(8192,0.0000)])
-        self.noiseenv = LinTable([(0,0.0000),(178,1.0000),(2325,0.0000)])
-        self.revenv = LinTable([(0,0.0000),(840,0.9939),(2271,0.9152),(3219,0.2061),(5616,0.0000)])
-        self.ampenv.graph(title=self.name + " Punch Amplitude")
-        self.pitchenv.graph(title=self.name + " Punch Pitch")
-        self.noisepitchenv.graph(title=self.name + " Noise Pitch")
-        self.noiseenv.graph(title=self.name + " Noise Amplitude")
-        self.revenv.graph(title=self.name + " Noise Reverb")
+        self.ampenv = LinTable([(0,0.0000),(232,1.0000),(733,0.1455),(8191,0.0000)])
+        self.pitchenv = LinTable([(0,0.0000),(340,1.0000),(1001,0.1818),(8192,0.0667)])
+        self.noiseenv = ExpTable([(0,0.0000),(125,1.0000),(8192,0.0242)])
+        # self.ampenv.graph(title=self.name + " Punch Amplitude")
+        # self.pitchenv.graph(title=self.name + " Punch Pitch")
+        # self.noiseenv.graph(title=self.name + " Noise Amplitude")
 
-        gain = 10
-
-        self.amp = TrigEnv(self.trig, table=self.ampenv, dur=dur, mul=gain*self.mul)
+        self.amp = TrigEnv(self.trig, table=self.ampenv, dur=dur, mul=self.mul)
         self.pitch = TrigEnv(self.trig, table=self.pitchenv, dur=dur, mul=self.peakFreq)
-        self.noisepitch = TrigEnv(self.trig, table=self.noisepitchenv, dur=dur, mul=3000)
-        self.noiseamp = TrigEnv(self.trig, table=self.noiseenv, dur=dur, mul=gain*self.mul)
-        self.revamp = TrigEnv(self.trig, table=self.revenv, dur=dur, mul=1)
+        self.noiseamp = TrigEnv(self.trig, table=self.noiseenv, dur=dur, mul=self.mul)
 
         self.osc = Sine(freq=self.pitch, mul=self.amp).mix(2)
         self.osc.out()
 
-        self.noise = PinkNoise(mul=self.noiseamp).mix(2)
-        self.filter = ButBP(self.noise, freq=self.noisepitch, q=2)
-        self.filter.ctrl()
+        self.noise = Noise(mul=self.noiseamp).mix(2)
+        self.lp = ButLP(self.noise, freq=cutoff)
 
-        self.effect = Freeverb(self.filter, size=.2, damp=.5, bal=self.revamp)
-        self.effect.ctrl()
+        self.lp.ctrl()
 
-        self.effect.out()
+        self.lp.out()
 
     def play(self, note=0):
         self.trig.play()
@@ -157,14 +147,14 @@ M = Maestro(time=time, tracks=[
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
             beat = [ 1, 0, 0, 0, 1, 1, 0, 0  ]
         ),
-        Piou(name="Piou", mul = 0.085, dur = time,
-            #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
-            beat = [ 0, 0, 1, 0 ]
-        ),
-        # Snare(name="Snare", mul = 0.1, dur = time,
+        # Piou(name="Piou", mul = 0.085, dur = time,
         #     #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
         #     beat = [ 0, 0, 1, 0 ]
         # ),
+        Snare(name="Snare", mul = 0.185, dur = time,
+            #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
+            beat = [ 0, 0, 1, 0 ]
+        ),
 ])
 
 s.start()
