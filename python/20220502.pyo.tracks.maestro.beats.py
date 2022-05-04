@@ -193,7 +193,7 @@ class Peak:
 root = 25
 dur = .2
 
-P = Peak(note=root+60, mul=0.16)
+P = Peak(note=root+48, mul=0.15)
 
 M = Maestro(time=0.125, tracks=[
         BassBeat(name="Bass Beat", mul = 0.2, root = root, attack=0.02, sustain=0.5,
