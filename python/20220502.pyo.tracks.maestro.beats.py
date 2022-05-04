@@ -39,65 +39,19 @@ class Maestro:
 
 class BassBeat (Track):
     def __init__(self, name="Bass Beat", root=49, beat=[1], note=[0], speed=1, mul=1,
-                 attack=0.016, sustain=0.5, dur=0.2):
+                 attack=0.016, sustain=0.5, dur=0.2, tone=[.8, 1., .8, .5]):
         super().__init__(name, root, beat, note, speed, mul)
 
         self.env = Adsr(attack=attack, decay=attack, sustain=sustain, release=2*attack, dur=dur, mul=self.mul)
         # self.env.ctrl()
 
-        self.table = HarmTable([.8, 1, .8 , .5, .3, .2, .1, .05])
+        self.table = HarmTable(tone)
         self.osc = Osc(table=self.table, freq=midiToHz(25), mul=self.env, phase=[0,.4])
         self.osc.out()
 
     def play(self, note=0):
         self.osc.freq = midiToHz(note)
         self.env.play()
-
-class GuitarPlucking (Track):
-    def __init__(self, name="Guitar Pluck", root=49, beat=[1], note=[0], speed=1, mul=1,
-                 dur=0.2):
-        super().__init__(name, root, beat, note, speed, mul)
-
-        self.envAmp = Linseg([(0.0000,0.0000),(0.0067,0.1646),(0.0631,0.1516),(0.1284,0.0000)], mul=self.mul)
-        self.envAmp.graph(title=self.name + " Amplitude")
-
-        self.envRev = Linseg([(0.0000,0.0000),(0.0121,0.7370),(0.1074,0.5285),(0.1284,0.0000)], mul=self.mul)
-        # self.envRev.graph(title=self.name + " Reverb")
-
-        self.table = HarmTable([1])
-        self.osc = Osc(table=self.table, freq=midiToHz(25), mul=self.envAmp, phase=[0,.4])
-
-        self.effect = Freeverb(self.osc, size=.8, damp=.5, bal=self.envRev)
-        # self.effect.ctrl()
-        self.effect.out()
-
-    def play(self, note=0):
-        self.osc.freq = midiToHz(note)
-        self.envAmp.play()
-        self.envRev.play()
-
-class BassPlucking (Track):
-    def __init__(self, name="Bass Pluck", root=49, beat=[1], note=[0], speed=1, mul=1,
-                 reverb=0, dur=0.2):
-        super().__init__(name, root, beat, note, speed, mul)
-
-        self.envAmp = Linseg([(0.0000,0.0000),(0.0118,0.0648),(0.0634,0.0509),(0.1284,0.0000)], mul=self.mul)
-        # self.envAmp.graph(title=self.name + " Amplitude")
-
-        self.envRev = Linseg([(0.0000,0.0000),(0.0121,0.7370),(0.0247,0.1429),(0.1284,0.0000)], mul=self.mul)
-        # self.envRev.graph(title=self.name + " Reverb")
-
-        self.table = HarmTable([.8, 1])
-        self.osc = Osc(table=self.table, freq=midiToHz(25), mul=self.envAmp, phase=[0,.4])
-
-        self.effect = Freeverb(self.osc, size=.8, damp=.5, bal=self.envRev)
-        # self.effect.ctrl()
-        self.effect.out()
-
-    def play(self, note=0):
-        self.osc.freq = midiToHz(note)
-        self.envAmp.play()
-        self.envRev.play()
 
 class KickBeat (Track):
     def __init__(self, name="Kick", root=49, beat=[1], note=[0], speed=1, mul=1,
@@ -129,9 +83,9 @@ class Snare (Track):
         self.ampenv = LinTable([(0,0.0000),(232,0.1455),(733,0.1455),(8191,0.0000)])
         self.pitchenv = LinTable([(0,0.0000),(340,1.0000),(1001,0.1818),(8192,0.0667)])
         self.noiseenv = ExpTable([(0,0.0000),(125,1.0000),(7887,0.0242),(8192,0.0000)])
-        self.ampenv.graph(title=self.name + " Punch Amplitude")
-        self.pitchenv.graph(title=self.name + " Punch Pitch")
-        self.noiseenv.graph(title=self.name + " Noise Amplitude")
+        # self.ampenv.graph(title=self.name + " Punch Amplitude")
+        # self.pitchenv.graph(title=self.name + " Punch Pitch")
+        # self.noiseenv.graph(title=self.name + " Noise Amplitude")
 
         self.amp = TrigEnv(self.trig, table=self.ampenv, dur=dur, mul=self.mul)
         self.pitch = TrigEnv(self.trig, table=self.pitchenv, dur=dur, mul=self.peakFreq)
@@ -142,9 +96,7 @@ class Snare (Track):
 
         self.noise = Noise(mul=self.noiseamp).mix(2)
         self.lp = ButLP(self.noise, freq=cutoff)
-
-        self.lp.ctrl()
-
+        self.lp.ctrl(title=self.name + "Cutoff")
         self.lp.out()
 
     def play(self, note=0):
@@ -152,7 +104,7 @@ class Snare (Track):
 
 class Arpeggio (Track):
     def __init__(self, name="Arpeggio", root=49, beat=[1], speed=1, mul=1,
-                 notes=[0,3,5,7,10], dur=0.2, decay=0.25, doMirror=False) -> None:
+                 notes=[0,3,5,7,10], dur=0.2, sustain=0.5, doMirror=False) -> None:
         super().__init__(name, root, beat, [0], speed, mul)
         self.idx = 0
         self.notes = notes
@@ -164,10 +116,9 @@ class Arpeggio (Track):
         self.osc = Osc(table=self.table, freq=[100,101])
 
         self.effect = Freeverb(self.osc, size=0.8, damp=0.5, bal=0.5)
-        # self.effect.ctrl()
 
-        self.env = Adsr(attack=.012, decay=decay, sustain=.0, release=.0, dur=dur)
-        self.env.ctrl()
+        p = 0.012
+        self.env = Adsr(attack=p, decay=p, sustain=sustain, release=p, dur=dur)
 
         self.out = self.mul * self.effect * self.env
         self.out.out()
@@ -179,42 +130,29 @@ class Arpeggio (Track):
         self.env.play()
         self.idx = (self.idx + 1) % len(self.notes)
 
-class Peak:
-  def __init__(self, note=48, mul=1.0) -> None:
-    self.noise1 = PinkNoise()
-    self.noise2 = PinkNoise()
-    self.band = Biquadx([self.noise1, self.noise2], freq=midiToHz(note), q=9, type=2, stages=2, mul=mul).out()
-
 root = 25
 dur = .2
 
-P = Peak(note=root+48, mul=0.15)
-
 M = Maestro(time=0.125, tracks=[
-        BassBeat(name="Bass Beat", mul = 0.2, root = root, attack=0.02, sustain=0.5,
+        BassBeat(name="Bass Beat", mul = 0.2, root = root, attack=0.02, sustain=0.5, tone=[.8, 1, .8, .5, .2],
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
             beat = [ 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0 ],
             note = [ 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7]
         ),
-        # GuitarPlucking(name="Guitar High Pluck", mul = 0.05, root = root+48,
-        #     #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
-        #     beat = [ 1 ],
-        #     note = [ 0 ]
-        # ),
-        # BassPlucking(name="Bass Pluck Root", mul = 0.8, root = root+12,
-        #     #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
-        #     beat = [ 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1 ],
-        #     note = [ 0 ]
-        # ),
-        # BassBeat(name="Bass Pluck 12 Beat", mul = 0.008, root = root+12,
-        #     #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
-        #     beat = [ 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0 ],
-        #     note = [ 12 ]
-        # ),
-        BassBeat(name="Bass Pluck Harm Beat", mul = 0.012, root = root+12,
+        BassBeat(name="Bass Pluck 12 Beat", mul = 0.01, root = root+36, tone=[1],
+            #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
+            beat = [ 1, 0 ],
+            note = [ 12 ]
+        ),
+        BassBeat(name="Low Mid Beat", mul = 0.038, root = root+12, tone=[1, .8 , .3 ],
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
             beat = [ 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0 ],
             note = [ 0, 0,16, 0, 0,16, 0, 0,16, 0, 0,16, 0, 0,16, 0, 0, 0,17, 0, 0,17, 0, 0,17, 0, 0,17, 0, 0,17, 0, 0, 0,16, 0, 0,16, 0, 0,16, 0, 0,16, 0, 0,16, 0, 0, 0,14, 0, 0,14, 0, 0,14, 0, 0,14, 0, 0,14, 0 ]
+        ),
+        BassBeat(name="Mid Beat", mul = 0.02, root = root+36, tone=[1 ],
+            #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
+            beat = [ 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0 ],
+            note = [ 0, 0,12, 0, 0,12, 0, 0,12, 0, 0,12, 0, 0,12, 0, 0, 0, 9, 0, 0, 9, 0, 0, 9, 0, 0, 9, 0, 0, 9, 0, 0, 0, 7, 0, 0, 7, 0, 0, 7, 0, 0, 7, 0, 0, 7, 0, 0, 0,11, 0, 0,11, 0, 0,11, 0, 0,11, 0, 0,11, 0 ]
         ),
         KickBeat(name="Kick", mul = 0.4, dur = dur,
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
@@ -224,7 +162,7 @@ M = Maestro(time=0.125, tracks=[
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
             beat = [ 0, 0, 0, 0, 1, 0, 0, 0 ]
         ),
-        Arpeggio(name="Arpeggio", mul=0.004, root=root+48, notes=expand([0,4,7,11], octaves=[0,1,2,3]), dur=dur, decay=dur*0.95, doMirror=False,
+        Arpeggio(name="Arpeggio", mul=0.008, root=root+48, notes=expand([0,4,7,11], octaves=[0,1,2,3]), dur=dur, sustain=.75, doMirror=False,
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
             beat = [ 1 ]
         ),
