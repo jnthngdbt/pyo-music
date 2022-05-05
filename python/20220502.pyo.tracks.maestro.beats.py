@@ -11,11 +11,13 @@ def expand(notes=[48, 52, 55], octaves=[0,1,2]):
     return x.tolist()
 
 class Track:
-    def __init__(self, name, root, beat, note, speed, mul):
+    def __init__(self, name="Track", root=49, note=[0], beat=[1], dur=.2, prob=.6, speed=1, mul=1):
         self.name = name
         self.root = root
         self.beat = beat
         self.note = note
+        self.dur = dur
+        self.prob = prob
         self.speed = speed
 
         self.mul = Sig(mul)
@@ -26,21 +28,39 @@ class Maestro:
         self.tracks = tracks
         self.time = time
         self.idx = 0
+        self.nbTickPerMeasure = 16
+        self.muls = [t.mul.value for t in self.tracks]
 
         self.clock = Pattern(self.tick, time=self.time).play()
 
     def tick(self):
+        if (self.idx) % (self.nbTickPerMeasure * 4 * 2) == 0:
+            self.toggle()
+
         for t in self.tracks:
             beat = t.beat[self.idx % len(t.beat)]
             note = t.note[self.idx % len(t.note)]
             if beat:
                 t.play(t.root + note)
+
         self.idx = self.idx + 1
 
+    def toggle(self):
+        nbActive = 0
+        for i, t in enumerate(self.tracks):
+            if random.random() < t.prob:
+                t.mul.setValue(self.muls[i])
+                nbActive = nbActive + 1
+            else:
+                t.mul.setValue(0)
+
+        if nbActive == 0:
+            i = random.choice(range(len(self.tracks)))
+            self.tracks[i].mul.setValue(self.muls[i])
+
 class BassBeat (Track):
-    def __init__(self, name="Bass Beat", root=49, beat=[1], note=[0], speed=1, mul=1,
-                 attack=0.016, sustain=0.5, dur=0.2, tone=[.8, 1., .8, .5]):
-        super().__init__(name, root, beat, note, speed, mul)
+    def __init__(self, attack=0.016, sustain=0.5, tone=[.8, 1., .8, .5], **kwargs):
+        super().__init__(**kwargs)
 
         self.env = Adsr(attack=attack, decay=attack, sustain=sustain, release=2*attack, dur=dur, mul=self.mul)
         # self.env.ctrl()
@@ -54,9 +74,9 @@ class BassBeat (Track):
         self.env.play()
 
 class KickBeat (Track):
-    def __init__(self, name="Kick", root=49, beat=[1], note=[0], speed=1, mul=1,
-                 dur=0.25) -> None:
-        super().__init__(name, root, beat, note, speed, mul)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
         self.peakFreq = 400
 
         self.trig = Trig()
@@ -73,9 +93,9 @@ class KickBeat (Track):
         self.trig.play()
 
 class Snare (Track):
-    def __init__(self, name="Snare", beat=[1], speed=1, mul=1,
-                 dur=0.125, cutoff=2000) -> None:
-        super().__init__(name, 0, beat, [0], speed, mul)
+    def __init__(self, cutoff=2000, **kwargs):
+        super().__init__(**kwargs)
+
         self.peakFreq = 400
 
         self.trig = Trig()
@@ -103,9 +123,9 @@ class Snare (Track):
         self.trig.play()
 
 class Arpeggio (Track):
-    def __init__(self, name="Arpeggio", root=49, beat=[1], speed=1, mul=1,
-                 notes=[0,3,5,7,10], dur=0.2, sustain=0.5, doMirror=False) -> None:
-        super().__init__(name, root, beat, [0], speed, mul)
+    def __init__(self, notes=[0,3,5,7,10], sustain=0.5, doMirror=False, **kwargs):
+        super().__init__(**kwargs)
+
         self.idx = 0
         self.notes = notes
 
@@ -139,7 +159,7 @@ M = Maestro(time=0.125, tracks=[
             beat = [ 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0 ],
             note = [ 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7]
         ),
-        BassBeat(name="Bass Pluck 12 Beat", mul = 0.01, root = root+36, tone=[1],
+        BassBeat(name="High Beep", mul = 0.01, root = root+36, tone=[1],
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
             beat = [ 1, 0 ],
             note = [ 12 ]
