@@ -24,18 +24,26 @@ class Track:
         self.mul.ctrl(title=name + " Gain")
 
 class Maestro:
-    def __init__(self, tracks: [Track], time=0.25):
+    def __init__(self, tracks: [Track], time=0.25, nbSectionsToggle=2):
         self.tracks = tracks
         self.time = time
+        self.nbSectionsToggle = nbSectionsToggle
+
         self.idx = 0
-        self.nbTickPerMeasure = 16
+        self.isShifted = False
+
         self.muls = [t.mul.value for t in self.tracks]
+        self.sectionSize = max([max([len(t.note), len([t.beat])]) for t in self.tracks])
 
         self.clock = Pattern(self.tick, time=self.time).play()
 
     def tick(self):
-        if (self.idx) % (self.nbTickPerMeasure * 4 * 2) == 0:
-            self.toggle()
+        doToggle = self.idx % (self.sectionSize * self.nbSectionsToggle) == 0
+        if doToggle:
+            self.toggleTracks()
+
+        if doToggle and (self.nbTracksActive >= len(self.tracks)):
+            self.shiftRoot()
 
         for t in self.tracks:
             beat = t.beat[self.idx % len(t.beat)]
@@ -45,18 +53,24 @@ class Maestro:
 
         self.idx = self.idx + 1
 
-    def toggle(self):
-        nbActive = 0
+    def toggleTracks(self):
+        self.nbTracksActive = 0
         for i, t in enumerate(self.tracks):
             if random.random() < t.prob:
                 t.mul.setValue(self.muls[i])
-                nbActive = nbActive + 1
+                self.nbTracksActive = self.nbTracksActive + 1
             else:
                 t.mul.setValue(0)
 
-        if nbActive == 0:
+        if self.nbTracksActive == 0:
             i = random.choice(range(len(self.tracks)))
             self.tracks[i].mul.setValue(self.muls[i])
+
+    def shiftRoot(self):
+        s = -1 if self.isShifted else 1
+        for t in self.tracks:
+            t.root = t.root + s
+        self.isShifted = ~self.isShifted
 
 class BassBeat (Track):
     def __init__(self, attack=0.016, sustain=0.5, tone=[.8, 1., .8, .5], **kwargs):
