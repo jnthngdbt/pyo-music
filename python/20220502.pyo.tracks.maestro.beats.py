@@ -87,7 +87,7 @@ class BassBeat (Track):
         self.osc.freq = midiToHz(note)
         self.env.play()
 
-class KickBeat (Track):
+class Kick (Track):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -188,7 +188,7 @@ M = Maestro(time=0.125, tracks=[
             beat = [ 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0 ],
             note = [ 0, 0,12, 0, 0,12, 0, 0,12, 0, 0,12, 0, 0,12, 0, 0, 0, 9, 0, 0, 9, 0, 0, 9, 0, 0, 9, 0, 0, 9, 0, 0, 0, 7, 0, 0, 7, 0, 0, 7, 0, 0, 7, 0, 0, 7, 0, 0, 0,11, 0, 0,11, 0, 0,11, 0, 0,11, 0, 0,11, 0 ]
         ),
-        KickBeat(name="Kick", mul = 0.4, dur = dur,
+        Kick(name="Kick", mul = 0.4, dur = dur,
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
             beat = [ 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0 ]
         ),

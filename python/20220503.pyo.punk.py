@@ -4,11 +4,13 @@ import numpy as np
 s = Server().boot()
 
 class Track:
-    def __init__(self, name, root, beat, note, speed, mul):
+    def __init__(self, name="Track", root=49, note=[0], beat=[1], dur=.2, prob=.6, speed=1, mul=1):
         self.name = name
         self.root = root
         self.beat = beat
         self.note = note
+        self.dur = dur
+        self.prob = prob
         self.speed = speed
 
         self.mul = Sig(mul)
@@ -34,9 +36,8 @@ class Maestro:
         self.idx = self.idx + 1
 
 class Snare (Track):
-    def __init__(self, name="Snare", beat=[1], speed=1, mul=1,
-                 dur=0.125, cutoff=2000) -> None:
-        super().__init__(name, 0, beat, [0], speed, mul)
+    def __init__(self, cutoff=2000, **kwargs):
+        super().__init__(**kwargs)
         self.peakFreq = 400
 
         self.trig = Trig()
@@ -46,29 +47,27 @@ class Snare (Track):
         self.noiseenv = ExpTable([(0,0.0000),(125,1.0000),(7887,0.0242),(8192,0.0000)])
         self.ampenv.graph(title=self.name + " Punch Amplitude")
         # self.pitchenv.graph(title=self.name + " Punch Pitch")
-        # self.noiseenv.graph(title=self.name + " Noise Amplitude")
+        self.noiseenv.graph(title=self.name + " Noise Amplitude")
 
-        self.amp = TrigEnv(self.trig, table=self.ampenv, dur=dur, mul=self.mul)
-        self.pitch = TrigEnv(self.trig, table=self.pitchenv, dur=dur, mul=self.peakFreq)
-        self.noiseamp = TrigEnv(self.trig, table=self.noiseenv, dur=dur, mul=self.mul)
+        self.amp = TrigEnv(self.trig, table=self.ampenv, dur=self.dur, mul=self.mul)
+        self.pitch = TrigEnv(self.trig, table=self.pitchenv, dur=self.dur, mul=self.peakFreq)
+        self.noiseamp = TrigEnv(self.trig, table=self.noiseenv, dur=self.dur, mul=self.mul)
 
         self.osc = Sine(freq=self.pitch, mul=self.amp).mix(2)
         self.osc.out()
 
         self.noise = Noise(mul=self.noiseamp).mix(2)
         self.lp = ButLP(self.noise, freq=cutoff)
-
         self.lp.ctrl()
-
         self.lp.out()
 
     def play(self, note=0):
         self.trig.play()
 
-class KickBeat (Track):
-    def __init__(self, name="Kick", root=49, beat=[1], note=[0], speed=1, mul=1,
-                 dur=0.25) -> None:
-        super().__init__(name, root, beat, note, speed, mul)
+class Kick (Track):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
         self.peakFreq = 400
 
         self.trig = Trig()
@@ -76,28 +75,8 @@ class KickBeat (Track):
         self.pitchenv = LinTable([(0,0.0000),(340,1.0000),(804,0.2364),(8192,0.0667)])
         # self.ampenv.graph(title="Kick Amplitude")
         # self.pitchenv.graph(title="Kick Pitch")
-        self.amp = TrigEnv(self.trig, table=self.ampenv, dur=dur, mul=self.mul)
-        self.pitch = TrigEnv(self.trig, table=self.pitchenv, dur=dur, mul=self.peakFreq)
-        self.osc = Sine(freq=self.pitch, mul=self.amp).mix(2)
-        self.osc.out()
-
-    def play(self, note=0):
-        self.trig.play()
-
-class Piou (Track):
-    def __init__(self, name="Piou", root=49, beat=[1], note=[0], speed=1, mul=1,
-                 dur=0.25) -> None:
-        super().__init__(name, root, beat, note, speed, mul)
-        self.maxFreq = 8000
-        self.minFreq = 10
-
-        self.trig = Trig()
-        self.ampenv = LinTable([(0,0.0000),(600,1.0000),(6564,0.6788),(8191,0.0000)])
-        self.pitchenv = LinTable([(0,0.0000),(340,1.0000),(930,0.2667),(5097,0.0000)])
-        self.ampenv.graph(title="Piou Amplitude")
-        self.pitchenv.graph(title="Piou Pitch")
-        self.amp = TrigEnv(self.trig, table=self.ampenv, dur=dur, mul=self.mul)
-        self.pitch = TrigEnv(self.trig, table=self.pitchenv, dur=dur, mul=self.maxFreq, add=self.minFreq)
+        self.amp = TrigEnv(self.trig, table=self.ampenv, dur=self.dur, mul=self.mul)
+        self.pitch = TrigEnv(self.trig, table=self.pitchenv, dur=self.dur, mul=self.peakFreq)
         self.osc = Sine(freq=self.pitch, mul=self.amp).mix(2)
         self.osc.out()
 
@@ -105,16 +84,16 @@ class Piou (Track):
         self.trig.play()
 
 class BassBeat (Track):
-    def __init__(self, name="Bass Beat", root=49, beat=[1], note=[0], speed=1, mul=1,
-                 attack=0.016, sustain=0.5, dur=0.2):
-        super().__init__(name, root, beat, note, speed, mul)
+    def __init__(self, attack=0.016, sustain=0.5, tone=[.8, 1., .8, .5], reverb=0., **kwargs):
+        super().__init__(**kwargs)
 
-        self.env = Adsr(attack=attack, decay=attack, sustain=sustain, release=2*attack, dur=dur, mul=self.mul)
+        self.env = Adsr(attack=attack, decay=attack, sustain=sustain, release=2*attack, dur=self.dur, mul=self.mul)
         # self.env.ctrl()
 
-        self.table = HarmTable([.8, 1, .8 , .5, .3, .2, .1, .05])
+        self.table = HarmTable(tone)
         self.osc = Osc(table=self.table, freq=midiToHz(25), mul=self.env, phase=[0,.4])
-        self.osc.out()
+        self.effect = Freeverb(self.osc, size=0.8, damp=0.5, bal=reverb)
+        self.effect.out()
 
     def play(self, note=0):
         self.osc.freq = midiToHz(note)
@@ -129,9 +108,6 @@ class Peak:
 time = 0.09
 root = 25
 
-# P = Peak(note=root+60, mul=0.15)
-# Q = Peak(note=root+67, mul=0.05)
-
 M = Maestro(time=time, tracks=[
         BassBeat(name="Bass Beat", mul = 0.1, root = root, dur=time, attack=0.2*time, sustain=1,
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
@@ -143,15 +119,21 @@ M = Maestro(time=time, tracks=[
             beat = [ 1, 0, 1, 0, 1, 1, 1, 0 ],
             note = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
         ),
-        KickBeat(name="Kick", mul = 0.4, dur = time,
+        BassBeat(name="Mid", mul = 0.004, root = root+48, dur=2*time, attack=0.2*time, sustain=1, tone = [1, .8], reverb=.4,
+            #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
+            beat = [ 1, 0 ],
+            note = [ 7, 7, 7, 0, 0, 0, 7, 7, 7, 0, 0, 0, 7, 7, 0, 0]
+        ),
+        BassBeat(name="Mid High", mul = 0.004, root = root+48, dur=2*time, attack=0.2*time, sustain=1, tone = [1, .8], reverb=.4,
+            #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
+            beat = [ 1, 0 ],
+            note = [12,12,12, 7, 7, 7,12,12,12, 7, 7, 0,12,12, 7, 7]
+        ),
+        Kick(name="Kick", mul = 0.4, dur = time,
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
             beat = [ 1, 0, 0, 0, 1, 1, 0, 0  ]
         ),
-        # Piou(name="Piou", mul = 0.085, dur = time,
-        #     #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
-        #     beat = [ 0, 0, 1, 0 ]
-        # ),
-        Snare(name="Snare", mul = 0.185, dur = time,
+        Snare(name="Snare", mul = 0.185, dur = time, cutoff=1200,
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
             beat = [ 0, 0, 1, 0 ]
         ),
