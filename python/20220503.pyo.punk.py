@@ -17,23 +17,53 @@ class Track:
         self.mul.ctrl(title=name + " Gain")
 
 class Maestro:
-    def __init__(self, tracks: [Track], time=0.25):
+    def __init__(self, tracks: [Track], time=0.25, nbSectionsToggle=0):
         self.tracks = tracks
         self.time = time
+        self.nbSectionsToggle = nbSectionsToggle
+
         self.idx = 0
+        self.isShifted = False
 
-        self.clock = Pattern(self.tick, time=self.time)
+        self.muls = [t.mul.value for t in self.tracks]
+        self.sectionSize = max([max([len(t.note), len([t.beat])]) for t in self.tracks])
 
-    def start(self):
-        self.clock.play()
+        self.clock = Pattern(self.tick, time=self.time).play()
 
     def tick(self):
+        doToggle = (self.nbSectionsToggle > 0) and (self.idx % (self.sectionSize * self.nbSectionsToggle) == 0)
+        if doToggle:
+            self.toggleTracks()
+
+        if doToggle and (self.nbTracksActive >= len(self.tracks)):
+            self.shiftRoot()
+
         for t in self.tracks:
             beat = t.beat[self.idx % len(t.beat)]
             note = t.note[self.idx % len(t.note)]
             if beat:
                 t.play(t.root + note)
+
         self.idx = self.idx + 1
+
+    def toggleTracks(self):
+        self.nbTracksActive = 0
+        for i, t in enumerate(self.tracks):
+            if random.random() < t.prob:
+                t.mul.value = self.muls[i]
+                self.nbTracksActive = self.nbTracksActive + 1
+            else:
+                t.mul.value = 0
+
+        if self.nbTracksActive == 0:
+            i = random.choice(range(len(self.tracks)))
+            self.tracks[i].mul.setValue(self.muls[i])
+
+    def shiftRoot(self):
+        s = -1 if self.isShifted else 1
+        for t in self.tracks:
+            t.root = t.root + s
+        self.isShifted = ~self.isShifted
 
 class Snare (Track):
     def __init__(self, cutoff=2000, **kwargs):
@@ -64,6 +94,11 @@ class Snare (Track):
     def play(self, note=0):
         self.trig.play()
 
+class SnarePunchy (Snare):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.noiseenv.list = [(0,0.0000),(125,1.0000),(2575,0.1030),(8192,0.0000)]
+
 class Kick (Track):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -84,7 +119,7 @@ class Kick (Track):
         self.trig.play()
 
 class BassBeat (Track):
-    def __init__(self, attack=0.016, sustain=0.5, tone=[.8, 1., .8, .5], reverb=0., **kwargs):
+    def __init__(self, attack=0.016, sustain=0.5, tone=[.8, 1., .8, .5, .3, .2, .1], reverb=0., **kwargs):
         super().__init__(**kwargs)
 
         self.env = Adsr(attack=attack, decay=attack, sustain=sustain, release=2*attack, dur=self.dur, mul=self.mul)
@@ -108,13 +143,13 @@ class Peak:
 time = 0.09
 root = 25
 
-M = Maestro(time=time, tracks=[
-        BassBeat(name="Bass Beat", mul = 0.1, root = root, dur=time, attack=0.2*time, sustain=1,
+M = Maestro(time=time, nbSectionsToggle=2, tracks=[
+        BassBeat(name="Bass Beat", mul = 0.1, root = root, dur=time, attack=0.2*time, sustain=1, tone=[.8, 1, 1, .8, .3, .2, .1],
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
             beat = [ 1, 0, 1, 0, 1, 1, 1, 0 ],
             note = [ 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7]
         ),
-        BassBeat(name="Bass Harm", mul = 0.012, root = root+24, dur=time, attack=0.2*time, sustain=1,
+        BassBeat(name="Bass Harm", mul = 0.012, root = root+24, dur=time, attack=0.2*time, sustain=1, tone=[.8, 1.,.8],
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
             beat = [ 1, 0, 1, 0, 1, 1, 1, 0 ],
             note = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
@@ -133,12 +168,11 @@ M = Maestro(time=time, tracks=[
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
             beat = [ 1, 0, 0, 0, 1, 1, 0, 0  ]
         ),
-        Snare(name="Snare", mul = 0.185, dur = time, cutoff=1200,
+        SnarePunchy(name="Snare", mul = 0.5, dur = time, cutoff=800,
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
             beat = [ 0, 0, 1, 0 ]
         ),
 ])
 
 s.start()
-M.start()
 s.gui(locals())
