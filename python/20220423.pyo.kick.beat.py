@@ -12,7 +12,7 @@ def beatToIntervals(x):
     z.insert(0, y[0]) # insert onset of first beat
     return z
 
-class KickBeat:
+class Kick:
   def __init__(self, intervals=[0], dur=0.25, mul=1) -> None:
     self.peakFreq = 400
 
@@ -26,7 +26,7 @@ class KickBeat:
     self.osc = Sine(freq=self.pitch, mul=self.amp).mix(2)
     self.osc.out()
 
-k = KickBeat(intervals=beatToIntervals(beat), dur=0.2, mul=0.2)
+k = Kick(intervals=beatToIntervals(beat), dur=0.2, mul=0.2)
 
 s.start()
 s.gui(locals())
