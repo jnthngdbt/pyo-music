@@ -18,12 +18,12 @@ M = band.Maestro(time=time, nbSectionsToggle=1, tracks=[
             beat = [ 1, 0, 1, 0, 1, 1, 1, 0 ],
             note = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
         ),
-        band.BassBeat(name="Mid", mul = 0.004, root = root+36, dur=2*time, adsr=[.01, .02, .5, .04], tone = [1, .8], reverb=.0,
+        band.BassBeat(name="Mid", mul = 0.004, root = root+36, dur=2*time, adsr=[.01, .02, .5, .04], tone = [.1, .8], reverb=.5,
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
             beat = [ 1, 0 ],
             note = [ 7, 7, 7, 0, 0, 0, 7, 7, 7, 0, 0, 0, 7, 7, 0, 0]
         ),
-        band.BassBeat(name="Mid High", mul = 0.004, root = root+36, dur=2*time, adsr=[.01, .02, .5, .04], tone = [1, .8], reverb=.0,
+        band.BassBeat(name="Mid High", mul = 0.004, root = root+36, dur=2*time, adsr=[.01, .02, .5, .04], tone = [1, .8], reverb=.5,
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
             beat = [ 1, 0 ],
             note = [12,12,12, 7, 7, 7,12,12,12, 7, 7, 7,12,12, 7, 7]
@@ -36,6 +36,14 @@ M = band.Maestro(time=time, nbSectionsToggle=1, tracks=[
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
             beat = [ 0, 0, 1, 0 ]
         ),
+        band.Arpeggio(name="Arpeggio", mul=0.003, root=root+48, notes=band.expand([0,4,5,7], octaves=[0,1]), dur=time, sustain=.75, doMirror=True,
+            #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
+            beat = [ 1 ]
+        ),
+        # band.Arpeggio(name="Arpeggio", mul=0.008, root=root+24, notes=band.expand([0,4,7,12], octaves=[0,1,2,3]), dur=time, sustain=.75, doMirror=False,
+        #     #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
+        #     beat = [ 1 ]
+        # ),
     ]
 )
 
