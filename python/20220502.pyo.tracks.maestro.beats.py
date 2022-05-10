@@ -4,7 +4,7 @@ from pyoband import band
 
 s = Server().boot()
 
-root = 20
+root = 25
 dur = .2
 
 M = band.Maestro(time=0.2, nbSectionsToggle=2, tracks=[
@@ -36,10 +36,18 @@ M = band.Maestro(time=0.2, nbSectionsToggle=2, tracks=[
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
             beat = [ 0, 0, 0, 0, 1, 0, 0, 0 ]
         ),
-        band.Arpeggio(name="Arpeggio", mul=0.008, root=root+24, notes=band.expand([0,4,7,11], octaves=[0,1,2,3]), dur=dur, sustain=.75, doMirror=False,
+        # band.Arpeggio(name="Arpeggio 1", mul=0.003, root=root+48, notes=band.expand([0,4,7], octaves=[0,1]), dur=dur, sustain=.75, doMirror=True,
+        #     #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
+        #     beat = [ 1 ]
+        # ),
+        band.Arpeggio(name="Arpeggio 2", mul=0.003, root=root+48, notes=band.expand([0,4,5,7], octaves=[0,1]), dur=dur, sustain=.75, doMirror=True,
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
             beat = [ 1 ]
         ),
+        # band.Arpeggio(name="Arpeggio 3", mul=0.006, root=root+36, notes=band.expand([0,4,7,0], octaves=[0,1,2,3]), dur=dur, sustain=.75, doMirror=False,
+        #     #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
+        #     beat = [ 1 ]
+        # ),
 ])
 
 s.start()
