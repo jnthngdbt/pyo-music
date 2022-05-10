@@ -7,8 +7,8 @@ s = Server().boot()
 root = 25
 dur = .2
 
-M = band.Maestro(time=0.125, tracks=[
-        band.BassBeat(name="Bass Beat", mul = 0.2, root = root, attack=0.02, sustain=0.5, tone=[.8, 1, .8, .5, .2],
+M = band.Maestro(time=0.125, nbSectionsToggle=2, tracks=[
+        band.BassBeat(name="Bass Beat", mul = 0.2, root = root, adsr=[.02, .02, .5, .04], tone=[.8, 1, .8, .5, .2],
             #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
             beat = [ 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0 ],
             note = [ 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7]

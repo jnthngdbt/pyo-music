@@ -22,7 +22,7 @@ class Track:
         self.mul.ctrl(title=name + " Gain")
 
 class Maestro:
-    def __init__(self, tracks: [Track], time=0.25, nbSectionsToggle=2):
+    def __init__(self, tracks: [Track], time=0.25, nbSectionsToggle=0):
         self.tracks = tracks
         self.time = time
         self.nbSectionsToggle = nbSectionsToggle
@@ -36,7 +36,7 @@ class Maestro:
         self.clock = Pattern(self.tick, time=self.time).play()
 
     def tick(self):
-        doToggle = self.idx % (self.sectionSize * self.nbSectionsToggle) == 0
+        doToggle = (self.nbSectionsToggle > 0) and (self.idx % (self.sectionSize * self.nbSectionsToggle) == 0)
         if doToggle:
             self.toggleTracks()
 
@@ -71,10 +71,10 @@ class Maestro:
         self.isShifted = ~self.isShifted
 
 class BassBeat (Track):
-    def __init__(self, attack=0.016, sustain=0.5, tone=[.8, 1., .8, .5, .3, .2, .1], reverb=0., **kwargs):
+    def __init__(self, adsr=[.01,.01,.8,.02], tone=[.8, 1., .8, .5, .3, .2, .1], reverb=0., **kwargs):
         super().__init__(**kwargs)
 
-        self.env = Adsr(attack=attack, decay=attack, sustain=sustain, release=2*attack, dur=self.dur, mul=self.mul)
+        self.env = Adsr(attack=adsr[0], decay=adsr[1], sustain=adsr[2], release=adsr[3], dur=self.dur, mul=self.mul)
         # self.env.ctrl()
 
         self.table = HarmTable(tone)
