@@ -149,7 +149,7 @@ class Arpeggio (Track):
         self.notes = notes
 
         if doMirror:
-          self.notes = self.notes + self.namenotes[-2:0:-1] # weird slicing: all except first and last, reversed
+          self.notes = self.notes + self.notes[-2:0:-1] # weird slicing: all except first and last, reversed
 
         self.table = HarmTable([1]) # , 0.3, 0.1, 0.02, 0.005
         self.osc = Osc(table=self.table, freq=[100,101])
