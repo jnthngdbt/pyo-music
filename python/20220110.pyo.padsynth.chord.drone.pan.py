@@ -73,13 +73,15 @@ class Chord:
 # scale = [1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0] # riff
 # scale = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # note
 
+root = 27
+
 scale = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # note
-a = Chord(mul=.7, root=24, scale=scale, octaves=[0,1], bw=40, damp=0.9)
+a = Chord(mul=.7, root=root, scale=scale, octaves=[0,1], bw=40, damp=0.9)
 
 scale = [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0] # power
-b = Chord(mul=.4, root=60, scale=scale, octaves=[0], bw=50, damp=0.5)
+b = Chord(mul=.4, root=root+36, scale=scale, octaves=[0], bw=50, damp=0.5)
 
 scale = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # note
-c = Chord(mul=.15, root=84, scale=scale, octaves=[0], bw=50, damp=0.4)
+c = Chord(mul=.15, root=root+60, scale=scale, octaves=[0], bw=50, damp=0.4)
 
 s.gui(locals())
