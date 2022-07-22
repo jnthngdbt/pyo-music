@@ -43,10 +43,10 @@ class Chord:
             f = midiToHz(note + root)
             freqRatio = padRatio * f / padFreq
 
-            self.oscLfos[i] = Sine(freq=randRange(0.01, 0.04), phase=0.75).range(0, 1)
+            self.oscLfos[i] = Sine(freq=randRange(0.01, 0.02), phase=0.75).range(0, 1)
             self.oscs[i] = Osc(self.table, freq=freqRatio, mul=self.oscLfos[i])
 
-            self.panLfos[i] = Sine(freq=randRange(0.01, 0.04), phase=np.random.rand()).range(0.3, 0.7)
+            self.panLfos[i] = Sine(freq=randRange(0.01, 0.02), phase=np.random.rand()).range(0.3, 0.7)
             self.pans[i] = Pan(self.oscs[i], outs=2, pan=self.panLfos[i])
 
         # Mix all note streams.
@@ -55,12 +55,13 @@ class Chord:
             self.x = self.x + sig
 
         self.d = Delay(self.x, delay=np.arange(0.15, 0.3, 0.05).tolist(), feedback=.5)
-        self.d.ctrl()
+        # self.d.ctrl()
 
         self.r = Freeverb(self.d, size=[.79,.8], damp=.9, bal=.3, mul=mul)
-        self.r.ctrl()
+        # self.r.ctrl()
 
         self.lp = MoogLP(self.r, freq=cutoff, res=0.0)
+        self.lp.ctrl()
         self.lp.out()
 
 # #        0  1  2  3  4  5  6  7  8  9  10 11
@@ -74,14 +75,17 @@ class Chord:
 # scale = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # note
 
 root = 27
+dampFactor = 1.0
+cutoff = 10000
+volume = .4
 
 scale = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # note
-a = Chord(mul=.7, root=root, scale=scale, octaves=[0,1], bw=40, damp=0.9)
+a = Chord(mul=volume*.7, root=root, scale=scale, octaves=[0,1], bw=40, damp=dampFactor*0.9, cutoff=cutoff)
 
 scale = [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0] # power
-b = Chord(mul=.4, root=root+36, scale=scale, octaves=[0], bw=50, damp=0.5)
+b = Chord(mul=volume*.4, root=root+36, scale=scale, octaves=[0], bw=50, damp=dampFactor*0.5, cutoff=cutoff)
 
 scale = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # note
-c = Chord(mul=.15, root=root+60, scale=scale, octaves=[0], bw=50, damp=0.4)
+c = Chord(mul=volume*.15, root=root+60, scale=scale, octaves=[0], bw=50, damp=dampFactor*0.4, cutoff=cutoff)
 
 s.gui(locals())
