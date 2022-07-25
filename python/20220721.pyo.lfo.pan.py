@@ -8,8 +8,20 @@ def randRange(a,b):
     r = b - a
     return a + r * np.random.rand()
 
-class Pad:
-    def __init__(self, note, bw, damp, lfo=0.015, cutoff=20000, mul=1.):
+class Base:
+    def __init__(self, lfo=0.015, cutoff=20000, mul=1.):
+        self.lfo = lfo
+        self.cutoff = cutoff
+
+        self.amp = Sig(mul)
+        self.amp.ctrl()
+
+        self.lfoMul = self.amp * Sine(freq=self.lfo * randRange(0.6, 1.5), phase=0.75).range(0, 1)
+
+
+class Pad (Base):
+    def __init__(self, note, bw, damp, **kwargs):
+        super().__init__(**kwargs)
 
         padSize = 262144 * 2
         padFreq = 440
@@ -30,46 +42,45 @@ class Pad:
         f = midiToHz(note)
         freqRatio = padRatio * f / padFreq
 
-        self.lfoMul = Sine(freq=lfo * randRange(0.6, 1.5), phase=0.75).range(0, mul)
-        self.lfoPan = Sine(freq=lfo * randRange(0.6, 1.5), phase=np.random.rand()).range(0.3, 0.7)
+        self.lfoPan = Sine(freq=self.lfo * randRange(0.6, 1.5), phase=np.random.rand()).range(0.3, 0.7)
 
         self.pipeline = []
         self.pipeline.append(Osc(self.table, freq=freqRatio))
         self.pipeline.append(Pan(self.pipeline[-1], outs=2, pan=self.lfoPan, mul=self.lfoMul))
         self.pipeline.append(Delay(self.pipeline[-1], delay=np.arange(0.15, 0.3, 0.05).tolist(), feedback=.5))
         self.pipeline.append(Freeverb(self.pipeline[-1], size=[.79,.8], damp=.9, bal=.3))
-        self.pipeline.append(MoogLP(self.pipeline[-1], freq=cutoff, res=0.0))
+        self.pipeline.append(MoogLP(self.pipeline[-1], freq=self.cutoff, res=0.0))
         self.out = self.pipeline[-1]
 
         self.out.out()
 
-class Recorded:
-    def __init__(self, soundPath, reverb=.3, lfo=.002, cutoff=20000, mul=1.) -> None:
+class Recorded (Base):
+    def __init__(self, soundPath, reverb=.3, **kwargs) -> None:
+        super().__init__(**kwargs)
+        
         self.table = SndTable(soundPath)
         self.freq = self.table.getRate()
-
-        self.lfoMul = Sine(freq=lfo * randRange(0.6, 1.5), phase=0.75).range(0, mul)
 
         self.pipeline = []
         self.pipeline.append(Osc(table=self.table, freq=self.freq, mul=self.lfoMul))
         self.pipeline.append(Freeverb(self.pipeline[-1], size=[.79,.8], damp=.9, bal=reverb))
-        self.pipeline.append(MoogLP(self.pipeline[-1], freq=cutoff, res=0.0))
+        self.pipeline.append(MoogLP(self.pipeline[-1], freq=self.cutoff, res=0.0))
         self.out = self.pipeline[-1]
 
         self.out.out()
 
-class RecordedGuit:
-    def __init__(self, soundPath, reverb=.3, lfo=.002, cutoff=20000, mul=1.) -> None:
+class RecordedGuit (Base):
+    def __init__(self, soundPath, reverb=.3, **kwargs) -> None:
+        super().__init__(**kwargs)
+        
         self.table = SndTable(soundPath)
         self.freq = self.table.getRate()
-
-        self.lfoMul = Sine(freq=lfo * randRange(0.6, 1.5), phase=0.75).range(0, mul)
 
         self.pipeline = []
         self.pipeline.append(Osc(table=self.table, freq=self.freq, mul=self.lfoMul))
         self.pipeline.append(Freeverb(self.pipeline[-1], size=[.79,.8], damp=.9, bal=reverb))
         self.pipeline.append(Delay(self.pipeline[-1], delay=[.05, .06], feedback=.5))
-        self.pipeline.append(MoogLP(self.pipeline[-1], freq=cutoff, res=0.0))
+        self.pipeline.append(MoogLP(self.pipeline[-1], freq=self.cutoff, res=0.0))
         self.out = self.pipeline[-1]
 
         self.out.out()
