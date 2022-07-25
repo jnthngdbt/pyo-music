@@ -176,7 +176,7 @@ class Peak:
     self.band = Biquadx([self.noise1, self.noise2], freq=midiToHz(note), q=14, type=2, stages=2, mul=mul).out()
 
 class Pad (Track):
-    def __init__(self, reverb=0., samplingRate=44100, **kwargs):
+    def __init__(self, reverb=0., samplingRate=44100, env=[(0,0.0000),(89,0.1697),(4525,0.6606),(7977,0.6606),(8192,0.0000)], **kwargs):
         super().__init__(**kwargs)
 
         # For high note (85-97)
@@ -193,13 +193,15 @@ class Pad (Track):
         self.table = PadSynthTable(basefreq=self.basefreq, size=self.size)
 
         self.trig = Trig()
-        self.env = LinTable([(0,0.0000),(1144,0.9212),(4883,0.9091),(6993,1.0000),(8192,0.0000)])
+        self.env = LinTable(env)
         self.amp = TrigEnv(self.trig, table=self.env, dur=self.dur, mul=self.mul)
 
         self.env.graph()
 
         self.osc = Osc(table=self.table, freq=midiToHz(25), mul=self.amp, phase=[0,.4])
-        self.effect = Freeverb(self.osc, size=0.5, damp=0.5, bal=reverb)
+        self.lp = ButLP(self.osc, freq=8000*self.amp + 100)
+
+        self.effect = Freeverb(self.lp, size=0.5, damp=0.5, bal=reverb)
         self.effect.out()
 
     def play(self, note=0):
