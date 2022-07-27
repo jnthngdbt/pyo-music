@@ -42,7 +42,7 @@ class Pad (Base):
         f = midiToHz(note)
         freqRatio = padRatio * f / padFreq
 
-        self.lfoPan = Sine(freq=self.lfo * randRange(0.6, 1.5), phase=np.random.rand()).range(0.3, 0.7)
+        self.lfoPan = Sine(freq=self.lfo * randRange(1.0, 2.0), phase=np.random.rand()).range(0.3, 0.7)
 
         self.pipeline = []
         self.pipeline.append(Osc(self.table, freq=freqRatio))
@@ -93,16 +93,26 @@ volume = .4
 
 oscs = [
     Pad(note=root     , bw=40, damp=dampFactor*0.9, cutoff=cutoff, mul=volume*.7),
-    Pad(note=root+12  , bw=40, damp=dampFactor*0.9, cutoff=cutoff, mul=volume*.7),
-    Pad(note=root+36  , bw=50, damp=dampFactor*0.5, cutoff=cutoff, mul=volume*.4),
-    Pad(note=root+36+7, bw=50, damp=dampFactor*0.5, cutoff=cutoff, mul=volume*.4),
+    Pad(note=root+12  , bw=40, damp=dampFactor*0.8, cutoff=cutoff, mul=volume*.7),
+    Pad(note=root+24  , bw=40, damp=dampFactor*0.8, cutoff=cutoff, mul=volume*.6),
+    Pad(note=root+24+7, bw=40, damp=dampFactor*0.8, cutoff=cutoff, mul=volume*.6),
+    Pad(note=root+36  , bw=50, damp=dampFactor*0.6, cutoff=cutoff, mul=volume*.4),
+    Pad(note=root+36+7, bw=50, damp=dampFactor*0.6, cutoff=cutoff, mul=volume*.4),
     Pad(note=root+60  , bw=50, damp=dampFactor*0.4, cutoff=cutoff, mul=volume*.15),
-    # Recorded(soundPath="./data/Clean Combo#03.wav", cutoff=cutoff, mul=volume*4.0, reverb=0.),
-    # Recorded(soundPath="./data/Clean Combo#01.wav", cutoff=cutoff, mul=volume*2.0, reverb=0.5),
-    Recorded(soundPath="./data/Clean Combo#05.wav", cutoff=cutoff, mul=volume*2.0, reverb=0.5),
-    RecordedGuit(soundPath="./data/AmbientE Loops.Guit.1.wav", cutoff=cutoff, mul=volume*0.08, lfo=.003, reverb=0.1),
-    RecordedGuit(soundPath="./data/AmbientE Loops.Guit.3.wav", cutoff=cutoff, mul=volume*0.08, lfo=.003, reverb=0.1),
-    RecordedGuit(soundPath="./data/AmbientE Loops.Guit.4.wav", cutoff=cutoff, mul=volume*0.08, lfo=.003, reverb=0.1),
+    Pad(note=root+60+7, bw=50, damp=dampFactor*0.3, cutoff=cutoff, mul=volume*.1),
+    # # Recorded(soundPath="./data/Clean Combo#03.wav", cutoff=cutoff, mul=volume*4.0, reverb=0.),
+    # # Recorded(soundPath="./data/Clean Combo#01.wav", cutoff=cutoff, mul=volume*2.0, reverb=0.5),
+    # Recorded(soundPath="./data/Clean Combo#05.wav", cutoff=cutoff, mul=volume*3.0, reverb=0.5),
+    # RecordedGuit(soundPath="./data/AmbientE Loops.Guit.1.wav", cutoff=cutoff, mul=volume*0.06, lfo=.003, reverb=0.5),
+    # RecordedGuit(soundPath="./data/AmbientE Loops.Guit.3.wav", cutoff=cutoff, mul=volume*0.06, lfo=.003, reverb=0.5),
+    # RecordedGuit(soundPath="./data/AmbientE Loops.Guit.4.wav", cutoff=cutoff, mul=volume*0.06, lfo=.003, reverb=0.5),
 ]
+
+# oscs = []
+# for i in np.arange(5): 
+#     ii = (float)(1./(i+1.))
+#     id = (float)(np.exp(-i*2.))
+#     oscs.append(Pad(note=root+(i*12 + 0), bw=40, damp=dampFactor*.9*ii, cutoff=cutoff, mul=volume*.7*ii))
+#     oscs.append(Pad(note=root+(i*12 + 7), bw=40, damp=dampFactor*.9*id, cutoff=cutoff, mul=volume*.7*ii))
 
 s.gui(locals())
