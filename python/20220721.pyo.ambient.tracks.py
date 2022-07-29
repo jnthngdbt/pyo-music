@@ -20,7 +20,7 @@ class Base:
 
 
 class Pad (Base):
-    def __init__(self, note, bw, damp, **kwargs):
+    def __init__(self, note, bw, damp, reverb=.3, **kwargs):
         super().__init__(**kwargs)
 
         padSize = 262144 * 2
@@ -47,8 +47,8 @@ class Pad (Base):
         self.pipeline = []
         self.pipeline.append(Osc(self.table, freq=freqRatio))
         self.pipeline.append(Pan(self.pipeline[-1], outs=2, pan=self.lfoPan, mul=self.lfoMul))
-        self.pipeline.append(Delay(self.pipeline[-1], delay=np.arange(0.15, 0.3, 0.05).tolist(), feedback=.5))
-        self.pipeline.append(Freeverb(self.pipeline[-1], size=[.79,.8], damp=.9, bal=.3))
+        self.pipeline.append(Delay(self.pipeline[-1], delay=[.15, .2], feedback=.0))
+        self.pipeline.append(Freeverb(self.pipeline[-1], size=[.79,.8], damp=.9, bal=reverb))
         self.pipeline.append(MoogLP(self.pipeline[-1], freq=self.cutoff, res=0.0))
         self.out = self.pipeline[-1]
 
@@ -85,6 +85,34 @@ class RecordedGuit (Base):
 
         self.out.out()
 
+class ToneBeatSimple (Base):
+    def __init__(self, note, dur, decay=.1, sustain=.2, reverb=.3, **kwargs) -> None:
+        super().__init__(**kwargs)
+
+        f = midiToHz(note)
+
+        self.table = HarmTable([1, 0.3, 0.1, 0.02, 0.005])
+
+        self.env = Adsr(attack=.01, decay=decay, sustain=sustain, release=.01, dur=dur)
+        self.env.ctrl()
+
+        self.lfoPan = Sine(freq=self.lfo * randRange(1.0, 2.0), phase=np.random.rand()).range(0.3, 0.7)
+
+        self.pipeline = []
+        self.pipeline.append(Osc(table=self.table, freq=[f, f*1.01]))
+        self.pipeline.append(Pan(self.pipeline[-1], outs=2, pan=self.lfoPan))
+        self.pipeline.append(Freeverb(self.pipeline[-1], size=[.79,.8], damp=.9, bal=reverb))
+        self.pipeline.append(Delay(self.pipeline[-1], delay=[.05, .06], feedback=.5))
+        self.out = self.pipeline[-1]
+
+        self.out = self.lfoMul * self.env * self.out
+        self.out.out()
+
+        self.pat = Pattern(self.play, dur)
+        self.pat.play()
+
+    def play(self):
+        self.env.play()
 
 root = 27
 dampFactor = 1.0
@@ -92,14 +120,18 @@ cutoff = 10000
 volume = .4
 
 oscs = [
-    Pad(note=root     , bw=40, damp=dampFactor*0.9, cutoff=cutoff, mul=volume*.7),
-    Pad(note=root+12  , bw=40, damp=dampFactor*0.8, cutoff=cutoff, mul=volume*.7),
-    Pad(note=root+24  , bw=40, damp=dampFactor*0.8, cutoff=cutoff, mul=volume*.6),
-    Pad(note=root+24+7, bw=40, damp=dampFactor*0.8, cutoff=cutoff, mul=volume*.6),
-    Pad(note=root+36  , bw=50, damp=dampFactor*0.6, cutoff=cutoff, mul=volume*.4),
-    Pad(note=root+36+7, bw=50, damp=dampFactor*0.6, cutoff=cutoff, mul=volume*.4),
-    Pad(note=root+60  , bw=50, damp=dampFactor*0.4, cutoff=cutoff, mul=volume*.15),
-    Pad(note=root+60+7, bw=50, damp=dampFactor*0.3, cutoff=cutoff, mul=volume*.1),
+    Pad(note=root     , bw=40, damp=dampFactor*0.9, cutoff=cutoff, reverb=.6, mul= 0.546), #  0.546   0.000
+    Pad(note=root+12  , bw=40, damp=dampFactor*0.8, cutoff=cutoff, reverb=.6, mul= 0.542), #  0.542   0.000
+    Pad(note=root+24  , bw=40, damp=dampFactor*0.8, cutoff=cutoff, reverb=.6, mul= 0.204), #  0.204   0.000
+    Pad(note=root+24+7, bw=40, damp=dampFactor*0.8, cutoff=cutoff, reverb=.6, mul= 0.077), #  0.077   0.000
+    Pad(note=root+36  , bw=50, damp=dampFactor*0.6, cutoff=cutoff, reverb=.6, mul= 0.112), #  0.112   0.065
+    Pad(note=root+36+7, bw=50, damp=dampFactor*0.6, cutoff=cutoff, reverb=.6, mul= 0.035), #  0.035   0.023
+    Pad(note=root+48  , bw=60, damp=dampFactor*0.6, cutoff=cutoff, reverb=.6, mul= 0.050), #  0.050   0.073
+    Pad(note=root+48+7, bw=60, damp=dampFactor*0.5, cutoff=cutoff, reverb=.6, mul= 0.019), #  0.019   0.042
+    Pad(note=root+60  , bw=60, damp=dampFactor*0.4, cutoff=cutoff, reverb=.6, mul= 0.042), #  0.042   0.027
+    Pad(note=root+60+7, bw=60, damp=dampFactor*0.3, cutoff=cutoff, reverb=.6, mul= 0.012), #  0.012   0.023
+    ToneBeatSimple(note=root+24, dur=.25, decay=.2, sustain=.0,    reverb=.3, mul= 0.069), #  0.069   0.000
+    # ToneBeatSimple(note=root+24, dur=.125, decay=.1, sustain=.2,   reverb=.3, mul= 0.123), #  0.123   0.000
     # # Recorded(soundPath="./data/Clean Combo#03.wav", cutoff=cutoff, mul=volume*4.0, reverb=0.),
     # # Recorded(soundPath="./data/Clean Combo#01.wav", cutoff=cutoff, mul=volume*2.0, reverb=0.5),
     # Recorded(soundPath="./data/Clean Combo#05.wav", cutoff=cutoff, mul=volume*3.0, reverb=0.5),
@@ -108,11 +140,11 @@ oscs = [
     # RecordedGuit(soundPath="./data/AmbientE Loops.Guit.4.wav", cutoff=cutoff, mul=volume*0.06, lfo=.003, reverb=0.5),
 ]
 
-# oscs = []
-# for i in np.arange(5): 
-#     ii = (float)(1./(i+1.))
-#     id = (float)(np.exp(-i*2.))
-#     oscs.append(Pad(note=root+(i*12 + 0), bw=40, damp=dampFactor*.9*ii, cutoff=cutoff, mul=volume*.7*ii))
-#     oscs.append(Pad(note=root+(i*12 + 7), bw=40, damp=dampFactor*.9*id, cutoff=cutoff, mul=volume*.7*ii))
+def printAmps():
+    [print("{:.3f}".format(osc.amp.value.value)) for osc in oscs]
+    print("-")
+
+pool = Pattern(printAmps, 5.)
+pool.play()
 
 s.gui(locals())
