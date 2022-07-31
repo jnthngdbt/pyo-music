@@ -127,8 +127,9 @@ dampFactor = 1.0
 cutoff = 10000
 volumeA = 1.0
 volumeB = 1.0
-dt = Sig(.2)
-dt.ctrl()
+
+dt = Sig(.25)
+dt.ctrl(None, "Tempo")
 
 # c = [SLMap(.0, 5., 'lin', "Volume", 1.0)]
 # volumeB.ctrl(c, "Beat Volume")
@@ -148,10 +149,12 @@ oscs = [
     Pad(note=root+72+7, bw=50, damp=dampFactor*0.3, cutoff=cutoff, reverb=.9, mul= volumeA * 0.010), #  0.012   0.023
     # ToneBeatSimple(note=root, dur=64*dt, decay=12., sustain=.05,    reverb=.3, mul= volumeB * 0.110, tone=[.2, 1., 0.8, 0.6, 0.2, .05]), #  0.069   0.000
     # ToneBeatSimple(note=root, dur=dt, decay=.2, sustain=.0,    reverb=.3, mul= volumeB * 0.110, tone=[.8, 1., 0.8, 0.6, 0.2, .05]), #  0.069   0.000
-    ToneBeatSimple(note=root   , dur=dt, decay=.8*dt.value, sustain=.0,    reverb=.9, mul= volumeB * 0.040, tone=[1., .8, .4, .2, .05]), #  0.069   0.000
-    ToneBeatSimple(note=root+12, dur=dt, decay=.8*dt.value, sustain=.0,    reverb=.9, mul= volumeB * 0.040, tone=[1., .8, .4, .2, .05]), #  0.069   0.000
-    ToneBeatSimple(note=root+24, dur=dt, decay=.8*dt.value, sustain=.0,    reverb=.9, mul= volumeB * 0.032, tone=[1., .8, .4, .2, .05]), #  0.069   0.000
-    ToneBeatSimple(note=root+36, dur=dt, decay=.8*dt.value, sustain=.0,    reverb=.9, mul= volumeB * 0.010, tone=[1., .4, .2, .1, .05]), #  0.069   0.000
+
+    ToneBeatSimple(note=root   , dur=dt, decay=.12, sustain=.0,    reverb=.9, mul= volumeB * 0.040, tone=[1., .8, .4, .2, .05]), #  0.069   0.000
+    ToneBeatSimple(note=root+12, dur=dt, decay=.12, sustain=.0,    reverb=.9, mul= volumeB * 0.040, tone=[1., .8, .4, .2, .05]), #  0.069   0.000
+    ToneBeatSimple(note=root+24, dur=dt, decay=.12, sustain=.0,    reverb=.9, mul= volumeB * 0.025, tone=[1., .8, .4, .2, .05]), #  0.069   0.000
+    ToneBeatSimple(note=root+36, dur=dt, decay=.12, sustain=.0,    reverb=.9, mul= volumeB * 0.008, tone=[1., .4, .2, .1, .05]), #  0.069   0.000
+
     # ToneBeatSimple(note=root+36+7, dur=dt, decay=.2, sustain=.0,    reverb=.8, mul= volume * 0.010, tone=[1., .8, .4, .2, .05]), #  0.069   0.000
     # ToneBeatSimple(note=root+36, dur=.5*dt, decay=.1, sustain=.2,   reverb=.3, mul= volume * 0.070, tone=[1, 0.3, 0.1, 0.02, 0.005]), #  0.123   0.000
     # # Recorded(soundPath="./data/Clean Combo#03.wav", cutoff=cutoff, mul=volume*4.0, reverb=0.),
