@@ -62,11 +62,11 @@ class Chord:
 scale = [1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0] # minor
 scale = [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0] # power
 scale = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # peak
-scale = [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0] # major small
 scale = [1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0] # riff
 scale = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # note
 scale = [1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0] # major
 scale = [1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0] # minor small
+scale = [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0] # major small
 
 root = 48
 dampFactor = 1.0
