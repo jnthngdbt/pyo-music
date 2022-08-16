@@ -59,7 +59,6 @@ class Chord:
 
 # Notes to play. Put selected profile at the end to be active.
 #        0  1  2  3  4  5  6  7  8  9  10 11
-scale = [1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0] # minor small
 scale = [1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0] # minor
 scale = [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0] # power
 scale = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # peak
@@ -67,10 +66,11 @@ scale = [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0] # major small
 scale = [1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0] # riff
 scale = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # note
 scale = [1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0] # major
+scale = [1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0] # minor small
 
 root = 48
 dampFactor = 1.0
-cutoff = 10000
+cutoff = 20000
 volume = .35
 
 x = Chord(mul=volume*.7, root=root, scale=scale, octaves=[2], bw=40, damp=dampFactor*0.7, cutoff=cutoff)
