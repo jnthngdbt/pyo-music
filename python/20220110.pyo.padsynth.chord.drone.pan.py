@@ -49,43 +49,30 @@ class Chord:
             self.panLfos[i] = Sine(freq=randRange(0.01, 0.02), phase=np.random.rand()).range(0.3, 0.7)
             self.pans[i] = Pan(self.oscs[i], outs=2, pan=self.panLfos[i])
 
-        # Mix all note streams.
-        self.x = 0.0 * Sine()
-        for sig in self.pans:
-            self.x = self.x + sig
+        self.p = []
+        self.p.append(Mix(self.pans, 2, mul=mul))
+        self.p.append(Delay(self.p[-1], delay=[.38, .39], feedback=.5))                       , self.p[-1].ctrl()
+        self.p.append(Freeverb(self.p[-1], size=[.79,.80], damp=.9, bal=.3))                  , self.p[-1].ctrl()
+        self.p.append(MoogLP(self.p[-1], freq=cutoff, res=0.0))                               , self.p[-1].ctrl()
+        self.p[-1].out()
 
-        self.d = Delay(self.x, delay=np.arange(0.15, 0.3, 0.05).tolist(), feedback=.5)
-        # self.d.ctrl()
 
-        self.r = Freeverb(self.d, size=[.79,.8], damp=.9, bal=.3, mul=mul)
-        # self.r.ctrl()
+# Notes to play. Put selected profile at the end to be active.
+#        0  1  2  3  4  5  6  7  8  9  10 11
+scale = [1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0] # minor small
+scale = [1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0] # minor
+scale = [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0] # power
+scale = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # peak
+scale = [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0] # major small
+scale = [1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0] # riff
+scale = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # note
+scale = [1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0] # major
 
-        self.lp = MoogLP(self.r, freq=cutoff, res=0.0)
-        self.lp.ctrl()
-        self.lp.out()
-
-# #        0  1  2  3  4  5  6  7  8  9  10 11
-# scale = [1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0] # major
-# scale = [1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0] # minor small
-# scale = [1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0] # minor
-# scale = [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0] # power
-# scale = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # peak
-# scale = [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0] # major small
-# scale = [1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0] # riff
-# scale = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # note
-
-root = 27
+root = 48
 dampFactor = 1.0
 cutoff = 10000
-volume = .4
+volume = .35
 
-scale = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # note
-a = Chord(mul=volume*.7, root=root, scale=scale, octaves=[0,1], bw=40, damp=dampFactor*0.9, cutoff=cutoff)
-
-scale = [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0] # power
-b = Chord(mul=volume*.4, root=root+36, scale=scale, octaves=[0], bw=50, damp=dampFactor*0.5, cutoff=cutoff)
-
-scale = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # note
-c = Chord(mul=volume*.15, root=root+60, scale=scale, octaves=[0], bw=50, damp=dampFactor*0.4, cutoff=cutoff)
+x = Chord(mul=volume*.7, root=root, scale=scale, octaves=[2], bw=40, damp=dampFactor*0.7, cutoff=cutoff)
 
 s.gui(locals())
