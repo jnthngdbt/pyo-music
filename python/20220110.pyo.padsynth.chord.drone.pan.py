@@ -46,15 +46,21 @@ class Chord:
             self.oscLfos[i] = Sine(freq=randRange(0.01, 0.02), phase=0.75).range(0, 1)
             self.oscs[i] = Osc(self.table, freq=freqRatio, mul=self.oscLfos[i])
 
-            self.panLfos[i] = Sine(freq=randRange(0.01, 0.02), phase=np.random.rand()).range(0.3, 0.7)
+            self.panLfos[i] = Sine(freq=randRange(0.01, 0.02), phase=np.random.rand()).range(.2, .8)
             self.pans[i] = Pan(self.oscs[i], outs=2, pan=self.panLfos[i])
 
         self.p = []
         self.p.append(Mix(self.pans, 2, mul=mul))
         self.p.append(Delay(self.p[-1], delay=[.38, .39], feedback=.5))                       , self.p[-1].ctrl()
-        self.p.append(Freeverb(self.p[-1], size=[.79,.80], damp=.9, bal=.3))                  , self.p[-1].ctrl()
+        # self.p.append(Freeverb(self.p[-1], size=[.79,.80], damp=.9, bal=.3))                  , self.p[-1].ctrl()
+        self.p.append(WGVerb(self.p[-1]))                  , self.p[-1].ctrl()
         self.p.append(MoogLP(self.p[-1], freq=cutoff, res=0.0))                               , self.p[-1].ctrl()
+        self.p.append(EQ(self.p[-1], freq=100))                               , self.p[-1].ctrl()
+        self.p.append(EQ(self.p[-1], freq=500))                               , self.p[-1].ctrl()
+        self.p.append(EQ(self.p[-1], freq=1000))                               , self.p[-1].ctrl()
         self.p[-1].out()
+
+        Spectrum(self.p[-1])
 
 
 # Notes to play. Put selected profile at the end to be active.
@@ -62,17 +68,17 @@ class Chord:
 scale = [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0] # power
 scale = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # peak
 scale = [1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0] # riff
-scale = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # note
 scale = [1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0] # major
 scale = [1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0] # minor small
 scale = [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0] # major small
 scale = [1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0] # minor
+scale = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # note
 
-root = 48
+root = 72
 dampFactor = 1.0
 cutoff = 20000
 volume = .35
 
-x = Chord(mul=volume*.7, root=root, scale=scale, octaves=[2], bw=40, damp=dampFactor*0.7, cutoff=cutoff)
+x = Chord(mul=volume*.7, root=root, scale=scale, octaves=[], bw=40, damp=dampFactor*0.7, cutoff=cutoff)
 
 s.gui(locals())
