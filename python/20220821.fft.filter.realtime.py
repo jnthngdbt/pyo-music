@@ -17,7 +17,7 @@ s.start()
 # minFftPeriod = minFreqNbCycles * minFreqPeriod # 2*.05=.1 > 4410
 # minFftN = fs * minFftPeriod
 
-N = 4096*4
+N = 4096*8
 Nh = int(N/2)
 
 a = Noise(.25).mix(2)
@@ -40,15 +40,15 @@ dmp.ctrl([SLMap(.1, 10., 'lin', "value", dmp.value)], "DMP")
 
 def createSpectrum():
   s = np.zeros(Nh)
-  for i in range(16):
+  for i in range(32):
     Nw = int((i * getSigVal(bws) + 1) * getSigVal(bw))
-    if Nw % 2 > 0:
-      Nw += 1
+    if Nw < 3: Nw = 3 # minimum length
+    if Nw % 2 == 0: Nw += 1 # make sure odd
     Nwh = int(Nw/2)
     damping = np.exp(-i*getSigVal(dmp))
     w = 10 * damping * signal.windows.hann(Nw)
     p = int(getSigVal(p0) * (i + 1))
-    s[p-Nwh : p + Nwh] += w
+    s[p-Nwh : p + Nwh + 1] += w # slicing: [a,b[
   return s
 
 v = createSpectrum()
@@ -60,7 +60,12 @@ amp = TableIndex(t, fin["bin"])
 
 re = fin["real"] * amp
 im = fin["imag"] * amp
-fout = IFFT(re, im, size=N, overlaps=4, wintype=2, mul=0.2).mix(2).out()
+fout = IFFT(re, im, size=N, overlaps=4, wintype=2).mix(2)
+
+p = []
+p.append(Mix(fout, 2, mul=.2))
+p.append(Freeverb(p[-1], size=[.5,.6]))
+p[-1].out()
 
 Spectrum(fout, size=N)
 
@@ -70,6 +75,6 @@ def changeSpectrum():
   t.replace(v.tolist())
   print("{}s".format(time.time() - tm))
 
-clk = Pattern(changeSpectrum, .2).play()
+clk = Pattern(changeSpectrum, .1).play()
 
 s.gui(locals())
