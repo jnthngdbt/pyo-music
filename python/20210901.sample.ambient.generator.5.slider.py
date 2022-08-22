@@ -252,10 +252,15 @@ def applyFilter(f, F, minFreq, maxFreq):
     F = F * w
   return F
 
+def zeroLowCoefs(F):
+  F[abs(F) < 0] = 0
+  return F
+
 def update():
   i = sliderPos.get()
-  # F = np.squeeze(S[:,i,:])
-  F = averageCorr(S, C0, i)
+  F = np.squeeze(S[:,i,:])
+  # F = averageCorr(S, C0, i)
+  F = zeroLowCoefs(F)
   playSample(f, F)
   showSpectrum(F[:,0], fftax)
 #   computeRatios(f, F)
