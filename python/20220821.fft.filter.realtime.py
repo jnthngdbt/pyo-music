@@ -1,4 +1,5 @@
 from pyo64 import *
+import numpy as np
 
 s = Server().boot()
 s.start()
@@ -8,36 +9,22 @@ N = 1024
 a = Noise(.25).mix(2)
 fin = FFT(a, size=N, overlaps=4, wintype=2)
 
-# t = ExpTable([(0,0),(3,0),(10,1),(20,0),(30,.8),(50,0),(70,.6),(150,0),(512,0)], size=512)
-# amp = TableIndex(t, fin["bin"])
+d = Sig(1)
+d.ctrl([SLMap(0., 10., 'lin', "value", d.value)], "D")
 
-dv = 1
-d = Sig(dv)
-d.ctrl([SLMap(0., 9., 'lin', "value", 8.)], "D")
-
-print(d.value)
-print([(0,0),(10-dv,0),(10,1),(20-dv,0),(20,.8),(30-dv,0),(30,.6),(40-dv,0),(512,0)])
-
-t = ExpTable([(0,0),(10-dv,0),(10,1),(20-dv,0),(20,.8),(30-dv,0),(30,.6),(40-dv,0),(512,0)], size=512)
+t = DataTable(512, init=np.random.rand(512).tolist())
 amp = TableIndex(t, fin["bin"])
-
-# t = HannTable(size=int(N/2))
-# amp = TableIndex(t, fin["bin"])
 
 re = fin["real"] * amp
 im = fin["imag"] * amp
-fout = IFFT(re, im, size=N, overlaps=4, wintype=2).mix(2).out()
+fout = IFFT(re, im, size=N, overlaps=4, wintype=2, mul=0.2).mix(2).out()
 
 Spectrum(fout, size=4096)
 
 def changeSpectrum():
   if hasattr(d.value, 'value'):
-    print(d.value.value)
-    dd = int(d.value.value)
-    ls = [(0,0),(10-dd,0),(10,1),(20-dd,0),(20,.8),(30-dd,0),(30,.6),(40-dd,0),(512,0)]
-    print(t.list)
-    print(ls)
-    t.list = ls
+    v = d.value.value * np.random.rand(512)
+    t.replace(v.tolist())
 
 clk = Pattern(changeSpectrum, 1).play()
 
