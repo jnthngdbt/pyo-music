@@ -115,6 +115,12 @@ def spectrogram(x, fs, Ts, Tw):
   return S
 
 ## -------------------------------------------------------
+import tkinter as tk
+from tkinter import filedialog
+
+root = tk.Tk()
+root.withdraw()
+
 # name = "03 Mission Two"
 # name = "04 Mission Three"
 # name = "05 Mission Four"
@@ -130,7 +136,7 @@ def spectrogram(x, fs, Ts, Tw):
 # name = "Aly Wood 2"
 # name = "Beverly Aly Hills 5"
 # name = "insects"
-name = "smallthings" # t: 31
+# name = "smallthings" # t: 31
 # name = "Sam Buca - Outdoor Tone Car"
 # name = "Sam Buca - Outdoor Tone"
 # name = "Tone night 21h Aug"
@@ -143,13 +149,24 @@ name = "smallthings" # t: 31
 # name = "TC RS212 vs SVT15E"
 # name = "bass recording jam miche 1"
 
-nameIn = "./data/" + name + ".m4a"
+# nameIn = "./data/" + name + ".m4a"
+
+# nameIn = "C:\\Users\\Default\\Desktop\\Sounds\\Strings\\Strings\\double bass\\double-bass_A1_15_piano_arco-normal.mp3"
+# nameIn = "C:\\Users\\Default\\Desktop\\Sounds\\Strings\\Strings\\double bass\\double-bass_A1_15_forte_arco-normal.mp3"
+# nameIn = "C:\\Users\\Default\\Desktop\\Sounds\\Strings\\Strings\\double bass\\double-bass_A3_15_fortissimo_arco-normal.mp3"
+# nameIn = "C:\\Users\\Default\\Desktop\\Sounds\\Strings\\Strings\\double bass\\double-bass_A3_15_mezzo-forte_arco-normal.mp3"
+# nameIn = "C:\\Users\\Default\\Desktop\\Sounds\\Brass\\Brass\\trombone\\trombone_A3_15_pianissimo_normal.mp3"
+# nameIn = "C:\\Users\\Default\\Desktop\\Sounds\\Brass\\Brass\\trombone\\trombone_A3_15_piano_normal.mp3"
+nameIn = "C:\\Users\\Default\\Desktop\\Sounds\\Strings\\Strings\\guitar\\guitar_A3_very-long_piano_harmonics.mp3"
+# nameIn = "C:\\Users\\Default\\Desktop\\Sounds\\Brass\\Brass\\trumpet\\trumpet_A3_1_pianissimo_normal.mp3"
+# nameIn = filedialog.askopenfilename()
+print(nameIn)
 
 seg = audiosegment.from_file(nameIn)
 
 ## -------------------------------------------------------
 Ts = 0.05 # step duration
-Tw = 0.25 # sample duration
+Tw = .75 # sample duration
 lowPass = 20000
 doBoostBass = False # when using a recording
 
@@ -217,7 +234,7 @@ def playSample(f, Fi):
   Fo = np.fft.fft(si, axis=0) # output signal FFT
   showSpectrum(np.abs(Fo[:,0]), fft2ax)
 
-  tmpWav = "temp.wav"
+  tmpWav = "slider.spectrum.sample.wav"
   play(si, tmpWav, volume=sliderVolume.get()/100.0)
 
 def showSpectrum(F, ax):
