@@ -15,6 +15,9 @@ noise1 = PinkNoise()
 noise2 = PinkNoise()
 band = Biquadx([noise1, noise2], freq=freq, q=10, type=2, stages=2, mul=.5)
 
+band.ctrl()
 band.out()
+
+Spectrum(band)
 
 s.gui(locals())
