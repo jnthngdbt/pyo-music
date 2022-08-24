@@ -26,12 +26,12 @@ freq = expand(octaves=octaves, notes=[x + root for x in notes])
 freq = padRatio * np.array(midiToHz(freq)) / padFreq
 
 p = []
-p.append(Osc(t, freq=freq.tolist(), mul=amp))
+p.append(Osc(t, freq=freq.tolist(), mul=amp).mix(2))
 # p.append(Delay(p[-1], delay=[.3, .32], feedback=0.6))
 # p.append(WGVerb(p[-1])), p[-1].ctrl()
-p.append(EQ(p[-1], [100,400,1600], q=5, boost=[0,0,0])), p[-1].ctrl()
+# p.append(EQ(p[-1], [100,400,1600], q=5, boost=[0,0,0])), p[-1].ctrl()
 p.append(MoogLP(p[-1], 20000, .5)), p[-1].ctrl()
-p.append(Pan(p[-1], 2, pan=.5, spread=1.))
+# p.append(Pan(p[-1], 2, pan=.5, spread=1.))
 p[-1].out()
 
 Spectrum(p[-1])
