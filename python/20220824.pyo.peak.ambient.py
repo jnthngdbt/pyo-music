@@ -17,10 +17,11 @@ def randRange(a,b):
 # https://mynoise.net/NoiseMachines/peakNoiseGenerator.php?l=00000000304030000000&a=2&am=5&d=-3 (A#)
 
 class Base:
-    def __init__(self, lfo=0.015, phase=Sig(.75), mul=1.):
+    def __init__(self, lfo=0.03, phase=Sig(.75), mul=1.):
         self.amp = Sig(mul)
         self.phase = phase
-        self.lfoMul = self.amp * Sine(freq=lfo * randRange(1.6, 2.5), phase=randRange(0, 1)).range(0, 1)
+        self.lfoMulFreq = Sine(freq=lfo*randRange(.2, .5), phase=randRange(0, 1)).range(lfo*.5, lfo*1.5) # LFO of amplitude LFO frequency
+        self.lfoMul = self.amp * Sine(freq=self.lfoMulFreq, phase=self.phase).range(0, 1) # LFO for amplitude modulation
 
 class Peak (Base):
     def __init__(self, note, qp=26, qb=2.3, **kwargs):
@@ -85,14 +86,8 @@ oscs = [
     Peak(note=root+24+ 9, mul=m2, phase=phase),
 ]
 
-drone = Sig(0)
-drone.ctrl([SLMap(0., 10., 'lin', "value", drone.value)], "Drone") # NOTE: the 'name' must be the name of attribute
-d = Peak(note=root+12, mul=drone, lfo=0, phase=.25)
-d.out.out()
-
 p = []
 p.append(Mix([osc.out for osc in oscs], 2))
-# p.append(EQ(p[-1], boost=0)); p[-1].ctrl()
 p.append(MoogLP(p[-1], freq=20000, res=.2)); p[-1].ctrl()
 p[-1].out()
 
