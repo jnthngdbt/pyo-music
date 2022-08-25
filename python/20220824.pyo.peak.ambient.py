@@ -42,34 +42,50 @@ class Peak (Base):
 
 root = 73
 
-mx = 1.
-mn = .8
+m0 = 1.
+m1 = .8
+m2 = .5
 
 phase = Sig(.75)
-phase.ctrl([SLMap(0., 1., 'lin', "value", phase.value)], "Phase", ) # NOTE: the 'name' must be the name of attribute
+phase.ctrl([SLMap(0., 1., 'lin', "value", phase.value)], "Phase") # NOTE: the 'name' must be the name of attribute
 
 oscs = [
-    Peak(note=root-48+ 0, mul=mn, phase=phase),
-    Peak(note=root-36+ 0, mul=mn, phase=phase),
-    Peak(note=root-24+ 0, mul=mn, phase=phase),
-    Peak(note=root-12+ 0, mul=mn, phase=phase),
-    Peak(note=root   + 0, mul=mx, phase=phase),
-    Peak(note=root+12+ 0, mul=mn, phase=phase),
-    Peak(note=root-12+ 4, mul=mn, phase=phase),
-    Peak(note=root   + 4, mul=mx, phase=phase),
-    Peak(note=root+12+ 4, mul=mn, phase=phase),
-    Peak(note=root-12+ 5, mul=mn, phase=phase),
-    Peak(note=root   + 5, mul=mx, phase=phase),
-    Peak(note=root+12+ 5, mul=mn, phase=phase),
-    Peak(note=root-12+ 7, mul=mn, phase=phase),
-    Peak(note=root   + 7, mul=mx, phase=phase),
-    Peak(note=root+12+ 7, mul=mn, phase=phase),
-    Peak(note=root-12+ 9, mul=mn, phase=phase),
-    Peak(note=root   + 9, mul=mx, phase=phase),
-    Peak(note=root+12+ 9, mul=mn, phase=phase),
+    Peak(note=root-48+ 0, mul=m1, phase=phase),
+    Peak(note=root-36+ 0, mul=m1, phase=phase),
+    Peak(note=root-24+ 0, mul=m1, phase=phase),
+    #
+    Peak(note=root-24+ 0, mul=m2, phase=phase),
+    Peak(note=root-12+ 0, mul=m1, phase=phase),
+    Peak(note=root   + 0, mul=m0, phase=phase),
+    Peak(note=root+12+ 0, mul=m1, phase=phase),
+    Peak(note=root+24+ 0, mul=m2, phase=phase),
+    #
+    Peak(note=root-24+ 4, mul=m2, phase=phase),
+    Peak(note=root-12+ 4, mul=m1, phase=phase),
+    Peak(note=root   + 4, mul=m0, phase=phase),
+    Peak(note=root+12+ 4, mul=m1, phase=phase),
+    Peak(note=root+24+ 4, mul=m2, phase=phase),
+    #
+    Peak(note=root-24+ 5, mul=m2, phase=phase),
+    Peak(note=root-12+ 5, mul=m1, phase=phase),
+    Peak(note=root   + 5, mul=m0, phase=phase),
+    Peak(note=root+12+ 5, mul=m1, phase=phase),
+    Peak(note=root+24+ 5, mul=m2, phase=phase),
+    #
+    Peak(note=root-24+ 7, mul=m2, phase=phase),
+    Peak(note=root-12+ 7, mul=m1, phase=phase),
+    Peak(note=root   + 7, mul=m0, phase=phase),
+    Peak(note=root+12+ 7, mul=m1, phase=phase),
+    Peak(note=root+24+ 7, mul=m2, phase=phase),
+    #
+    Peak(note=root-24+ 9, mul=m2, phase=phase),
+    Peak(note=root-12+ 9, mul=m1, phase=phase),
+    Peak(note=root   + 9, mul=m0, phase=phase),
+    Peak(note=root+12+ 9, mul=m1, phase=phase),
+    Peak(note=root+24+ 9, mul=m2, phase=phase),
 ]
 
-drone = Sig(1.)
+drone = Sig(0)
 drone.ctrl([SLMap(0., 10., 'lin', "value", drone.value)], "Drone") # NOTE: the 'name' must be the name of attribute
 d = Peak(note=root+12, mul=drone, lfo=0, phase=.25)
 d.out.out()
@@ -77,6 +93,7 @@ d.out.out()
 p = []
 p.append(Mix([osc.out for osc in oscs], 2))
 # p.append(EQ(p[-1], boost=0)); p[-1].ctrl()
+p.append(MoogLP(p[-1], freq=20000, res=.2)); p[-1].ctrl()
 p[-1].out()
 
 Spectrum(p[-1])
