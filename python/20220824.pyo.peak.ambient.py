@@ -38,8 +38,6 @@ class Peak (Base):
         self.peak = Biquadx([self.noise1, self.noise2], freq=self.freq, q=self.qp,  type=2, stages=2, mul=2.*self.lfoMul)
         self.out = self.band + self.peak
 
-        self.out.out()
-
 # -----------------------------------------------------------------------------------------------
 
 root = 73
@@ -74,6 +72,14 @@ oscs = [
 drone = Sig(1.)
 drone.ctrl([SLMap(0., 10., 'lin', "value", drone.value)], "Drone") # NOTE: the 'name' must be the name of attribute
 d = Peak(note=root+12, mul=drone, lfo=0, phase=.25)
+d.out.out()
+
+p = []
+p.append(Mix([osc.out for osc in oscs], 2))
+# p.append(EQ(p[-1], boost=0)); p[-1].ctrl()
+p[-1].out()
+
+Spectrum(p[-1])
 
 # -----------------------------------------------------------------------------------------------
 
