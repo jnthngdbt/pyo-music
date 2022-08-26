@@ -17,7 +17,7 @@ def randRange(a,b):
 # https://mynoise.net/NoiseMachines/peakNoiseGenerator.php?l=00000000304030000000&a=2&am=5&d=-3 (A#)
 
 class Base:
-    def __init__(self, lfo=0.03, mul=1.):
+    def __init__(self, lfo=0.015, mul=1.):
         self.amp = Sig(mul)
         self.lfoMulFreq = Sine(freq=lfo*randRange(.2, .5), phase=randRange(0, 1)).range(lfo*.5, lfo*1.5) # LFO of amplitude LFO frequency
         self.lfoMul = self.amp * Sine(freq=self.lfoMulFreq, phase=randRange(0, 1)).range(0, 1) # LFO for amplitude modulation
@@ -46,42 +46,42 @@ m0 = 1.
 m1 = .8
 m2 = .5
 
-mulp = Sig(2.)
+mulp = Sig(1.5)
 mulp.ctrl([SLMap(0., 4., 'lin', "value", mulp.value)], "Peak volume") # NOTE: the 'name' must be the name of attribute
 
 oscs = [
-    Peak(note=root-48+ 0, mul=m1, mulp=mulp, lfo=0.01),
-    Peak(note=root-36+ 0, mul=m1, mulp=mulp, lfo=0.01),
+    # Peak(note=root-48+ 0, mul=m1, mulp=mulp, lfo=0.005),
+    # Peak(note=root-36+ 0, mul=m1, mulp=mulp, lfo=0.005),
     #
-    Peak(note=root-24+ 0, mul=m2, mulp=mulp),
+    # Peak(note=root-24+ 0, mul=m2, mulp=mulp),
     Peak(note=root-12+ 0, mul=m1, mulp=mulp),
     Peak(note=root   + 0, mul=m0, mulp=mulp),
     Peak(note=root+12+ 0, mul=m1, mulp=mulp),
     Peak(note=root+24+ 0, mul=m2, mulp=mulp),
     #
-    Peak(note=root-24+ 4, mul=m2, mulp=mulp),
-    Peak(note=root-12+ 4, mul=m1, mulp=mulp),
-    Peak(note=root   + 4, mul=m0, mulp=mulp),
-    Peak(note=root+12+ 4, mul=m1, mulp=mulp),
-    Peak(note=root+24+ 4, mul=m2, mulp=mulp),
-    #
-    Peak(note=root-24+ 5, mul=m2, mulp=mulp),
-    Peak(note=root-12+ 5, mul=m1, mulp=mulp),
-    Peak(note=root   + 5, mul=m0, mulp=mulp),
-    Peak(note=root+12+ 5, mul=m1, mulp=mulp),
-    Peak(note=root+24+ 5, mul=m2, mulp=mulp),
-    #
-    Peak(note=root-24+ 7, mul=m2, mulp=mulp),
+    # Peak(note=root-24+ 4, mul=m2, mulp=mulp),
+    # Peak(note=root-12+ 4, mul=m1, mulp=mulp),
+    # Peak(note=root   + 4, mul=m0, mulp=mulp),
+    # Peak(note=root+12+ 4, mul=m1, mulp=mulp),
+    # Peak(note=root+24+ 4, mul=m2, mulp=mulp),
+    # #
+    # Peak(note=root-24+ 5, mul=m2, mulp=mulp),
+    # Peak(note=root-12+ 5, mul=m1, mulp=mulp),
+    # Peak(note=root   + 5, mul=m0, mulp=mulp),
+    # Peak(note=root+12+ 5, mul=m1, mulp=mulp),
+    # Peak(note=root+24+ 5, mul=m2, mulp=mulp),
+    # #
+    # Peak(note=root-24+ 7, mul=m2, mulp=mulp),
     Peak(note=root-12+ 7, mul=m1, mulp=mulp),
     Peak(note=root   + 7, mul=m0, mulp=mulp),
     Peak(note=root+12+ 7, mul=m1, mulp=mulp),
-    Peak(note=root+24+ 7, mul=m2, mulp=mulp),
-    #
-    Peak(note=root-24+ 9, mul=m2, mulp=mulp),
-    Peak(note=root-12+ 9, mul=m1, mulp=mulp),
-    Peak(note=root   + 9, mul=m0, mulp=mulp),
-    Peak(note=root+12+ 9, mul=m1, mulp=mulp),
-    Peak(note=root+24+ 9, mul=m2, mulp=mulp),
+    ##Peak(note=root+24+ 7, mul=m2, mulp=mulp),
+    # #
+    # Peak(note=root-24+ 9, mul=m2, mulp=mulp),
+    # Peak(note=root-12+ 9, mul=m1, mulp=mulp),
+    # Peak(note=root   + 9, mul=m0, mulp=mulp),
+    # Peak(note=root+12+ 9, mul=m1, mulp=mulp),
+    # ##Peak(note=root+24+ 9, mul=m2, mulp=mulp),
 ]
 
 p = []
