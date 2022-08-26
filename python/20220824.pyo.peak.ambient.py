@@ -47,8 +47,8 @@ m1 = .8
 m2 = .5
 
 oscs = [
-    Peak(note=root-48+ 0, mul=m1),
-    Peak(note=root-36+ 0, mul=m1),
+    Peak(note=root-48+ 0, mul=m1, lfo=0.01),
+    Peak(note=root-36+ 0, mul=m1, lfo=0.01),
     #
     Peak(note=root-24+ 0, mul=m2),
     Peak(note=root-12+ 0, mul=m1),
@@ -83,7 +83,8 @@ oscs = [
 
 p = []
 p.append(Mix([osc.out for osc in oscs], 2))
-p.append(MoogLP(p[-1], freq=20000, res=.2)); p[-1].ctrl()
+p.append(MoogLP(p[-1], freq=20000, res=0)); p[-1].ctrl()
+# p.append(MoogLP(p[-1], freq=Osc(TriangleTable(), freq=0.005, phase=.9).range(1000, 5000), res=.1)); # LFO controlled cutoff
 p[-1].out()
 
 Spectrum(p[-1])
