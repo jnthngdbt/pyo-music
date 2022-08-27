@@ -21,13 +21,13 @@ t = PadSynthTable(
   spread=1, # 1: def strings, 2:shallower/pure, in between: creepy (near 1, slight dissonnance) // freq = basefreq * pow(n, spread)
   bw=50, # 20: org, 50: def strings, 70: dreamy more highs
   bwscl=1, # 1: def string, 2: dreamy, 3: flute/wind
-  damp=0.7, # 0.7: def, 1: big high synth, 0.5: mellow // amp = pow(damp, n)
+  damp=.7, # 0.7: def, 1: big high synth, 0.5: mellow // amp = pow(damp, n)
   nharms=64, # 64: def 
 )
 
-root = 49 # c#
-amp = [1., .2]
-notes = [0, 7]
+root = 49 # c#  
+amp = [1.]
+notes = [0]
 octaves = [0]
 
 freq = expand(octaves=octaves, notes=[x + root for x in notes])
