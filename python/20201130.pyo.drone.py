@@ -4,12 +4,12 @@ import numpy as np
 s = Server().boot()
 
 # Sets fundamental frequency and highest harmonic.
-freq = 278/4
-high = 12
+freq = midiToHz(25)
+nbHarms = 12
 
 # Generates lists for frequencies and amplitudes
-harms = [freq * i for i in range(1, high)]
-amps = [1 / i for i in range(1, high)]
+harms = [freq * i for i in range(1, nbHarms)]
+amps = [1 / i for i in range(1, nbHarms)]
 # amps = [0, 0.18, 0.25, 0.33, 0.36, .33, .28, .2, .12, .01, 0, 0]
 
 a = Sine(freq=harms, mul=amps)#.out()
