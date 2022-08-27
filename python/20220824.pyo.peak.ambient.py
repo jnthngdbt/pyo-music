@@ -44,9 +44,9 @@ class BigBass (Base):
         super().__init__(**kwargs)
 
         self.p = []
-        self.p.append(HarmTable([.5, 1, .7, .2])) # sub 0, main, fifth, octave
+        self.p.append(HarmTable([.5, 1, .2])) # sub 0, main, fifth, octave
         self.p.append(Osc(self.p[-1], midiToHz(note)))
-        self.p.append(Chorus(self.p[-1], [1, 1.2], feedback=0)) # adds some movement
+        self.p.append(Chorus(self.p[-1], [1, 1.2], feedback=0, bal=.3)) # adds some movement
         self.p[-1].mul = self.lfoMul
         
         self.out = self.p[-1]
@@ -59,44 +59,44 @@ m0 = 1.
 m1 = .8
 m2 = .5
 
+lfoMain = 0.03
+lfoBass = 0.01
+
 mulp = Sig(1.5)
 mulp.ctrl([SLMap(0., 4., 'lin', "value", mulp.value)], "Peak volume") # NOTE: the 'name' must be the name of attribute
 
 oscs = [
-    # Peak(note=root-48+ 0, mul=m1, mulp=mulp, lfo=0.005),
-    # Peak(note=root-36+ 0, mul=m1, mulp=mulp, lfo=0.005),
+    BigBass(note=root-48+ 0, mul=.15*m0, lfo=lfoBass), # better if around midi(25)
+    # BigBass(note=root-36+ 0, mul=.075*m1, lfo=lfoBass), # better if around midi(37)
     #
-    BigBass(note=root-48+ 0, mul=.2*m0, lfo=0.01), # better if around midi(25)
-    BigBass(note=root-36+ 0, mul=.1*m1, lfo=0.01), # better if around midi(37)
+    Peak(note=root-24+ 0, mul=m2, mulp=mulp, lfo=lfoMain),
+    Peak(note=root-12+ 0, mul=m1, mulp=mulp, lfo=lfoMain),
+    Peak(note=root   + 0, mul=m0, mulp=mulp, lfo=lfoMain),
+    Peak(note=root+12+ 0, mul=m1, mulp=mulp, lfo=lfoMain),
+    # Peak(note=root+24+ 0, mul=m2, mulp=mulp, lfo=lfoMain),
     #
-    Peak(note=root-24+ 0, mul=m2, mulp=mulp),
-    Peak(note=root-12+ 0, mul=m1, mulp=mulp),
-    Peak(note=root   + 0, mul=m0, mulp=mulp),
-    Peak(note=root+12+ 0, mul=m1, mulp=mulp),
-    Peak(note=root+24+ 0, mul=m2, mulp=mulp),
+    Peak(note=root-24+ 4, mul=m2, mulp=mulp, lfo=lfoMain),
+    Peak(note=root-12+ 4, mul=m1, mulp=mulp, lfo=lfoMain),
+    Peak(note=root   + 4, mul=m0, mulp=mulp, lfo=lfoMain),
+    Peak(note=root+12+ 4, mul=m1, mulp=mulp, lfo=lfoMain),
+    # Peak(note=root+24+ 4, mul=m2, mulp=mulp, lfo=lfoMain),
     #
-    Peak(note=root-24+ 4, mul=m2, mulp=mulp),
-    Peak(note=root-12+ 4, mul=m1, mulp=mulp),
-    Peak(note=root   + 4, mul=m0, mulp=mulp),
-    Peak(note=root+12+ 4, mul=m1, mulp=mulp),
-    Peak(note=root+24+ 4, mul=m2, mulp=mulp),
+    Peak(note=root-24+ 5, mul=m2, mulp=mulp, lfo=lfoMain),
+    Peak(note=root-12+ 5, mul=m1, mulp=mulp, lfo=lfoMain),
+    Peak(note=root   + 5, mul=m0, mulp=mulp, lfo=lfoMain),
+    Peak(note=root+12+ 5, mul=m1, mulp=mulp, lfo=lfoMain),
+    # Peak(note=root+24+ 5, mul=m2, mulp=mulp, lfo=lfoMain),
     #
-    Peak(note=root-24+ 5, mul=m2, mulp=mulp),
-    Peak(note=root-12+ 5, mul=m1, mulp=mulp),
-    Peak(note=root   + 5, mul=m0, mulp=mulp),
-    Peak(note=root+12+ 5, mul=m1, mulp=mulp),
-    Peak(note=root+24+ 5, mul=m2, mulp=mulp),
+    Peak(note=root-24+ 7, mul=m2, mulp=mulp, lfo=lfoMain),
+    Peak(note=root-12+ 7, mul=m1, mulp=mulp, lfo=lfoMain),
+    Peak(note=root   + 7, mul=m0, mulp=mulp, lfo=lfoMain),
+    Peak(note=root+12+ 7, mul=m1, mulp=mulp, lfo=lfoMain),
+    #Peak(note=root+24+ 7, mul=m2, mulp=mulp, lfo=lfoMain),
     #
-    Peak(note=root-24+ 7, mul=m2, mulp=mulp),
-    Peak(note=root-12+ 7, mul=m1, mulp=mulp),
-    Peak(note=root   + 7, mul=m0, mulp=mulp),
-    Peak(note=root+12+ 7, mul=m1, mulp=mulp),
-    #Peak(note=root+24+ 7, mul=m2, mulp=mulp),
-    #
-    Peak(note=root-24+ 9, mul=m2, mulp=mulp),
-    Peak(note=root-12+ 9, mul=m1, mulp=mulp),
-    Peak(note=root   + 9, mul=m0, mulp=mulp),
-    Peak(note=root+12+ 9, mul=m1, mulp=mulp),
+    Peak(note=root-24+ 9, mul=m2, mulp=mulp, lfo=lfoMain),
+    Peak(note=root-12+ 9, mul=m1, mulp=mulp, lfo=lfoMain),
+    Peak(note=root   + 9, mul=m0, mulp=mulp, lfo=lfoMain),
+    Peak(note=root+12+ 9, mul=m1, mulp=mulp, lfo=lfoMain),
     ##Peak(note=root+24+ 9, mul=m2, mulp=mulp),
 ]
 
