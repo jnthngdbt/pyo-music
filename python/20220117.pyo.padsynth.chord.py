@@ -25,7 +25,7 @@ t = PadSynthTable(
   nharms=64, # 64: def 
 )
 
-root = 49 # c#  
+root = 61 # c#  
 amp = [1.]
 notes = [0]
 octaves = [0]
@@ -40,5 +40,7 @@ mix = .6 * d
 
 p = Pan(mix, outs=2, pan=0.5)
 p.out()
+
+Spectrum(p)
 
 s.gui(locals())
