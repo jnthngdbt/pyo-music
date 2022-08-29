@@ -26,16 +26,18 @@ fin = FFT(a, size=N, overlaps=4, wintype=2)
 def getSigVal(sig):
   return sig.value.value if hasattr(sig.value, 'value') else sig.value
 
-p0 = Sig(100)
+note = midiToHz(61)
+
+p0 = Sig(int(N * note / s.getSamplingRate()))
 p0.ctrl([SLMap(5., 500., 'lin', "value", p0.value)], "P0")
 
-bw = Sig(10)
+bw = Sig(8)
 bw.ctrl([SLMap(5., 50., 'lin', "value", bw.value)], "BW")
 
 bws = Sig(.7)
 bws.ctrl([SLMap(.1, 2.0, 'lin', "value", bws.value)], "BWS")
 
-dmp = Sig(.7)
+dmp = Sig(.52)
 dmp.ctrl([SLMap(.1, 10., 'lin', "value", dmp.value)], "DMP")
 
 def createSpectrum():
