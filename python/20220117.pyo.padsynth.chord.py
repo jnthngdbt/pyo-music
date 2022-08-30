@@ -34,13 +34,11 @@ freq = expand(octaves=octaves, notes=[x + root for x in notes])
 freq = padRatio * np.array(midiToHz(freq)) / padFreq
 
 o = Osc(t, freq=freq.tolist())
-d = Delay(o, delay=[.00, .05], feedback=0)
+d = Delay(o, delay=[.00, .20], feedback=0)
 
 mix = .6 * d
+mix.out()
 
-p = Pan(mix, outs=2, pan=0.5)
-p.out()
-
-Spectrum(p)
+Spectrum(mix)
 
 s.gui(locals())
