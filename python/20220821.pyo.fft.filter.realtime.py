@@ -17,70 +17,93 @@ s.start()
 # minFftPeriod = minFreqNbCycles * minFreqPeriod # 2*.05=.1 > 4410
 # minFftN = fs * minFftPeriod
 
-N = 2**14 # 2**14=16k
-Nh = int(N/2)
-
-a = Noise(.25).mix(2)
-fin = FFT(a, size=N, overlaps=4, wintype=2)
-
 def getSigVal(sig):
+  if not hasattr(sig, 'value'):
+    return sig
   return sig.value.value if hasattr(sig.value, 'value') else sig.value
 
-note = midiToHz(61)
+class SpectrumEditor:
+  def __init__(self) -> None:
+    pass
 
-p0 = Sig(int(N * note / s.getSamplingRate()))
-p0.ctrl([SLMap(5., 500., 'lin', "value", p0.value)], "P0")
+class PeakPadSpectrum:
+  def __init__(self) -> None:
+    self.size = 2**14 # 2**14=16k
+    self.halfsize = int(self.size/2)
 
-bw = Sig(8)
-bw.ctrl([SLMap(5., 50., 'lin', "value", bw.value)], "BW")
+    self.freq = Sig(midiToHz(37))
+    self.freq.ctrl([SLMap(20., 5000., 'lin', "value", self.freq.value)], "Frequency")
 
-bws = Sig(.7)
-bws.ctrl([SLMap(.1, 2.0, 'lin', "value", bws.value)], "BWS")
+    self.q = Sig(19.2)
+    self.q.ctrl([SLMap(.1, 50., 'lin', "value", self.q.value)], "Q")
 
-dmp = Sig(.52)
-dmp.ctrl([SLMap(.1, 10., 'lin', "value", dmp.value)], "DMP")
+    self.damp = Sig(.56)
+    self.damp.ctrl([SLMap(.01, 3., 'lin', "value", self.damp.value)], "Damp")
 
-def createSpectrum():
-  s = np.zeros(Nh)
-  for i in range(16):
-    Nw = int((i * getSigVal(bws) + 1) * getSigVal(bw))
-    if Nw < 3: Nw = 3 # minimum length
-    if Nw % 2 == 0: Nw += 1 # make sure odd
-    Nwh = int(Nw/2)
-    damping = np.exp(-i*getSigVal(dmp))
-    w = 10 * damping * signal.windows.hann(Nw)
-    p = int(getSigVal(p0) * (i + 1))
+    self.nbHarms = Sig(16)
+    self.nbHarms.ctrl([SLMap(1, 64, 'lin', "value", self.nbHarms.value, res='int')], "Harmonics")
 
-    a = max(0, p-Nwh)
-    b = min(Nh-1, p + Nwh + 1)
-    Nab = b-a
-    s[a:b] += w[0:Nab] # slicing: [a,b[
-  return s
+    self.magnitudes = np.zeros(self.halfsize)
+    self.generate()
 
-v = createSpectrum()
-t = DataTable(Nh, init=v.tolist())
-amp = TableIndex(t, fin["bin"])
+  def generate(self):
+    self.magnitudes = np.zeros(self.halfsize)
 
-# plt.plot(v)
-# plt.show()
+    for i in range(getSigVal(self.nbHarms)):
+      fi = getSigVal(self.freq) * (i + 1)
+      q = getSigVal(self.q)
+      damp = getSigVal(self.damp)
 
-re = fin["real"] * amp
-im = fin["imag"] * amp
-fout = IFFT(re, im, size=N, overlaps=4, wintype=2).mix(2)
+      bandwidth = (fi / q)
+      
+      winSize = int(self.size * bandwidth / s.getSamplingRate())
+      if winSize < 3: winSize = 3 # minimum length
+      if winSize % 2 == 0: winSize += 1 # make sure odd
+
+      winHalfsize = int(.5 * winSize)
+
+      damping = np.exp(-i * damp)
+      w = 10 * damping * signal.windows.hann(winSize)
+
+      freqPos = int(self.size * fi / s.getSamplingRate())
+
+      a = max(0, freqPos - winHalfsize)
+      b = min(self.size-1, freqPos + winHalfsize + 1)
+      Nab = b-a
+
+      self.magnitudes[a:b] += w[0:Nab] # slicing: [a,b[
+
+class PeakPadSynth:
+  def __init__(self) -> None:
+    self.spectrum = PeakPadSpectrum()
+
+    self.noise = Noise(.25).mix(2)
+    self.fft = FFT(self.noise, size=self.spectrum.size, overlaps=4, wintype=2)
+
+    self.table = DataTable(self.spectrum.halfsize, init=self.spectrum.magnitudes.tolist())
+    self.amp = TableIndex(self.table, self.fft["bin"])
+
+    self.real = self.fft["real"] * self.amp
+    self.imag = self.fft["imag"] * self.amp
+    self.ifft = IFFT(self.real, self.imag, size=self.spectrum.size, overlaps=4, wintype=2).mix(1)
+
+    self.out = Delay(self.ifft, [.0, .2])
+
+  def updateSpectrum(self):
+    tm = time.time()
+    self.spectrum.generate()
+    self.table.replace(self.spectrum.magnitudes.tolist())
+    print("{}s".format(time.time() - tm))
+
+
+x = PeakPadSynth()
 
 p = []
-p.append(fout)
-# p.append(Freeverb(p[-1], size=[.5,.6])), p[-1].ctrl()
+p.append(x.out)
 p[-1].out()
 
-Spectrum(fout, size=N)
+Spectrum(p[-1])
 
-def changeSpectrum():
-  tm = time.time()
-  v = createSpectrum()
-  t.replace(v.tolist())
-  print("{}s".format(time.time() - tm))
-
-clk = Pattern(changeSpectrum, .1).play()
+clk = Pattern(x.updateSpectrum, .1).play()
 
 s.gui(locals())
