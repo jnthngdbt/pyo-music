@@ -31,17 +31,32 @@ class PeakPadSpectrum:
     self.size = 2**14 # 2**14=16k
     self.halfsize = int(self.size/2)
 
-    self.freq = Sig(midiToHz(37))
+    self.freq = Sig(midiToHz(73))
     self.freq.ctrl([SLMap(20., 5000., 'lin', "value", self.freq.value)], "Frequency")
 
-    self.q = Sig(19.2)
-    self.q.ctrl([SLMap(.1, 50., 'lin', "value", self.q.value)], "Q")
+    self.qp = Sig(9.6)
+    self.qp.ctrl([SLMap(.1, 50., 'lin', "value", self.qp.value)], "Q Peak")
+
+    self.qb = Sig(.67)
+    self.qb.ctrl([SLMap(.1, 50., 'lin', "value", self.qb.value)], "Q Noise")
+
+    self.mulp = Sig(10)
+    self.mulp.ctrl([SLMap(.1, 50., 'lin', "value", self.mulp.value)], "Amplitude Peak")
+
+    self.mulb = Sig(2)
+    self.mulb.ctrl([SLMap(.1, 50., 'lin', "value", self.mulb.value)], "Amplitude Noise")
 
     self.damp = Sig(.56)
     self.damp.ctrl([SLMap(.01, 3., 'lin', "value", self.damp.value)], "Damp")
 
-    self.nbHarms = Sig(16)
+    self.nbHarms = Sig(1)
     self.nbHarms.ctrl([SLMap(1, 64, 'lin', "value", self.nbHarms.value, res='int')], "Harmonics")
+
+    self.shape = Sig(.323)
+    self.shape.ctrl([SLMap(0, 1, 'lin', "value", self.shape.value)], "Shape")
+
+    self.std = Sig(.012)
+    self.std.ctrl([SLMap(0.005, .2, 'lin', "value", self.std.value)], "Sigma")
 
     self.magnitudes = np.zeros(self.halfsize)
     self.generate()
@@ -49,11 +64,27 @@ class PeakPadSpectrum:
   def generate(self):
     self.magnitudes = np.zeros(self.halfsize)
 
-    for i in range(getSigVal(self.nbHarms)):
-      fi = getSigVal(self.freq) * (i + 1)
-      q = getSigVal(self.q)
-      damp = getSigVal(self.damp)
+    self.addPeaks(
+      getSigVal(self.freq), 
+      getSigVal(self.nbHarms), 
+      getSigVal(self.mulp), 
+      getSigVal(self.qp), 
+      getSigVal(self.damp), 
+      getSigVal(self.shape),
+      getSigVal(self.std))
 
+    self.addPeaks(
+      getSigVal(self.freq), 
+      getSigVal(self.nbHarms), 
+      getSigVal(self.mulb), 
+      getSigVal(self.qb), 
+      getSigVal(self.damp),
+      getSigVal(self.shape),
+      getSigVal(self.std))
+
+  def addPeaks(self, freq, nbHarms, scale, q, damp, shape, std):
+    for i in range(nbHarms):
+      fi = freq * (i + 1)
       bandwidth = (fi / q)
       
       winSize = int(self.size * bandwidth / s.getSamplingRate())
@@ -63,7 +94,7 @@ class PeakPadSpectrum:
       winHalfsize = int(.5 * winSize)
 
       damping = np.exp(-i * damp)
-      w = 10 * damping * signal.windows.hann(winSize)
+      w = scale * damping * signal.windows.general_gaussian(winSize, shape, std*winSize)
 
       freqPos = int(self.size * fi / s.getSamplingRate())
 
