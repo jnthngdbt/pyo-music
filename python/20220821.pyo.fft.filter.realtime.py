@@ -35,27 +35,27 @@ class PeakPadSpectrum:
     self.freq.ctrl([SLMap(20., 5000., 'lin', "value", self.freq.value)], "Frequency")
 
     self.qp = Sig(9.6)
-    self.qp.ctrl([SLMap(.1, 50., 'lin', "value", self.qp.value)], "Q Peak")
+    self.qp.ctrl([SLMap(1, 50., 'lin', "value", self.qp.value)], "Q Peak")
 
     self.qb = Sig(.67)
-    self.qb.ctrl([SLMap(.1, 50., 'lin', "value", self.qb.value)], "Q Noise")
+    self.qb.ctrl([SLMap(.1, 5., 'lin', "value", self.qb.value)], "Q Noise")
 
     self.mulp = Sig(10)
-    self.mulp.ctrl([SLMap(.1, 50., 'lin', "value", self.mulp.value)], "Amplitude Peak")
+    self.mulp.ctrl([SLMap(.0, 20., 'lin', "value", self.mulp.value)], "Amplitude Peak")
 
     self.mulb = Sig(2)
-    self.mulb.ctrl([SLMap(.1, 50., 'lin', "value", self.mulb.value)], "Amplitude Noise")
+    self.mulb.ctrl([SLMap(.0, 4., 'lin', "value", self.mulb.value)], "Amplitude Noise")
 
     self.damp = Sig(.56)
     self.damp.ctrl([SLMap(.01, 3., 'lin', "value", self.damp.value)], "Damp")
 
     self.nbHarms = Sig(1)
-    self.nbHarms.ctrl([SLMap(1, 64, 'lin', "value", self.nbHarms.value, res='int')], "Harmonics")
+    self.nbHarms.ctrl([SLMap(1, 32, 'lin', "value", self.nbHarms.value, res='int')], "Harmonics")
 
-    self.shape = Sig(.323)
-    self.shape.ctrl([SLMap(0, 1, 'lin', "value", self.shape.value)], "Shape")
+    self.shape = Sig(.323) # for peak: 0.323 (kinda exp), for padsynth: 1 (gauss)
+    self.shape.ctrl([SLMap(0, 1.5, 'lin', "value", self.shape.value)], "Shape")
 
-    self.std = Sig(.012)
+    self.std = Sig(.012) # for peak: 0.012, for padsynth: 0.14
     self.std.ctrl([SLMap(0.005, .2, 'lin', "value", self.std.value)], "Sigma")
 
     self.magnitudes = np.zeros(self.halfsize)
