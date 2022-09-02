@@ -72,7 +72,7 @@ chords = [
 ]
 
 dur = 12
-overlap = 0.2
+overlap = 0.25
 interval = (1.-overlap) * dur # somehow overlap must be < 0.5
 
 i = 0
@@ -85,9 +85,9 @@ def playChord():
   i += 1
 
 peaks = [
-  Peak(note=72, mul=0.6),
+  Peak(note=72, mul=0.15),
   # Peak(note=79, mul=0.2),
-  # Peak(note=84, mul=0.1),
+  Peak(note=84, mul=0.2),
 ]
 
 p = Pattern(playChord, time=interval).play()
