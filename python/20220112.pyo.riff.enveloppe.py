@@ -11,9 +11,9 @@ class Pad:
     self.ratio = s.getSamplingRate() / self.size
     self.table = PadSynthTable(basefreq=self.basefreq, size=self.size, 
       spread=1, # for slight dissonnance
-      bw=50, # def: 50, pure > noisy
+      bw=40, # def: 50, pure > noisy
       bwscl=1.2, # def: 1, breathing
-      damp=0.6) # def: 0.7, mellow/bright
+      damp=.6) # def: 0.7, mellow/bright
 
   def freq(self, midi=48):
     f = midiToHz(midi)
@@ -86,7 +86,8 @@ def playChord():
 
 peaks = [
   Peak(note=72, mul=0.6),
-  # Peak(note=84, mul=0.4),
+  # Peak(note=79, mul=0.2),
+  # Peak(note=84, mul=0.1),
 ]
 
 p = Pattern(playChord, time=interval).play()
