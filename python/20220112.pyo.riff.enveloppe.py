@@ -53,11 +53,12 @@ class Peak:
     self.noise2 = PinkNoise()
     self.band = Biquadx([self.noise1, self.noise2], freq=midiToHz(note), q=9, type=2, stages=2, mul=mul).out()
 
+mul = .02; root = 85; peak = Peak(note=root-12, mul=0.8)
+# mul = .1; root = 61; peak = Peak(note=root+24, mul=0.8)
+
 # Using 2 instances to allow overlapping.
-mul = .1
 ins = [Instrument(mul=mul), Instrument(mul=mul)]
 
-root = 61
 octaves = [0]
 
 chords = [
@@ -83,12 +84,6 @@ def playChord():
   chordIdx = i % len(chords)
   ins[insIdx].play(notes=chords[chordIdx], dur=dur, octaves=octaves)
   i += 1
-
-peaks = [
-  Peak(note=root+24, mul=0.8),
-  # Peak(note=79, mul=0.2),
-  # Peak(note=root+48, mul=0.2),
-]
 
 p = Pattern(playChord, time=interval).play()
 
