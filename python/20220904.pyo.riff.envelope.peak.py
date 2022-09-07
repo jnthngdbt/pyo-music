@@ -9,7 +9,7 @@ class Peak:
     f = midiToHz(note)
     self.noise = BrownNoise()
     self.band = Biquadx(self.noise, freq=np.zeros(8).tolist(), q=2.3, type=2, stages=3, mul=.3*mul)
-    self.peak = Biquadx(self.noise, freq=np.zeros(8).tolist(), q=26,  type=2, stages=2, mul=2.*mul)
+    self.peak = Biquadx(self.noise, freq=np.zeros(8).tolist(), q=26,  type=2, stages=2, mul=10.*mul)
     self.osc = self.band + self.peak
 
 class InstrumentPeak:
@@ -39,8 +39,12 @@ class InstrumentPeak:
 
     return self
 
+  def stop(self):
+    self.env.stop()
+    return self
+
 # Using 2 instances to allow overlapping.
-mul = 1.; ins = [InstrumentPeak(mul=mul), InstrumentPeak(mul=mul)]
+mul = .6; ins = [InstrumentPeak(mul=mul), InstrumentPeak(mul=mul)]
 
 root = 61
 octaves = [0,1,2]
@@ -62,6 +66,7 @@ def playChord():
   global i
   insIdx = i % len(ins)
   chordIdx = i % len(chords)
+  ins[insIdx].stop()
   ins[insIdx].play(notes=chords[chordIdx], dur=dur, octaves=octaves)
   i += 1
 
