@@ -21,7 +21,7 @@ class Preset:
   peak = 0
   string = 1
 
-preset = Preset.peak
+preset = Preset.string
 
 #     peak, string
 note = [85, 49]
@@ -69,6 +69,9 @@ class PeakPadSpectrum:
     self.nbHarms = Sig(nbHarms[preset])
     self.nbHarms.ctrl([SLMap(1, 32, 'lin', "value", self.nbHarms.value, res='int')], "Harmonics")
 
+    self.amps = Sig(np.ones(32).tolist())
+    self.amps.ctrl([SLMap(0, 5, 'lin', "value", self.amps.value)], "Harmonics amplitudes")
+
     self.shape = Sig(shape[preset])
     self.shape.ctrl([SLMap(0, 1.5, 'lin', "value", self.shape.value)], "Shape")
 
@@ -88,7 +91,8 @@ class PeakPadSpectrum:
       getSigVal(self.qp), 
       getSigVal(self.damp), 
       getSigVal(self.shape),
-      getSigVal(self.std))
+      getSigVal(self.std),
+      getSigVal(self.amps))
 
     self.addPeaks(
       getSigVal(self.freq), 
@@ -97,9 +101,10 @@ class PeakPadSpectrum:
       getSigVal(self.qb), 
       getSigVal(self.damp),
       getSigVal(self.shape),
-      getSigVal(self.std))
+      getSigVal(self.std),
+      getSigVal(self.amps))
 
-  def addPeaks(self, freq, nbHarms, scale, q, damp, shape, std):
+  def addPeaks(self, freq, nbHarms, scale, q, damp, shape, std, amps):
     for i in range(nbHarms):
       fi = freq * (i + 1)
       bandwidth = (fi / q)
@@ -111,7 +116,7 @@ class PeakPadSpectrum:
       winHalfsize = int(.5 * winSize)
 
       damping = np.exp(-i * damp)
-      w = scale * damping * signal.windows.general_gaussian(winSize, shape, std*winSize)
+      w = scale * damping * amps[i] * signal.windows.general_gaussian(winSize, shape, std*winSize)
 
       freqPos = int(self.size * fi / s.getSamplingRate())
 
