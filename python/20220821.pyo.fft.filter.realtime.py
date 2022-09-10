@@ -102,7 +102,8 @@ class PeakPadSpectrum:
       b = min(self.size-1, freqPos + winHalfsize + 1)
       Nab = b-a
 
-      self.magnitudes[a:b] += w[0:Nab] # slicing: [a,b[
+      # Use maximum to avoid accumulating to much noise.
+      self.magnitudes[a:b] = np.maximum(w[0:Nab], self.magnitudes[a:b]) # slicing: [a,b[
 
 class PeakPadSynth:
   def __init__(self) -> None:
