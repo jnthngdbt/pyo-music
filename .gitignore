@@ -1,7 +1,4 @@
 .vscode
 *.pyc
 *.lnk
-.idea
-python/songs/*
-!python/songs/.gitkeep
-python/20220111.pyo.example.template.py
+fiddling/20220111.pyo.example.template.py
