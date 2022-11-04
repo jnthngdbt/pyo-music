@@ -84,6 +84,9 @@ riffs = [
   [ 0, 7, 9, 5],
   [ 5, 7, 9, 9],
   [ 5, 7, 9, 5],
+  [ 5, 0, 7, 7],
+  [ 0, 7, 0, 5],
+  [ 0, 5, 0, 7],
 ]
 
 M = Maestro(time=dur, nbSectionsSwitch=2, riffs=riffs, track=
