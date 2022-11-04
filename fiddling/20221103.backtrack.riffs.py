@@ -9,7 +9,7 @@ bpm = 36
 
 bps = bpm / 60.
 
-durTarget = 4
+durTarget = 6
 dur = (float)(bps * np.floor(durTarget / bps))
 
 class Track:
@@ -39,8 +39,10 @@ class Maestro:
 
         self.clock = Pattern(self.tick, time=self.time).play()
 
+        print('Riff initial: {}'.format(self.track.note))
+
     def tick(self):
-        doSwitch = (self.nbSectionsSwitch > 0) and (self.beatIdx % (self.sectionSize * self.nbSectionsSwitch) == 0)
+        doSwitch = (self.nbSectionsSwitch > 0) and (self.beatIdx > 0) and (self.beatIdx % (self.sectionSize * self.nbSectionsSwitch) == 0)
         if doSwitch:
             self.switchRiff()
 
@@ -79,6 +81,9 @@ class Bass (Track):
 
 riffs = [
   [ 9, 5, 0, 7],
+  [ 9, 5, 0, 0],
+  [ 9, 7, 0, 5],
+  [ 9, 7, 5, 0],
   [ 5, 0, 9, 7],
   [ 5, 0, 7, 9],
   [ 0, 7, 9, 5],
@@ -87,13 +92,16 @@ riffs = [
   [ 5, 0, 7, 7],
   [ 0, 7, 0, 5],
   [ 0, 5, 0, 7],
+  [ 0, 5, 0, 5],
+  [ 4, 5, 0, 7],
+  [ 7, 9, 5, 0],
 ]
 
 M = Maestro(time=dur, nbSectionsSwitch=2, riffs=riffs, track=
-    Bass(name="Bass", mul = .12, root = root, adsr=[.02, .02, .4, .02], dur=dur, tone=[1, 1, .6, .2, .1],
+    Bass(name="Bass", mul = .1, root = root, adsr=[.01, .01, 1, .01], dur=dur, tone=[1, 1, .6, .2, .1],
         #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
         beat = [ 1 ],
-        note = [ 9, 5, 0, 7]
+        note = [ 5, 0, 7, 7],
     )
 )
 
