@@ -4,13 +4,15 @@ from typing import List
 
 s = Server().boot()
 
-root = 24
-bpm = 36
+maxNote = 100 # set high note to deactivate this fonctionality
 
-bps = bpm / 60.
+gain = .042
+root = 25 # below 24 is too low // A:21, C:24, E:28
+bpm = 48
 
-durTarget = 6
-dur = (float)(bps * np.floor(durTarget / bps))
+beatDur = 60 / bpm # beatPerSec = bpm / 60, so secPerBeat = 60 / bpm
+beatPerBar = 4 # 4:4
+barDur = beatDur * beatPerBar
 
 class Track:
     def __init__(self, name="Track", root=49, note=[0], beat=[1], dur=.2, prob=.6, speed=1, mul=1):
@@ -47,9 +49,13 @@ class Maestro:
             self.switchRiff()
 
         beat = self.track.beat[self.beatIdx % len(self.track.beat)]
-        note = self.track.note[self.beatIdx % len(self.track.note)]
+        note = self.track.note[self.beatIdx % len(self.track.note)] + self.track.root
+
+        if note > maxNote:
+            note = note - 12
+
         if beat:
-            self.track.play(self.track.root + note)
+            self.track.play(note)
 
         self.beatIdx = self.beatIdx + 1
 
@@ -95,13 +101,16 @@ riffs = [
   [ 0, 5, 0, 5],
   [ 4, 5, 0, 7],
   [ 7, 9, 5, 0],
+  [ 0, 0, 0, 5],
+  [ 0, 0, 0, 5],
+  [ 0, 2, 4, 5],
 ]
 
-M = Maestro(time=dur, nbSectionsSwitch=2, riffs=riffs, track=
-    Bass(name="Bass", mul = .1, root = root, adsr=[.01, .01, 1, .01], dur=dur, tone=[1, 1, .6, .2, .1],
+M = Maestro(time=barDur, nbSectionsSwitch=2, riffs=riffs, track=
+    Bass(name="Bass", mul = gain, root = root, adsr=[.01, .01, 1, .01], dur=barDur, tone=[1, 1, .6, .2, .1],
         #        |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x  |  x  x  x  X  x  x  x  X  x  x  x  X  x  x  x
         beat = [ 1 ],
-        note = [ 5, 0, 7, 7],
+        note = [ 0, 7, 9, 5],
     )
 )
 
